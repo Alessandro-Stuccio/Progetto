@@ -244,4 +244,14 @@ public class BookingServiceImpl implements BookingService {
         emailService.sendBookingCancellationEmail(clientEmail, clientName, profName, start);
         emailService.sendBookingCancellationEmail(profEmail, profName, clientName, start);
     }
+
+    @Override
+    public List<Booking> findRecentByUser(User user, LocalDateTime since) {
+        return bookingRepository.findRecentByUser(user, since);
+    }
+
+    @Override
+    public List<Booking> findRecentByProfessional(User professional, LocalDateTime since) {
+        return bookingRepository.findRecentByProfessional(professional, since);
+    }
 }

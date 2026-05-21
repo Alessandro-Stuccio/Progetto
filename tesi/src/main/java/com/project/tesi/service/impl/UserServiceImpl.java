@@ -294,6 +294,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Amministratore non trovato nel sistema."));
     }
 
+    @Override
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utente", id));
+    }
+
     private ProfessionalSummaryDTO buildProfessionalSummary(User pro) {
         return ProfessionalSummaryDTO.builder()
                 .id(pro.getId())

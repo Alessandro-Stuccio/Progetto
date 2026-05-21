@@ -54,16 +54,12 @@ public class Booking {
     @JoinColumn(name = "slot_id", nullable = false, foreignKey = @ForeignKey(name = "fk_booking_slot_id"))
     private Slot slot;
 
-    @Enumerated(EnumType.STRING)
-    private BookingStatus status;
+
 
     @CreationTimestamp
     private LocalDateTime bookedAt;
 
-    @Column(nullable = false)
-    private String meetingLink;
 
-    private boolean reminderSent = false;
 
     public static BookingBuilder builder() {
         return new BookingBuilderImpl();

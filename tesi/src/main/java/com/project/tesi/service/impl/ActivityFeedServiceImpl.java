@@ -44,6 +44,8 @@ public class ActivityFeedServiceImpl implements ActivityFeedService {
 
     private record SortableItem(ActivityFeedItemResponse item, LocalDateTime sortKey) {}
 
+
+
     @Override
     public List<ActivityFeedItemResponse> getActivityFeed(Long userId, int days, int limit) {
         User user = userRepository.findById(userId)
@@ -64,6 +66,8 @@ public class ActivityFeedServiceImpl implements ActivityFeedService {
                 .map(SortableItem::item)
                 .collect(Collectors.toList());
     }
+
+
 
     private void collectClientFeed(User client, LocalDateTime since, List<SortableItem> out) {
         for (Booking b : bookingRepository.findRecentByUser(client, since)) {

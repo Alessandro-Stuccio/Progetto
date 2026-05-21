@@ -2,19 +2,8 @@ package com.project.tesi.model;
 
 import com.project.tesi.builder.SlotBuilder;
 import com.project.tesi.builder.impl.SlotBuilderImpl;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.persistence.Version;
+import com.project.tesi.enums.BookingStatus;
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -59,6 +48,14 @@ public class Slot {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booked_by_id", foreignKey = @ForeignKey(name = "fk_slot_booked_by_id"))
     private User bookedBy;
+
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
+
+    @Column(nullable = false)
+    private String meetingLink;
+
+    private boolean reminderSent = false;
 
     @Version
     private Integer version;

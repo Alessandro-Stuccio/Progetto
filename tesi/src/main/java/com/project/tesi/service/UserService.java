@@ -1,5 +1,8 @@
 package com.project.tesi.service;
 
+import com.project.tesi.model.User;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
 import com.project.tesi.dto.response.ClientBasicInfoResponse;
@@ -38,4 +41,6 @@ public interface UserService {
 
     /** Restituisce i dati dell'account Admin (per la chat di supporto). */
     ClientBasicInfoResponse getAdmin();
+
+    User getUserById(@NotNull(message = "l'id deve essere valorizzato") @Min(value = 1, message = "non esistono id negativi") Long id);
 }

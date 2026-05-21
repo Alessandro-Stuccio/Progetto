@@ -1,5 +1,8 @@
 package com.project.tesi.service;
 
+import com.project.tesi.model.User;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import org.springframework.validation.annotation.Validated;
 
 import com.project.tesi.dto.response.DocumentResponse;
@@ -8,6 +11,7 @@ import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.model.Document;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -53,4 +57,10 @@ public interface DocumentService {
 
     /** Carica un documento senza validazione del ruolo (operazione base). */
     Document uploadDocument(MultipartFile file, Long clientId, Long uploaderId, String docType);
+
+    List<Document> findRecentByOwner(@NotNull User owner,@NotNull @PastOrPresent LocalDateTime since);
+
+
+    List<Document> findRecentByProfessional(User professional, LocalDateTime since);
+
 }

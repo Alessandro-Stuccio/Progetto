@@ -119,6 +119,16 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<Document> findRecentByOwner(User owner, LocalDateTime since) {
+        return documentRepository.findRecentByOwner(owner,since);
+    }
+
+    @Override
+    public List<Document> findRecentByProfessional(User professional, LocalDateTime since) {
+        return documentRepository.findRecentByUploader(professional, since);
+    }
+
+    @Override
     public byte[] downloadDocument(Long documentId) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException(documentId));
