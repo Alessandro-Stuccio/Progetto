@@ -5,8 +5,8 @@ import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
-import com.project.tesi.facade.IActivityFeedFacade;
-import com.project.tesi.facade.IDocumentFacade;
+import com.project.tesi.facade.ActivityFeedFacade;
+import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.UserRepository;
@@ -20,14 +20,14 @@ import java.util.List;
  * Implementazione del facade per la gestione dei documenti.
  */
 @Component
-public class DocumentFacadeImpl implements IDocumentFacade {
+public class DocumentFacadeImpl implements DocumentFacade {
 
     private final DocumentService documentService;
-    private final IActivityFeedFacade activityFeedFacade;
+    private final ActivityFeedFacade activityFeedFacade;
     private final UserRepository userRepository;
 
     public DocumentFacadeImpl(DocumentService documentService,
-                              IActivityFeedFacade activityFeedFacade,
+                              ActivityFeedFacade activityFeedFacade,
                               UserRepository userRepository) {
         this.documentService = documentService;
         this.activityFeedFacade = activityFeedFacade;

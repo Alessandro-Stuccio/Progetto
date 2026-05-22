@@ -164,7 +164,7 @@ public class ChatServiceImpl implements ChatService {
             return ConversationPreviewResponse.builder()
                     .chatId(chat.getId())
                     .otherUserId(partner.getId())
-                    .otherUserName(partner.getFirstName() + " " + partner.getLastName())
+                    .otherUserName(partner.getFullName())
                     .otherUserRole(partner.getRole() != null ? partner.getRole().name() : null)
                     .lastMessage(lastMsg != null ? lastMsg.getContent() : "")
                     .lastMessageTime(lastMsg != null ? lastMsg.getTimeStamp() : null)
@@ -206,7 +206,7 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public String getUserFullName(Long userId) {
         return userRepository.findById(userId)
-                .map(u -> u.getFirstName() + " " + u.getLastName())
+                .map(User::getFullName)
                 .orElse("Utente");
     }
 
@@ -294,7 +294,7 @@ public class ChatServiceImpl implements ChatService {
                 .id(m.getId())
                 .chatId(m.getChat().getId())
                 .senderId(sender.getId())
-                .senderName(sender.getFirstName() + " " + sender.getLastName())
+                .senderName(sender.getFullName())
                 .receiverId(receiverId)
                 .content(m.getContent())
                 .createdAt(m.getTimeStamp())

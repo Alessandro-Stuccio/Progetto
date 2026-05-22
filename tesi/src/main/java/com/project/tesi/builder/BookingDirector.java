@@ -9,33 +9,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class BookingDirector {
 
-    public Booking buildConfirmedBooking(User user, User professional, Slot slot, String meetingLink) {
+    public Booking buildConfirmedBooking(User user, Slot slot) {
+        slot.setStatus(BookingStatus.CONFIRMED);
         return Booking.builder()
                 .user(user)
-                .professional(professional)
                 .slot(slot)
-                .meetingLink(meetingLink)
-                .status(BookingStatus.CONFIRMED)
                 .build();
     }
 
-    public Booking buildCompletedBooking(User user, User professional, Slot slot, String meetingLink) {
+    public Booking buildCompletedBooking(User user, Slot slot) {
+        slot.setStatus(BookingStatus.COMPLETED);
         return Booking.builder()
                 .user(user)
-                .professional(professional)
                 .slot(slot)
-                .meetingLink(meetingLink)
-                .status(BookingStatus.COMPLETED)
                 .build();
     }
 
-    public Booking buildCancelledBooking(User user, User professional, Slot slot, String meetingLink) {
+    public Booking buildCancelledBooking(User user, Slot slot) {
+        slot.setStatus(BookingStatus.CANCELED);
         return Booking.builder()
                 .user(user)
-                .professional(professional)
                 .slot(slot)
-                .meetingLink(meetingLink)
-                .status(BookingStatus.CANCELED)
                 .build();
     }
 }

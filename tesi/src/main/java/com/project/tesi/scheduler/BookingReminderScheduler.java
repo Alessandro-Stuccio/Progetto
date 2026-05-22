@@ -1,8 +1,10 @@
 package com.project.tesi.scheduler;
 
 import com.project.tesi.model.Booking;
+import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.BookingRepository;
+import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,21 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Cron job che gira ogni 5 minuti in background.
- * Spazzola il database in cerca di appuntamenti imminenti (entro i prossimi 35 minuti) 
- * e spara una mail di reminder col link della call a cliente e professionista.
- */
 @Component
 public class BookingReminderScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(BookingReminderScheduler.class);
 
     private final BookingRepository bookingRepository;
+    private final SlotRepository slotRepository;
     private final EmailService emailService;
 
-    public BookingReminderScheduler(BookingRepository bookingRepository, EmailService emailService) {
+    public BookingReminderScheduler(BookingRepository bookingRepository,
+                                    SlotRepository slotRepository,
+                                    EmailService emailService) {
         this.bookingRepository = bookingRepository;
+        this.slotRepository = slotRepository;
         this.emailService = emailService;
     }
 
@@ -46,14 +47,14 @@ public class BookingReminderScheduler {
         for (Booking booking : upcoming) {
             try {
                 User client = booking.getUser();
-                User professional = booking.getProfessional();
-                LocalDateTime startTime = booking.getSlot().getStartTime();
-                String meetingLink = booking.getMeetingLink();
+                Slot slot = booking.getSlot();
+                User professional = slot.getProfessional();
+                LocalDateTime startTime = slot.getStartTime();
+                String meetingLink = slot.getMeetingLink();
 
-                String clientName = client.getFirstName() + " " + client.getLastName();
-                String profName = professional.getFirstName() + " " + professional.getLastName();
+                String clientName = client.getFullName();
+                String profName = professional.getFullName();
 
-                // Email al cliente
                 emailService.sendBookingReminderEmail(
                         client.getEmail(),
                         client.getFirstName(),
@@ -63,7 +64,6 @@ public class BookingReminderScheduler {
                         true
                 );
 
-                // Email al professionista
                 emailService.sendBookingReminderEmail(
                         professional.getEmail(),
                         professional.getFirstName(),
@@ -73,9 +73,8 @@ public class BookingReminderScheduler {
                         false
                 );
 
-                // Segna come inviato per non re-inviare
-                booking.setReminderSent(true);
-                bookingRepository.save(booking);
+                slot.setReminderSent(true);
+                slotRepository.save(slot);
 
                 log.info("Promemoria inviato per booking #{} — {} con {}",
                         booking.getId(), clientName, profName);
@@ -87,4 +86,3 @@ public class BookingReminderScheduler {
         }
     }
 }
-

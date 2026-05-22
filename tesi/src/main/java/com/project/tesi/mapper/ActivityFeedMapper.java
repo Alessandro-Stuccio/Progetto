@@ -15,7 +15,7 @@ public class ActivityFeedMapper {
     public List<ActivityFeedItemResponse> toActivityFeedItemResponse(List<Booking> sortable, List<Document> documents, User user) {
         List<ActivityFeedItemResponse> activityFeedItemResponses = new ArrayList<>();
         for (Booking booking : sortable) {
-            activityFeedItemResponses.add(toActivityFeedItemResponse(booking,user));
+            activityFeedItemResponses.add(toActivityFeedItemResponse(booking, user));
         }
         for (Document document : documents) {
             activityFeedItemResponses.add(toActivityFeedItemResponse(document, user));
@@ -24,42 +24,35 @@ public class ActivityFeedMapper {
         return activityFeedItemResponses;
     }
 
-    private ActivityFeedItemResponse toActivityFeedItemResponse(Booking booking,User user) {
-        if(user.getRole() == Role.CLIENT) return toActivityFeedItemResponseBookingUser(booking);
+    private ActivityFeedItemResponse toActivityFeedItemResponse(Booking booking, User user) {
+        if (user.getRole() == Role.CLIENT) return toActivityFeedItemResponseBookingUser(booking);
         else return toActivityFeedItemResponseBookingProfessional(booking);
     }
 
     private ActivityFeedItemResponse toActivityFeedItemResponseBookingUser(Booking booking) {
-        String proName = booking.getProfessional().getFirstName();
-        String proRole = booking.getProfessional().getRole() == Role.PERSONAL_TRAINER ? "PT" : "Nutrizionista";
+        User professional = booking.getSlot().getProfessional();
+        String proName = professional.getFirstName();
+        String proRole = professional.getRole() == Role.PERSONAL_TRAINER ? "PT" : "Nutrizionista";
         return new ActivityFeedItemResponse("Booking", "Appuntamento prenotato con " + proRole + " " + proName, booking.getSlot().getStartTime());
     }
 
     private ActivityFeedItemResponse toActivityFeedItemResponseBookingProfessional(Booking booking) {
-        String clientName = booking.getUser().getFirstName() + " " + booking.getUser().getLastName();
+        String clientName = booking.getUser().getFullName();
         return new ActivityFeedItemResponse("Booking", clientName + " ha prenotato un appuntamento", booking.getSlot().getStartTime());
     }
 
-    private ActivityFeedItemResponse toActivityFeedItemResponse(Document document,User user) {
-        if(user.getRole() == Role.CLIENT) return toActivityFeedItemResponseBookingUser(document);
-        else return toActivityFeedItemResponseBookingProfessional(document);
+    private ActivityFeedItemResponse toActivityFeedItemResponse(Document document, User user) {
+        if (user.getRole() == Role.CLIENT) return toActivityFeedItemResponseDocumentUser(document);
+        else return toActivityFeedItemResponseDocumentProfessional(document);
     }
 
-    private ActivityFeedItemResponse toActivityFeedItemResponseBookingProfessional(Document document) {
-        String clientName = document.getOwner() != null
-                ? document.getOwner().getFirstName() + " " + document.getOwner().getLastName() : "";
-        return new ActivityFeedItemResponse("Document", document.getType().getDesc() + " caricata per " + clientName,document.getUploadDate());
+    private ActivityFeedItemResponse toActivityFeedItemResponseDocumentProfessional(Document document) {
+        String clientName = document.getOwner() != null ? document.getOwner().getFullName() : "";
+        return new ActivityFeedItemResponse("Document", document.getType().getDesc() + " caricata per " + clientName, document.getUploadDate());
     }
 
-    private ActivityFeedItemResponse toActivityFeedItemResponseBookingUser(Document document) {
+    private ActivityFeedItemResponse toActivityFeedItemResponseDocumentUser(Document document) {
         String uploaderName = document.getUploadedBy() != null ? document.getUploadedBy().getFirstName() : "Sistema";
-
-        return new ActivityFeedItemResponse("Document", document.getType().getDesc() + " caricata da " + uploaderName,document.getUploadDate());
+        return new ActivityFeedItemResponse("Document", document.getType().getDesc() + " caricata da " + uploaderName, document.getUploadDate());
     }
-
-
-
-
-
-
 }

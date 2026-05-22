@@ -6,6 +6,7 @@ import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.PlanDuration;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
+import com.project.tesi.mapper.SubscriptionMapper;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
@@ -36,6 +37,7 @@ class SubscriptionServiceImplTest {
     @Mock private SubscriptionRepository subscriptionRepository;
     @Mock private PlanRepository planRepository;
     @Mock private UserRepository userRepository;
+    @Mock private SubscriptionMapper subscriptionMapper;
 
     @InjectMocks
     private SubscriptionServiceImpl subscriptionService;
@@ -72,14 +74,17 @@ class SubscriptionServiceImplTest {
             s.setId(100L);
             return s;
         });
+        when(subscriptionMapper.toResponse(any(Subscription.class))).thenReturn(
+                SubscriptionResponse.builder().planName("Premium Annuale").active(true)
+                        .currentCreditsPT(8).currentCreditsNutri(4).build());
 
         SubscriptionResponse response = subscriptionService.activateSubscription(request, 1L);
 
         assertThat(response).isNotNull();
         assertThat(response.getPlanName()).isEqualTo("Premium Annuale");
         assertThat(response.isActive()).isTrue();
-        assertThat(response.getRemainingPtCredits()).isEqualTo(8);
-        assertThat(response.getRemainingNutritionistCredits()).isEqualTo(4);
+        assertThat(response.getCurrentCreditsPT()).isEqualTo(8);
+        assertThat(response.getCurrentCreditsNutri()).isEqualTo(4);
     }
 
     @Test
@@ -95,6 +100,8 @@ class SubscriptionServiceImplTest {
             s.setId(101L);
             return s;
         });
+        when(subscriptionMapper.toResponse(any(Subscription.class))).thenReturn(
+                SubscriptionResponse.builder().planName("Base Semestrale").active(true).build());
 
         SubscriptionResponse response = subscriptionService.activateSubscription(request, 1L);
 
@@ -117,6 +124,8 @@ class SubscriptionServiceImplTest {
             if (s.getId() == null) s.setId(100L);
             return s;
         });
+        when(subscriptionMapper.toResponse(any(Subscription.class))).thenReturn(
+                SubscriptionResponse.builder().active(true).build());
 
         subscriptionService.activateSubscription(request, 1L);
 
@@ -157,6 +166,8 @@ class SubscriptionServiceImplTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.of(sub));
+        when(subscriptionMapper.toResponse(sub)).thenReturn(
+                SubscriptionResponse.builder().active(true).planName("Premium Annuale").build());
 
         SubscriptionResponse response = subscriptionService.getSubscriptionStatus(1L);
 

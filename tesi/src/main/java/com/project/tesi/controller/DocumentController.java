@@ -4,7 +4,7 @@ import com.project.tesi.dto.request.UpdateNotesRequest;
 import com.project.tesi.dto.response.DocumentResponse;
 import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
-import com.project.tesi.facade.IDocumentFacade;
+import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,9 +34,9 @@ import java.util.List;
 @Tag(name = "Documents", description = "API per la gestione sicura dei documenti")
 public class DocumentController {
 
-    private final IDocumentFacade documentFacade;
+    private final DocumentFacade documentFacade;
 
-    public DocumentController(IDocumentFacade documentFacade) {
+    public DocumentController(DocumentFacade documentFacade) {
         this.documentFacade = documentFacade;
     }
 

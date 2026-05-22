@@ -96,9 +96,8 @@ class BookingServiceImplTest {
 
         Booking fakeBooking = new Booking();
         fakeBooking.setUser(client);
-        fakeBooking.setProfessional(pt);
         fakeBooking.setSlot(slot);
-        when(bookingDirector.buildConfirmedBooking(any(), any(), any(), anyString())).thenReturn(fakeBooking);
+        when(bookingDirector.buildConfirmedBooking(any(), any())).thenReturn(fakeBooking);
 
         BookingResponse expectedResp = BookingResponse.builder().id(1L).status(BookingStatus.CONFIRMED).build();
         when(bookingMapper.toResponse(any())).thenReturn(expectedResp);

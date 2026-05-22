@@ -4,44 +4,48 @@ import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
 import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
-import com.project.tesi.dto.response.SubscriptionResponseDTO;
-import com.project.tesi.dto.response.UserResponseDTO;
+import com.project.tesi.dto.response.SubscriptionResponse;
+import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
-import com.project.tesi.facade.FacadeMapper;
-import com.project.tesi.facade.IAdminFacade;
+import com.project.tesi.facade.AdminFacade;
+import com.project.tesi.mapper.PlanMapper;
+import com.project.tesi.mapper.SubscriptionMapper;
+import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.service.AdminService;
 import com.project.tesi.service.AdminStatsService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Implementazione del facade per il pannello di amministrazione.
- */
 @Component
-public class AdminFacadeImpl implements IAdminFacade {
+public class AdminFacadeImpl implements AdminFacade {
 
     private final AdminService adminService;
     private final AdminStatsService adminStatsService;
-    private final FacadeMapper facadeMapper;
+    private final UserMapper userMapper;
+    private final SubscriptionMapper subscriptionMapper;
+    private final PlanMapper planMapper;
 
-    public AdminFacadeImpl(AdminService adminService, AdminStatsService adminStatsService, FacadeMapper facadeMapper) {
+    public AdminFacadeImpl(AdminService adminService, AdminStatsService adminStatsService,
+                           UserMapper userMapper, SubscriptionMapper subscriptionMapper,
+                           PlanMapper planMapper) {
         this.adminService = adminService;
         this.adminStatsService = adminStatsService;
-        this.facadeMapper = facadeMapper;
+        this.userMapper = userMapper;
+        this.subscriptionMapper = subscriptionMapper;
+        this.planMapper = planMapper;
     }
 
     @Override
-    public List<UserResponseDTO> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         return adminService.getAllUsers().stream()
-                .map(facadeMapper::mapToUserResponse)
+                .map(userMapper::toAdminResponse)
                 .toList();
     }
 
     @Override
-    public UserResponseDTO createUser(UserCreateRequestDTO request) {
-        return facadeMapper.mapToUserResponse(adminService.createUser(request));
+    public UserResponse createUser(UserCreateRequestDTO request) {
+        return userMapper.toAdminResponse(adminService.createUser(request));
     }
 
     @Override
@@ -50,30 +54,30 @@ public class AdminFacadeImpl implements IAdminFacade {
     }
 
     @Override
-    public List<SubscriptionResponseDTO> getAllSubscriptions() {
+    public List<SubscriptionResponse> getAllSubscriptions() {
         return adminService.getAllSubscriptions().stream()
-                .map(facadeMapper::mapToSubscriptionResponse)
-                .collect(Collectors.toList());
+                .map(subscriptionMapper::toResponse)
+                .toList();
     }
 
     @Override
-    public SubscriptionResponseDTO updateSubscriptionCredits(Long id, int pt, int nutri) {
-        return facadeMapper.mapToSubscriptionResponse(adminService.updateSubscriptionCredits(id, pt, nutri));
+    public SubscriptionResponse updateSubscriptionCredits(Long id, int pt, int nutri) {
+        return subscriptionMapper.toResponse(adminService.updateSubscriptionCredits(id, pt, nutri));
     }
 
     @Override
-    public UserResponseDTO updateUser(Long id, ModeratorUserUpdateRequest request) {
-        return facadeMapper.mapToUserResponse(adminService.updateUser(id, request));
+    public UserResponse updateUser(Long id, ModeratorUserUpdateRequest request) {
+        return userMapper.toAdminResponse(adminService.updateUser(id, request));
     }
 
     @Override
     public PlanResponseDTO createPlan(PlanCreateRequestDTO request) {
-        return facadeMapper.mapToPlanResponse(adminService.createPlan(request));
+        return planMapper.toResponse(adminService.createPlan(request));
     }
 
     @Override
     public PlanResponseDTO updatePlan(Long id, PlanCreateRequestDTO request) {
-        return facadeMapper.mapToPlanResponse(adminService.updatePlan(id, request));
+        return planMapper.toResponse(adminService.updatePlan(id, request));
     }
 
     @Override

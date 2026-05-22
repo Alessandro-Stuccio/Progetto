@@ -59,12 +59,12 @@ public class ProfessionalStatsServiceImpl implements ProfessionalStatsService {
 
         List<TodayBookingItem> todayList = todayBookings.stream().map(b -> new TodayBookingItem(
                 b.getId(),
-                b.getUser().getFirstName() + " " + b.getUser().getLastName(),
+                b.getUser().getFullName(),
                 b.getUser().getId(),
                 b.getSlot().getStartTime().toLocalTime().toString().substring(0, 5),
                 b.getSlot().getEndTime().toLocalTime().toString().substring(0, 5),
-                b.getStatus().name(),
-                b.getMeetingLink()
+                b.getSlot().getStatus().name(),
+                b.getSlot().getMeetingLink()
         )).collect(Collectors.toList());
 
         List<User> clients;

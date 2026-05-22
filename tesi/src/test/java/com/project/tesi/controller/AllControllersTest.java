@@ -48,8 +48,8 @@ class AllControllersTest {
 
         @Test @DisplayName("getAllUsers")
         void getAllUsers() {
-            when(adminFacade.getAllUsers()).thenReturn(List.of(new UserResponseDTO(1L, null, null, null, null, null, null, null, null)));
-            ResponseEntity<List<UserResponseDTO>> resp = adminController.getAllUsers();
+            when(adminFacade.getAllUsers()).thenReturn(List.of(UserResponse.builder().id(1L).build()));
+            ResponseEntity<List<UserResponse>> resp = adminController.getAllUsers();
             assertThat(resp.getStatusCode().value()).isEqualTo(200);
             assertThat(resp.getBody()).hasSize(1);
         }
@@ -57,9 +57,9 @@ class AllControllersTest {
         @Test @DisplayName("createUser")
         void createUser() {
             UserCreateRequestDTO body = new UserCreateRequestDTO("test@test.com", "test", "test", "test", "CLIENT", null, null, null, null);
-            when(adminFacade.createUser(body)).thenReturn(new UserResponseDTO(1L, null, null, null, null, null, null, null, null));
-            ResponseEntity<UserResponseDTO> resp = adminController.createUser(body);
-            assertThat(resp.getBody().id()).isEqualTo(1L);
+            when(adminFacade.createUser(body)).thenReturn(UserResponse.builder().id(1L).build());
+            ResponseEntity<UserResponse> resp = adminController.createUser(body);
+            assertThat(resp.getBody().getId()).isEqualTo(1L);
         }
 
         @Test @DisplayName("deleteUser")
@@ -144,7 +144,7 @@ class AllControllersTest {
         void activateSubscription() {
             User mockUser = User.builder().id(1L).email("test@test.com").password("testpass").role(Role.CLIENT).build();
             PlanRequest req = new PlanRequest(1L, PaymentFrequency.UNICA_SOLUZIONE);
-            SubscriptionResponse resp = SubscriptionResponse.builder().id(1L).isActive(true).build();
+            SubscriptionResponse resp = SubscriptionResponse.builder().id(1L).active(true).build();
             when(userFacade.activateSubscription(req, 1L)).thenReturn(resp);
             assertThat(subscriptionController.activateSubscription(req, mockUser).getBody().isActive()).isTrue();
         }

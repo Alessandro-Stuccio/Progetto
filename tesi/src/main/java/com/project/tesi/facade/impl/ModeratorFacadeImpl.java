@@ -2,62 +2,62 @@ package com.project.tesi.facade.impl;
 
 import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.request.UserCreateRequestDTO;
-import com.project.tesi.dto.response.SubscriptionResponseDTO;
-import com.project.tesi.dto.response.UserResponseDTO;
-import com.project.tesi.facade.FacadeMapper;
-import com.project.tesi.facade.IModeratorFacade;
+import com.project.tesi.dto.response.SubscriptionResponse;
+import com.project.tesi.dto.response.UserResponse;
+import com.project.tesi.facade.ModeratorFacade;
+import com.project.tesi.mapper.SubscriptionMapper;
+import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.service.AdminService;
 import com.project.tesi.service.ChatService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Implementazione del facade per il pannello del moderatore.
- */
 @Component
-public class ModeratorFacadeImpl implements IModeratorFacade {
+public class ModeratorFacadeImpl implements ModeratorFacade {
 
     private final AdminService adminService;
     private final ChatService chatService;
-    private final FacadeMapper facadeMapper;
+    private final UserMapper userMapper;
+    private final SubscriptionMapper subscriptionMapper;
 
-    public ModeratorFacadeImpl(AdminService adminService, ChatService chatService, FacadeMapper facadeMapper) {
+    public ModeratorFacadeImpl(AdminService adminService, ChatService chatService,
+                               UserMapper userMapper, SubscriptionMapper subscriptionMapper) {
         this.adminService = adminService;
         this.chatService = chatService;
-        this.facadeMapper = facadeMapper;
+        this.userMapper = userMapper;
+        this.subscriptionMapper = subscriptionMapper;
     }
 
     @Override
-    public List<UserResponseDTO> getManageableUsers() {
+    public List<UserResponse> getManageableUsers() {
         return adminService.getModeratorManageableUsers().stream()
-                .map(facadeMapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .map(userMapper::toAdminResponse)
+                .toList();
     }
 
     @Override
-    public List<SubscriptionResponseDTO> getAllSubscriptions() {
+    public List<SubscriptionResponse> getAllSubscriptions() {
         return adminService.getAllSubscriptions().stream()
-                .map(facadeMapper::mapToSubscriptionResponse)
-                .collect(Collectors.toList());
+                .map(subscriptionMapper::toResponse)
+                .toList();
     }
 
     @Override
-    public List<UserResponseDTO> getChatContacts() {
+    public List<UserResponse> getChatContacts() {
         return adminService.getModeratorChatContacts().stream()
-                .map(facadeMapper::mapToUserResponse)
-                .collect(Collectors.toList());
+                .map(userMapper::toAdminResponse)
+                .toList();
     }
 
     @Override
-    public UserResponseDTO createUser(UserCreateRequestDTO request) {
-        return facadeMapper.mapToUserResponse(adminService.createUserAsModerator(request));
+    public UserResponse createUser(UserCreateRequestDTO request) {
+        return userMapper.toAdminResponse(adminService.createUserAsModerator(request));
     }
 
     @Override
-    public UserResponseDTO updateUser(Long id, ModeratorUserUpdateRequest request) {
-        return facadeMapper.mapToUserResponse(adminService.updateUserAsModerator(id, request));
+    public UserResponse updateUser(Long id, ModeratorUserUpdateRequest request) {
+        return userMapper.toAdminResponse(adminService.updateUserAsModerator(id, request));
     }
 
     @Override
@@ -66,8 +66,8 @@ public class ModeratorFacadeImpl implements IModeratorFacade {
     }
 
     @Override
-    public SubscriptionResponseDTO updateSubscriptionCredits(Long id, int pt, int nutri) {
-        return facadeMapper.mapToSubscriptionResponse(adminService.updateSubscriptionCredits(id, pt, nutri));
+    public SubscriptionResponse updateSubscriptionCredits(Long id, int pt, int nutri) {
+        return subscriptionMapper.toResponse(adminService.updateSubscriptionCredits(id, pt, nutri));
     }
 
     @Override

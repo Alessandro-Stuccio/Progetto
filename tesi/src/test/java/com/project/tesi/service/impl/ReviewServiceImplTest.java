@@ -8,6 +8,7 @@ import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.review.ReviewNotAllowedException;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
+import com.project.tesi.mapper.ReviewMapper;
 import com.project.tesi.repository.BookingRepository;
 import com.project.tesi.repository.ReviewRepository;
 import com.project.tesi.repository.UserRepository;
@@ -33,6 +34,7 @@ class ReviewServiceImplTest {
     @Mock private ReviewRepository reviewRepository;
     @Mock private UserRepository userRepository;
     @Mock private BookingRepository bookingRepository;
+    @Mock private ReviewMapper reviewMapper;
 
     @InjectMocks
     private ReviewServiceImpl reviewService;
@@ -59,6 +61,8 @@ class ReviewServiceImplTest {
         Review savedReview = Review.builder().id(1L).client(client).professional(professional)
                 .rating(5).comment("Ottimo professionista!").createdAt(LocalDateTime.now()).build();
         when(reviewRepository.save(any(Review.class))).thenReturn(savedReview);
+        when(reviewMapper.toResponse(savedReview)).thenReturn(
+                ReviewResponse.builder().rating(5).authorName("Mario").build());
 
         ReviewResponse response = reviewService.addReview(reviewRequest, 1L);
 
@@ -80,6 +84,8 @@ class ReviewServiceImplTest {
         Review savedReview = Review.builder().id(1L).client(unassignedClient).professional(professional)
                 .rating(4).comment("Bravo").createdAt(LocalDateTime.now()).build();
         when(reviewRepository.save(any(Review.class))).thenReturn(savedReview);
+        when(reviewMapper.toResponse(savedReview)).thenReturn(
+                ReviewResponse.builder().rating(4).build());
 
         ReviewResponse response = reviewService.addReview(reviewRequest, 1L);
         assertThat(response.getRating()).isEqualTo(4);
@@ -128,6 +134,7 @@ class ReviewServiceImplTest {
                 .rating(4).comment("Bravo").createdAt(LocalDateTime.now()).build();
         when(userRepository.findById(2L)).thenReturn(Optional.of(professional));
         when(reviewRepository.findByProfessional(professional)).thenReturn(List.of(r));
+        when(reviewMapper.toResponse(r)).thenReturn(ReviewResponse.builder().rating(4).build());
 
         List<ReviewResponse> result = reviewService.getReviewsForProfessional(2L);
         assertThat(result).hasSize(1);

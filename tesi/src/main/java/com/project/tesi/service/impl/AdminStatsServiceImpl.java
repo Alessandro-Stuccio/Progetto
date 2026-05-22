@@ -131,7 +131,7 @@ public class AdminStatsServiceImpl implements AdminStatsService {
                             ? allUsers.stream().filter(u -> u.getAssignedPT() != null && u.getAssignedPT().getId().equals(pro.getId())).count()
                             : allUsers.stream().filter(u -> u.getAssignedNutritionist() != null && u.getAssignedNutritionist().getId().equals(pro.getId())).count();
                     return new ProfessionalWorkloadItem(
-                            pro.getFirstName() + " " + pro.getLastName(),
+                            pro.getFullName(),
                             pro.getRole().name(),
                             clientCount);
                 })

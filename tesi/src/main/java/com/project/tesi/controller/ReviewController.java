@@ -2,7 +2,7 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.ReviewRequest;
 import com.project.tesi.dto.response.ReviewResponse;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -31,9 +31,9 @@ import java.util.Map;
 @Tag(name = "Reviews", description = "Recensioni dei clienti verso i professionisti")
 public class ReviewController {
 
-    private final IUserFacade userFacade;
+    private final UserFacade userFacade;
 
-    public ReviewController(IUserFacade userFacade) {
+    public ReviewController(UserFacade userFacade) {
         this.userFacade = userFacade;
     }
 

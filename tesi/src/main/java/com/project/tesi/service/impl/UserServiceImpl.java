@@ -163,7 +163,7 @@ public class UserServiceImpl implements UserService {
 
                     return ProfessionalSummaryDTO.builder()
                             .id(pro.getId())
-                            .fullName(pro.getFirstName() + " " + pro.getLastName())
+                            .fullName(pro.getFullName())
                             .role(pro.getRole())
                             .averageRating(avg != null ? avg : 0.0)
                             .currentActiveClients((int) activeClients)
@@ -210,9 +210,9 @@ public class UserServiceImpl implements UserService {
                     .planName(sub.getPlan().getName())
                     .startDate(sub.getStartDate())
                     .endDate(sub.getEndDate())
-                    .isActive(sub.isActive())
-                    .remainingPtCredits(sub.getCurrentCreditsPT())
-                    .remainingNutritionistCredits(sub.getCurrentCreditsNutri())
+                    .active(sub.isActive())
+                    .currentCreditsPT(sub.getCurrentCreditsPT())
+                    .currentCreditsNutri(sub.getCurrentCreditsNutri())
                     .build();
         }
 
@@ -249,9 +249,7 @@ public class UserServiceImpl implements UserService {
                         .firstName(client.getFirstName())
                         .lastName(client.getLastName())
                         .email(client.getEmail())
-                        .profilePictureUrl(client.getProfilePicture() != null
-                                ? client.getProfilePicture()
-                                : client.getProfilePictureUrl())
+                        .profilePictureUrl(client.getProfilePicture())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -303,7 +301,7 @@ public class UserServiceImpl implements UserService {
     private ProfessionalSummaryDTO buildProfessionalSummary(User pro) {
         return ProfessionalSummaryDTO.builder()
                 .id(pro.getId())
-                .fullName(pro.getFirstName() + " " + pro.getLastName())
+                .fullName(pro.getFullName())
                 .role(pro.getRole())
                 .build();
     }
@@ -343,9 +341,7 @@ public class UserServiceImpl implements UserService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
-                .profilePictureUrl(user.getProfilePicture() != null
-                        ? user.getProfilePicture()
-                        : user.getProfilePictureUrl())
+                .profilePictureUrl(user.getProfilePicture())
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .build();
     }

@@ -2,7 +2,7 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.BookingRequest;
 import com.project.tesi.dto.response.BookingResponse;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,9 +29,9 @@ import java.util.Map;
 @Tag(name = "Bookings", description = "Creazione e cancellazione prenotazioni")
 public class BookingController {
 
-    private final IUserFacade userFacade;
+    private final UserFacade userFacade;
 
-    public BookingController(IUserFacade userFacade) {
+    public BookingController(UserFacade userFacade) {
         this.userFacade = userFacade;
     }
 

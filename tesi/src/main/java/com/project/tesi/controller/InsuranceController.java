@@ -1,8 +1,8 @@
 package com.project.tesi.controller;
 
-import com.project.tesi.dto.response.SubscriptionResponseDTO;
-import com.project.tesi.dto.response.UserResponseDTO;
-import com.project.tesi.facade.IAdminFacade;
+import com.project.tesi.dto.response.SubscriptionResponse;
+import com.project.tesi.dto.response.UserResponse;
+import com.project.tesi.facade.AdminFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -17,21 +17,21 @@ import java.util.List;
 @Tag(name = "Insurance", description = "API riservate all'Insurance Manager")
 public class InsuranceController {
 
-    private final IAdminFacade adminFacade;
+    private final AdminFacade adminFacade;
 
-    public InsuranceController(IAdminFacade adminFacade) {
+    public InsuranceController(AdminFacade adminFacade) {
         this.adminFacade = adminFacade;
     }
 
     @Operation(summary = "Lista abbonamenti", description = "Restituisce tutti gli abbonamenti attivi e scaduti.")
     @GetMapping("/subscriptions")
-    public ResponseEntity<List<SubscriptionResponseDTO>> getSubscriptions() {
+    public ResponseEntity<List<SubscriptionResponse>> getSubscriptions() {
         return ResponseEntity.ok(adminFacade.getAllSubscriptions());
     }
 
     @Operation(summary = "Lista utenti", description = "Restituisce tutti gli utenti registrati.")
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponseDTO>> getUsers() {
+    public ResponseEntity<List<UserResponse>> getUsers() {
         return ResponseEntity.ok(adminFacade.getAllUsers());
     }
 }

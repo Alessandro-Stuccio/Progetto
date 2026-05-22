@@ -13,127 +13,42 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Repository per l'accesso ai dati dell'entità {@link Booking}.
- *
- * Fornisce query personalizzate per recuperare le prenotazioni
- * filtrate per cliente, professionista, data o intervallo temporale.
- */
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    /**
-     * Restituisce tutte le prenotazioni di un cliente.
-     *
-     * @param user il cliente
-     * @return lista delle prenotazioni
-     */
     List<Booking> findByUser(User user);
 
-    /**
-     * Restituisce tutte le prenotazioni ricevute da un professionista.
-     *
-     * @param professional il professionista
-     * @return lista delle prenotazioni
-     */
-    List<Booking> findByProfessional(User professional);
+    @Query("SELECT b FROM Booking b WHERE b.slot.professional = :professional")
+    List<Booking> findByProfessional(@Param("professional") User professional);
 
-    /**
-     * Verifica se esiste già almeno una prenotazione tra un cliente e un professionista.
-     *
-     * @param user         il cliente
-     * @param professional il professionista
-     * @return {@code true} se esiste almeno una prenotazione
-     */
-    boolean existsByUserAndProfessional(User user, User professional);
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b WHERE b.user.id = :userId AND b.slot.professional.id = :professionalId")
+    boolean existsByUserIdAndProfessionalId(@Param("userId") Long userId, @Param("professionalId") Long professionalId);
 
-    /**
-     * Verifica per ID se esiste almeno una prenotazione storica tra cliente e professionista.
-     * Usato dalla logica recensioni per verificare la relazione formale senza caricare le entità.
-     *
-     * @param userId         ID del cliente
-     * @param professionalId ID del professionista
-     * @return {@code true} se esiste almeno una prenotazione
-     */
-    boolean existsByUserIdAndProfessionalId(Long userId, Long professionalId);
-
-    /**
-     * Restituisce le prenotazioni future di un cliente, ordinate per data di inizio slot crescente.
-     *
-     * @param user  il cliente
-     * @param start data/ora a partire dalla quale cercare (tipicamente LocalDateTime.now())
-     * @return lista delle prenotazioni future ordinate cronologicamente
-     */
-    List<Booking> findByUserAndSlotStartTimeAfterOrderBySlotStartTimeAsc(User user, LocalDateTime start);
-
-    /**
-     * Restituisce le prenotazioni future di un cliente (query JPQL esplicita).
-     *
-     * @param user il cliente
-     * @param now  data/ora corrente
-     * @return lista delle prenotazioni future
-     */
     @Query("SELECT b FROM Booking b WHERE b.user = :user AND b.slot.startTime > :now ORDER BY b.slot.startTime ASC")
     List<Booking> findFutureByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
-    /**
-     * Restituisce gli appuntamenti di oggi per un professionista.
-     * Filtra gli slot con startTime compreso tra l'inizio e la fine della giornata.
-     *
-     * @param professional il professionista
-     * @param dayStart     inizio giornata (00:00)
-     * @param dayEnd       fine giornata (00:00 del giorno successivo)
-     * @return lista degli appuntamenti odierni ordinati per orario
-     */
-    @Query("SELECT b FROM Booking b WHERE b.professional = :professional AND b.slot.startTime >= :dayStart AND b.slot.startTime < :dayEnd ORDER BY b.slot.startTime ASC")
+    @Query("SELECT b FROM Booking b WHERE b.slot.professional = :professional AND b.slot.startTime >= :dayStart AND b.slot.startTime < :dayEnd ORDER BY b.slot.startTime ASC")
     List<Booking> findTodayByProfessional(@Param("professional") User professional, @Param("dayStart") LocalDateTime dayStart, @Param("dayEnd") LocalDateTime dayEnd);
 
-    /**
-     * Restituisce le prenotazioni recenti di un cliente (per il feed attività).
-     *
-     * @param user  il cliente
-     * @param since data/ora minima di creazione
-     * @return lista delle prenotazioni recenti
-     */
     @Query("SELECT b FROM Booking b WHERE b.user = :user AND b.bookedAt >= :since ORDER BY b.bookedAt DESC")
     List<Booking> findRecentByUser(@Param("user") User user, @Param("since") LocalDateTime since);
 
-    /**
-     * Restituisce le prenotazioni recenti ricevute da un professionista (per il feed attività).
-     *
-     * @param professional il professionista
-     * @param since        data/ora minima di creazione
-     * @return lista delle prenotazioni recenti
-     */
-    @Query("SELECT b FROM Booking b WHERE b.professional = :professional AND b.bookedAt >= :since ORDER BY b.bookedAt DESC")
+    @Query("SELECT b FROM Booking b WHERE b.slot.professional = :professional AND b.bookedAt >= :since ORDER BY b.bookedAt DESC")
     List<Booking> findRecentByProfessional(@Param("professional") User professional, @Param("since") LocalDateTime since);
 
-    /**
-     * Verifica se esiste già una prenotazione con un dato stato per uno slot specifico.
-     * Usato per impedire la doppia prenotazione a livello business dopo la rimozione
-     * del vincolo UNIQUE su slot_id.
-     *
-     * @param slot   lo slot da verificare
-     * @param status lo stato della prenotazione (tipicamente CONFIRMED)
-     * @return {@code true} se esiste almeno una prenotazione con quello stato per lo slot
-     */
-    boolean existsBySlotAndStatus(Slot slot, BookingStatus status);
+    boolean existsBySlotAndSlotStatus(Slot slot, BookingStatus status);
 
     @Modifying
-    @Query("DELETE FROM Booking b WHERE b.slot = :slot AND b.status = :status")
+    @Query("DELETE FROM Booking b WHERE b.slot = :slot AND b.slot.status = :status")
     void deleteBySlotAndStatus(@Param("slot") Slot slot, @Param("status") BookingStatus status);
 
     @Modifying
-    @Query("DELETE FROM Booking b WHERE b.user.id = :userId OR b.professional.id = :userId")
+    @Query("DELETE FROM Booking b WHERE b.user.id = :userId OR b.slot.professional.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);
 
-    /**
-     * Trova le prenotazioni CONFIRMED il cui slot inizia tra {@code from} e {@code to}
-     * e per le quali non è ancora stato inviato il promemoria email.
-     */
     @Query("SELECT b FROM Booking b " +
-           "WHERE b.status = com.project.tesi.enums.BookingStatus.CONFIRMED " +
-           "AND b.reminderSent = false " +
+           "WHERE b.slot.status = com.project.tesi.enums.BookingStatus.CONFIRMED " +
+           "AND b.slot.reminderSent = false " +
            "AND b.slot.startTime >= :from " +
            "AND b.slot.startTime <= :to")
     List<Booking> findUpcomingNeedingReminder(@Param("from") LocalDateTime from,

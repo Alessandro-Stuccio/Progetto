@@ -1,7 +1,7 @@
 package com.project.tesi.controller;
 
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
-import com.project.tesi.facade.IAdminFacade;
+import com.project.tesi.facade.AdminFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Admin Stats", description = "Statistiche aggregate per la dashboard dell'amministratore")
 public class AdminStatsController {
 
-    private final IAdminFacade adminFacade;
+    private final AdminFacade adminFacade;
 
-    public AdminStatsController(IAdminFacade adminFacade) {
+    public AdminStatsController(AdminFacade adminFacade) {
         this.adminFacade = adminFacade;
     }
 

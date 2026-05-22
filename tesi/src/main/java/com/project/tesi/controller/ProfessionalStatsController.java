@@ -1,7 +1,7 @@
 package com.project.tesi.controller;
 
 import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Professional Stats", description = "Metriche e statistiche per la dashboard del professionista")
 public class ProfessionalStatsController {
 
-    private final IUserFacade userFacade;
+    private final UserFacade userFacade;
 
-    public ProfessionalStatsController(IUserFacade userFacade) {
+    public ProfessionalStatsController(UserFacade userFacade) {
         this.userFacade = userFacade;
     }
 

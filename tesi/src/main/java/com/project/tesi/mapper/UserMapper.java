@@ -62,22 +62,32 @@ public class UserMapper {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .assignedPtName(user.getAssignedPT() != null ?
-                        user.getAssignedPT().getFirstName() + " " + user.getAssignedPT().getLastName() : null)
+                        user.getAssignedPT().getFullName() : null)
                 .assignedNutritionistName(user.getAssignedNutritionist() != null ?
-                        user.getAssignedNutritionist().getFirstName() + " " + user.getAssignedNutritionist().getLastName() : null)
+                        user.getAssignedNutritionist().getFullName() : null)
                 .activeClientsCount(clientsCount)
                 .averageRating(avgRating)
                 .build();
     }
 
     /**
-     * Converte un DTO di registrazione in un'entità User.
-     * Imposta automaticamente il ruolo CLIENT.
-     * La password viene salvata in chiaro e sarà hashata nel service.
-     *
-     * @param request dati della registrazione
-     * @return l'entità User pronta per il salvataggio, oppure {@code null} se request è null
+     * Versione leggera senza enrichment da DB; usata nei contesti admin/moderator
+     * dove il rating e il conteggio clienti vengono omessi per semplicità.
      */
+    public UserResponse toAdminResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .assignedPtName(user.getAssignedPT() != null ?
+                        user.getAssignedPT().getFullName() : null)
+                .assignedNutritionistName(user.getAssignedNutritionist() != null ?
+                        user.getAssignedNutritionist().getFullName() : null)
+                .build();
+    }
+
     public User toUser(RegisterRequest request) {
         if (request == null) {
             return null;

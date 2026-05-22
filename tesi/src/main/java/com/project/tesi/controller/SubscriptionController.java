@@ -2,7 +2,7 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.PlanRequest;
 import com.project.tesi.dto.response.SubscriptionResponse;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Subscriptions", description = "Attivazione e stato degli abbonamenti")
 public class SubscriptionController {
 
-    private final IUserFacade userFacade;
+    private final UserFacade userFacade;
 
-    public SubscriptionController(IUserFacade userFacade) {
+    public SubscriptionController(UserFacade userFacade) {
         this.userFacade = userFacade;
     }
 

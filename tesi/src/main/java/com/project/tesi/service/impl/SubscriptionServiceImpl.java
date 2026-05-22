@@ -6,6 +6,7 @@ import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.PlanDuration;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
+import com.project.tesi.mapper.SubscriptionMapper;
 import com.project.tesi.model.Booking;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
@@ -41,16 +42,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final PlanRepository planRepository;
     private final UserRepository userRepository;
     private final List<BookingStrategy> strategies;
+    private final SubscriptionMapper subscriptionMapper;
 
-    // Costruttore esplicito — sostituisce @RequiredArgsConstructor di Lombok
     public SubscriptionServiceImpl(SubscriptionRepository subscriptionRepository,
                                    PlanRepository planRepository,
                                    UserRepository userRepository,
-                                   List<BookingStrategy> strategies) {
+                                   List<BookingStrategy> strategies,
+                                   SubscriptionMapper subscriptionMapper) {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
         this.userRepository = userRepository;
         this.strategies = strategies;
+        this.subscriptionMapper = subscriptionMapper;
     }
 
     @Override
@@ -99,7 +102,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         Subscription saved = subscriptionRepository.save(sub);
-        return mapToResponse(saved);
+        return subscriptionMapper.toResponse(saved);
     }
 
     @Override
@@ -110,7 +113,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription sub = subscriptionRepository.findByUserAndActiveTrue(user)
                 .orElseThrow(SubscriptionNotFoundException::new);
 
-        return mapToResponse(sub);
+        return subscriptionMapper.toResponse(sub);
     }
 
     // Scala i crediti quando scatta l'evento di avvenuta prenotazione (via Observer).
@@ -119,7 +122,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Transactional
     public void deductCredits(Booking booking) {
         User user = booking.getUser();
-        User professional = booking.getProfessional();
+        User professional = booking.getSlot().getProfessional();
 
         try {
             Subscription sub = subscriptionRepository.findByUserAndActiveTrueWithLock(user)
@@ -140,11 +143,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
     }
 
-    // Restituisce il credito perso se si annulla la prenotazione (sempre chiamato via Observer).
     @Override
     @Transactional
     public void refundCredits(Booking booking) {
-        User professional = booking.getProfessional();
+        User professional = booking.getSlot().getProfessional();
 
         BookingStrategy strategy = strategies.stream()
                 .filter(s -> s.getSupportedRole() == professional.getRole())
@@ -165,15 +167,4 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
     }
 
-    private SubscriptionResponse mapToResponse(Subscription sub) {
-        return SubscriptionResponse.builder()
-                .id(sub.getId())
-                .planName(sub.getPlan().getName())
-                .startDate(sub.getStartDate())
-                .endDate(sub.getEndDate())
-                .isActive(sub.isActive())
-                .remainingPtCredits(sub.getCurrentCreditsPT())
-                .remainingNutritionistCredits(sub.getCurrentCreditsNutri())
-                .build();
-    }
 }

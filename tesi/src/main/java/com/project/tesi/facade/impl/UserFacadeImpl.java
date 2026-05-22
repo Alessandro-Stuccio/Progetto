@@ -4,7 +4,6 @@ import com.project.tesi.dto.request.BookingRequest;
 import com.project.tesi.dto.request.PlanRequest;
 import com.project.tesi.dto.request.ProfileUpdateRequest;
 import com.project.tesi.dto.request.ReviewRequest;
-import com.project.tesi.dto.response.ActivityFeedItemResponse;
 import com.project.tesi.dto.response.BookingResponse;
 import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ClientDashboardResponse;
@@ -14,8 +13,7 @@ import com.project.tesi.dto.response.SlotDTO;
 import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.IUserFacade;
-import com.project.tesi.service.ActivityFeedService;
+import com.project.tesi.facade.UserFacade;
 import com.project.tesi.service.BookingService;
 import com.project.tesi.service.ProfessionalStatsService;
 import com.project.tesi.service.ReviewService;
@@ -30,13 +28,12 @@ import java.util.List;
  * Implementazione del facade principale per l'area utente.
  */
 @Component
-public class UserFacadeImpl implements IUserFacade {
+public class UserFacadeImpl implements UserFacade {
 
     private final UserService userService;
     private final BookingService bookingService;
     private final ReviewService reviewService;
     private final SubscriptionService subscriptionService;
-    private final ActivityFeedService activityFeedService;
     private final ProfessionalStatsService professionalStatsService;
     private final SlotService slotService;
 
@@ -44,14 +41,12 @@ public class UserFacadeImpl implements IUserFacade {
                           BookingService bookingService,
                           ReviewService reviewService,
                           SubscriptionService subscriptionService,
-                          ActivityFeedService activityFeedService,
                           ProfessionalStatsService professionalStatsService,
                           SlotService slotService) {
         this.userService = userService;
         this.bookingService = bookingService;
         this.reviewService = reviewService;
         this.subscriptionService = subscriptionService;
-        this.activityFeedService = activityFeedService;
         this.professionalStatsService = professionalStatsService;
         this.slotService = slotService;
     }
@@ -146,8 +141,4 @@ public class UserFacadeImpl implements IUserFacade {
         return professionalStatsService.getProfessionalStats(professionalId);
     }
 
-    @Override
-    public List<ActivityFeedItemResponse> getActivityFeed(Long userId, int days, int size) {
-        return activityFeedService.getActivityFeed(userId, days, size);
-    }
 }

@@ -4,6 +4,7 @@ import com.project.tesi.dto.response.SlotDTO;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
+import com.project.tesi.mapper.SlotMapper;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.model.WeeklySchedule;
@@ -40,13 +41,16 @@ public class SlotServiceImpl implements SlotService {
     private final SlotRepository slotRepository;
     private final UserRepository userRepository;
     private final WeeklyScheduleRepository weeklyScheduleRepository;
+    private final SlotMapper slotMapper;
 
     public SlotServiceImpl(SlotRepository slotRepository,
                            UserRepository userRepository,
-                           WeeklyScheduleRepository weeklyScheduleRepository) {
+                           WeeklyScheduleRepository weeklyScheduleRepository,
+                           SlotMapper slotMapper) {
         this.slotRepository = slotRepository;
         this.userRepository = userRepository;
         this.weeklyScheduleRepository = weeklyScheduleRepository;
+        this.slotMapper = slotMapper;
     }
 
     @Override
@@ -70,7 +74,7 @@ public class SlotServiceImpl implements SlotService {
         List<Slot> savedSlots = slotRepository.saveAll(slotsToSave);
 
         return savedSlots.stream()
-                .map(this::mapToDTO)
+                .map(slotMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -137,7 +141,7 @@ public class SlotServiceImpl implements SlotService {
                 .orElseThrow(() -> new ResourceNotFoundException("Professionista", professionalId));
 
         return slotRepository.findByProfessionalAndBookedByIsNull(professional).stream()
-                .map(this::mapToDTO)
+                .map(slotMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -156,16 +160,6 @@ public class SlotServiceImpl implements SlotService {
             throw new UnauthorizedAccessException("Non sei autorizzato a eliminare questo slot");
         }
         slotRepository.deleteById(slotId);
-    }
-
-    private SlotDTO mapToDTO(Slot slot) {
-        return SlotDTO.builder()
-                .id(slot.getId())
-                .startTime(slot.getStartTime())
-                .endTime(slot.getEndTime())
-                .isAvailable(slot.getBookedBy() == null)
-                .professionalId(slot.getProfessional().getId())
-                .build();
     }
 
     @Scheduled(cron = "0 0 0 * * SUN") // ogni domenica a mezzanotte

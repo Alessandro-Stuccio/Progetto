@@ -1,7 +1,7 @@
 package com.project.tesi.controller;
 
 import com.project.tesi.dto.response.ActivityFeedItemResponse;
-import com.project.tesi.facade.IActivityFeedFacade;
+import com.project.tesi.facade.ActivityFeedFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,9 +21,9 @@ import java.util.List;
 @Tag(name = "Activity Feed", description = "Feed delle attività recenti dell'utente autenticato")
 public class ActivityFeedController {
 
-    private final IActivityFeedFacade activityFeedFacade;
+    private final ActivityFeedFacade activityFeedFacade;
 
-    public ActivityFeedController(IActivityFeedFacade activityFeedFacade) {
+    public ActivityFeedController(ActivityFeedFacade activityFeedFacade) {
         this.activityFeedFacade = activityFeedFacade;
     }
 

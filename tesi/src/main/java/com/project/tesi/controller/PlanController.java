@@ -1,6 +1,6 @@
 package com.project.tesi.controller;
 
-import com.project.tesi.facade.IPlanFacade;
+import com.project.tesi.facade.PlanFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.Plan;
@@ -19,9 +19,9 @@ import java.util.List;
 @Tag(name = "Plans", description = "Piani di abbonamento disponibili (endpoint pubblico)")
 public class PlanController {
 
-    private final IPlanFacade planFacade;
+    private final PlanFacade planFacade;
 
-    public PlanController(IPlanFacade planFacade) {
+    public PlanController(PlanFacade planFacade) {
         this.planFacade = planFacade;
     }
 

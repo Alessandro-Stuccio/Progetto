@@ -35,13 +35,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Gestisce le prenotazioni tra clienti e professionisti.
- * 
- * Qui ci sono i controlli più critici del sistema: dobbiamo assicurarci che 
- * l'abbonamento copra la data scelta, che i crediti bastino e, soprattutto, 
- * evitare race condition se due clienti provano a prenotare lo stesso slot nello stesso istante.
- */
 @Service
 @Slf4j
 public class BookingServiceImpl implements BookingService {
@@ -64,11 +57,7 @@ public class BookingServiceImpl implements BookingService {
 
     /**
      * Mappa per gestire i lock a grana fine sugli slot.
-     * Invece di usare un lock globale (che rallenterebbe tutto bloccando l'intera applicazione), 
-     * o un 'synchronized' sul metodo (stesso problema), usiamo una ConcurrentHashMap per mappare
-     * ogni ID dello slot a un suo ReentrantLock specifico. 
-     * Il contatore 'count' serve a capire quanti thread stanno aspettando quello slot: quando arriva a zero, 
-     * rimuoviamo il lock dalla mappa per non saturare la memoria.
+     * ConcurrentHashMap con ReentrantLock per slot — shared resource + lock richiesto dal corso.
      */
     private final Map<Long, LockReference> slotLocks = new ConcurrentHashMap<>();
 
@@ -90,14 +79,6 @@ public class BookingServiceImpl implements BookingService {
         this.bookingDirector = bookingDirector;
     }
 
-    /**
-     * Il cuore del processo di prenotazione. Segue questo flusso narrativo:
-     * 1. Acquisiamo il lock specifico per questo slot. Se un altro thread ci sta provando, aspetta al varco.
-     * 2. Controlliamo se lo slot è stato occupato nel frattempo. Se sì, lanciamo SlotAlreadyBookedException!
-     * 3. Scegliamo la Strategy corretta (PT o Nutrizionista) per consumare i crediti.
-     * 4. Validiamo l'abbonamento (deve essere attivo e coprire la data dello slot).
-     * 5. Scaliamo i crediti, generiamo il link della call e salviamo tutto.
-     */
     @Override
     @Transactional
     public BookingResponse createBooking(BookingRequest request, Long userId) {
@@ -119,16 +100,14 @@ public class BookingServiceImpl implements BookingService {
                 throw new SlotAlreadyBookedException("Slot non più disponibile");
             }
 
-            if (bookingRepository.existsBySlotAndStatus(slot, BookingStatus.CONFIRMED)) {
-                throw new SlotAlreadyBookedException("Esiste gi una prenotazione confermata per questo slot.");
+            if (bookingRepository.existsBySlotAndSlotStatus(slot, BookingStatus.CONFIRMED)) {
+                throw new SlotAlreadyBookedException("Esiste già una prenotazione confermata per questo slot.");
             }
 
             bookingRepository.deleteBySlotAndStatus(slot, BookingStatus.CANCELED);
 
             User professional = slot.getProfessional();
 
-            // Applichiamo il pattern Strategy: a seconda del ruolo del professionista 
-            // (Personal Trainer o Nutrizionista), la logica di controllo e di scalatura dei crediti cambia.
             BookingStrategy strategy = strategies.stream()
                     .filter(s -> s.getSupportedRole() == professional.getRole())
                     .findFirst()
@@ -155,25 +134,22 @@ public class BookingServiceImpl implements BookingService {
             subscriptionRepository.save(sub);
 
             slot.setBookedBy(user);
+            String meetLink = videoConferenceService.generateMeetingLink(user, professional, slot);
+            slot.setMeetingLink(meetLink);
             slotRepository.save(slot);
 
-            String meetLink = videoConferenceService.generateMeetingLink(user, professional, slot);
-
-            Booking booking = bookingDirector.buildConfirmedBooking(user, professional, slot, meetLink);
+            Booking booking = bookingDirector.buildConfirmedBooking(user, slot);
 
             Booking saved = bookingRepository.save(booking);
 
-            // Aggiorna il timestamp bookedAt dentro la stessa transazione
             activityFeedService.logBookingCreated(saved);
 
-            // Estrai i dati dalle entità mentre siamo ancora dentro la transazione (lazy-load safe)
             String clientEmail  = saved.getUser().getEmail();
             String clientName   = saved.getUser().getFirstName();
-            String profEmail    = saved.getProfessional().getEmail();
-            String profName     = saved.getProfessional().getFirstName();
-            LocalDateTime start = saved.getSlot().getStartTime();
+            String profEmail    = professional.getEmail();
+            String profName     = professional.getFirstName();
+            LocalDateTime start = slot.getStartTime();
 
-            // Chiamate @Async: non bloccanti, girano su emailTaskExecutor
             emailService.sendBookingConfirmationEmail(clientEmail, clientName, profName, start, meetLink);
             emailService.sendBookingConfirmationEmail(profEmail, profName, clientName, start, meetLink);
 
@@ -189,12 +165,6 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    /**
-     * Annulla una prenotazione. 
-     * La regola è rigida: puoi annullare e riavere i crediti SOLO se mancano 
-     * più di 24 ore all'appuntamento. Sotto quella soglia, per tutelare il professionista, 
-     * lo slot si libera ma il credito è perso.
-     */
     @Override
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {
@@ -205,17 +175,20 @@ public class BookingServiceImpl implements BookingService {
             throw new BookingCancellationException("Non puoi annullare una prenotazione che non ti appartiene.");
         }
 
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new BookingCancellationException("Questa prenotazione non può essere annullata (stato: " + booking.getStatus() + ").");
+        Slot slot = booking.getSlot();
+
+        if (slot.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BookingCancellationException("Questa prenotazione non può essere annullata (stato: " + slot.getStatus() + ").");
         }
 
-        Slot slot = booking.getSlot();
         if (slot.getStartTime().isBefore(LocalDateTime.now().plusHours(24))) {
-            throw new BookingCancellationException("Non  possibile annullare una prenotazione a meno di 24 ore dall'appuntamento.");
+            throw new BookingCancellationException("Non è possibile annullare una prenotazione a meno di 24 ore dall'appuntamento.");
         }
+
+        User professional = slot.getProfessional();
 
         BookingStrategy strategy = strategies.stream()
-                .filter(s -> s.getSupportedRole() == booking.getProfessional().getRole())
+                .filter(s -> s.getSupportedRole() == professional.getRole())
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Strategia non trovata"));
 
@@ -229,17 +202,16 @@ public class BookingServiceImpl implements BookingService {
         }
 
         slot.setBookedBy(null);
+        slot.setStatus(BookingStatus.CANCELED);
         slotRepository.save(slot);
 
-        booking.setStatus(BookingStatus.CANCELED);
-        Booking saved = bookingRepository.save(booking);
+        bookingRepository.save(booking);
 
-        // Estrai dati dentro la transazione (lazy-load safe) e invia email async
-        String clientEmail  = saved.getUser().getEmail();
-        String clientName   = saved.getUser().getFirstName();
-        String profEmail    = saved.getProfessional().getEmail();
-        String profName     = saved.getProfessional().getFirstName();
-        LocalDateTime start = saved.getSlot().getStartTime();
+        String clientEmail  = booking.getUser().getEmail();
+        String clientName   = booking.getUser().getFirstName();
+        String profEmail    = professional.getEmail();
+        String profName     = professional.getFirstName();
+        LocalDateTime start = slot.getStartTime();
 
         emailService.sendBookingCancellationEmail(clientEmail, clientName, profName, start);
         emailService.sendBookingCancellationEmail(profEmail, profName, clientName, start);

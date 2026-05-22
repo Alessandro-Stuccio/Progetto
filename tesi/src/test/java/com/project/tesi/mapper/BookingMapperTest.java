@@ -28,11 +28,11 @@ class BookingMapperTest {
         LocalDateTime start = LocalDateTime.now().plusMinutes(5).withSecond(0).withNano(0);
         LocalDateTime end = start.plusHours(1);
         Slot slot = Slot.builder().professional(pt).startTime(start).endTime(end).build();
+        slot.setMeetingLink("https://meet.jit.si/test");
+        slot.setStatus(BookingStatus.CONFIRMED);
 
         Booking booking = Booking.builder()
-                .id(1L).user(client).professional(pt).slot(slot)
-                .meetingLink("https://meet.jit.si/test")
-                .status(BookingStatus.CONFIRMED).build();
+                .id(1L).user(client).slot(slot).build();
 
         BookingResponse response = mapper.toResponse(booking);
 

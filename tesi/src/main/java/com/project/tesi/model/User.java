@@ -62,7 +62,6 @@ public class User implements UserDetails {
 
     private String firstName;
     private String lastName;
-    private String profilePictureUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -93,6 +92,10 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    public String getFullName() {
+        return firstName + " " + lastName;
     }
 
     @Override

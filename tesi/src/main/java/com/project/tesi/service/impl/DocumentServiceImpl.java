@@ -212,9 +212,9 @@ public class DocumentServiceImpl implements DocumentService {
                 doc.getType().name(),
                 doc.getUploadDate().toString(),
                 doc.getOwner().getId(),
-                doc.getOwner().getFirstName() + " " + doc.getOwner().getLastName(),
+                doc.getOwner().getFullName(),
                 doc.getUploadedBy().getId(),
-                doc.getUploadedBy().getFirstName() + " " + doc.getUploadedBy().getLastName(),
+                doc.getUploadedBy().getFullName(),
                 doc.getNotes()
         );
     }

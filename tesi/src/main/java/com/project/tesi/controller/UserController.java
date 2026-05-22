@@ -4,7 +4,7 @@ import com.project.tesi.dto.request.ProfileUpdateRequest;
 import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ClientDashboardResponse;
 import lombok.extern.slf4j.Slf4j;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,9 +29,9 @@ import java.util.List;
 @Tag(name = "Users", description = "Profilo utente e dashboard cliente")
 public class UserController {
 
-    private final IUserFacade userFacade;
+    private final UserFacade userFacade;
 
-    public UserController(IUserFacade userFacade) {
+    public UserController(UserFacade userFacade) {
         this.userFacade = userFacade;
     }
 

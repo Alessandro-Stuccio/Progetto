@@ -22,7 +22,6 @@ public class UserBuilderImpl implements UserBuilder {
     private String profilePicture;
     private String firstName;
     private String lastName;
-    private String profilePictureUrl;
     private Role role;
     private String professionalBio;
     private User assignedPT;
@@ -58,11 +57,6 @@ public class UserBuilderImpl implements UserBuilder {
     @Override
     public UserBuilder lastName(String lastName) {
         this.lastName = lastName;
-        return this;
-    }
-    @Override
-    public UserBuilder profilePictureUrl(String profilePictureUrl) {
-        this.profilePictureUrl = profilePictureUrl;
         return this;
     }
     @Override
@@ -118,7 +112,6 @@ public class UserBuilderImpl implements UserBuilder {
         obj.setProfilePicture(this.profilePicture);
         obj.setFirstName(this.firstName);
         obj.setLastName(this.lastName);
-        obj.setProfilePictureUrl(this.profilePictureUrl);
         obj.setRole(this.role);
         obj.setProfessionalBio(this.professionalBio);
         obj.setAssignedPT(this.assignedPT);

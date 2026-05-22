@@ -50,8 +50,9 @@ class ProfessionalStatsServiceImplTest {
         Slot slot = Slot.builder().professional(pt)
                 .startTime(LocalDateTime.now().withHour(10).withMinute(0))
                 .endTime(LocalDateTime.now().withHour(10).withMinute(30)).build();
-        Booking booking = Booking.builder().id(1L).user(client).professional(pt).slot(slot)
-                .status(BookingStatus.CONFIRMED).meetingLink("https://meet.jit.si/test").build();
+        slot.setStatus(BookingStatus.CONFIRMED);
+        slot.setMeetingLink("https://meet.jit.si/test");
+        Booking booking = Booking.builder().id(1L).user(client).slot(slot).build();
         when(bookingRepository.findTodayByProfessional(eq(pt), any(), any())).thenReturn(List.of(booking));
         when(userRepository.findByAssignedPT(pt)).thenReturn(List.of(client));
         Document oldDoc = Document.builder().uploadDate(LocalDateTime.now().minusDays(10)).build();

@@ -3,7 +3,7 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.response.ProfessionalSummaryDTO;
 import com.project.tesi.dto.response.SlotDTO;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,9 +30,9 @@ import java.util.List;
 @Tag(name = "Professionals", description = "Gestione slot e recupero professionisti disponibili")
 public class ProfessionalController {
 
-    private final IUserFacade userFacade;
+    private final UserFacade userFacade;
 
-    public ProfessionalController(IUserFacade userFacade) {
+    public ProfessionalController(UserFacade userFacade) {
         this.userFacade = userFacade;
     }
 

@@ -3,13 +3,16 @@ package com.project.tesi.facade;
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
 import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
-import com.project.tesi.dto.response.SubscriptionResponseDTO;
-import com.project.tesi.dto.response.UserResponseDTO;
+import com.project.tesi.dto.response.SubscriptionResponse;
+import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.facade.impl.AdminFacadeImpl;
+import com.project.tesi.mapper.PlanMapper;
+import com.project.tesi.mapper.SubscriptionMapper;
+import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.service.AdminService;
 import com.project.tesi.service.AdminStatsService;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -32,7 +34,9 @@ class AdminFacadeTest {
 
     @Mock private AdminService adminService;
     @Mock private AdminStatsService adminStatsService;
-    @Spy FacadeMapper facadeMapper = new FacadeMapper();
+    @Mock private UserMapper userMapper;
+    @Mock private SubscriptionMapper subscriptionMapper;
+    @Mock private PlanMapper planMapper;
 
     @InjectMocks
     private AdminFacadeImpl adminFacade;
@@ -42,24 +46,26 @@ class AdminFacadeTest {
     void getAllUsers() {
         User user = new User();
         user.setId(1L);
-        user.setFirstName("Test");
+        UserResponse response = UserResponse.builder().id(1L).build();
         when(adminService.getAllUsers()).thenReturn(List.of(user));
+        when(userMapper.toAdminResponse(user)).thenReturn(response);
 
-        List<UserResponseDTO> response = adminFacade.getAllUsers();
-        assertThat(response.get(0).id()).isEqualTo(1L);
+        List<UserResponse> result = adminFacade.getAllUsers();
+        assertThat(result.get(0).getId()).isEqualTo(1L);
     }
 
     @Test
     @DisplayName("createUser")
     void createUser() {
         UserCreateRequestDTO request = new UserCreateRequestDTO("test@test.com", "Test", "User", "pass", "CLIENT", null, null, null, null);
-        User result = new User();
-        result.setId(1L);
-        result.setEmail("test@test.com");
-        when(adminService.createUser(any())).thenReturn(result);
+        User user = new User();
+        user.setId(1L);
+        UserResponse response = UserResponse.builder().id(1L).build();
+        when(adminService.createUser(any())).thenReturn(user);
+        when(userMapper.toAdminResponse(user)).thenReturn(response);
 
-        UserResponseDTO response = adminFacade.createUser(request);
-        assertThat(response.id()).isEqualTo(1L);
+        UserResponse result = adminFacade.createUser(request);
+        assertThat(result.getId()).isEqualTo(1L);
     }
 
     @Test
@@ -74,22 +80,26 @@ class AdminFacadeTest {
     void getAllSubscriptions() {
         Subscription sub = new Subscription();
         sub.setId(1L);
+        SubscriptionResponse response = SubscriptionResponse.builder().id(1L).build();
         when(adminService.getAllSubscriptions()).thenReturn(List.of(sub));
+        when(subscriptionMapper.toResponse(sub)).thenReturn(response);
 
-        List<SubscriptionResponseDTO> response = adminFacade.getAllSubscriptions();
-        assertThat(response.get(0).id()).isEqualTo(1L);
+        List<SubscriptionResponse> result = adminFacade.getAllSubscriptions();
+        assertThat(result.get(0).getId()).isEqualTo(1L);
     }
 
     @Test
     @DisplayName("createPlan")
     void createPlan() {
         PlanCreateRequestDTO request = new PlanCreateRequestDTO("Premium", "MENSILE", 100.0, 100.0, 5, 5);
-        Plan result = new Plan();
-        result.setId(1L);
-        when(adminService.createPlan(any())).thenReturn(result);
+        Plan plan = new Plan();
+        plan.setId(1L);
+        PlanResponseDTO response = new PlanResponseDTO(1L, "Premium", "MENSILE", 100.0, 100.0, 5, 5);
+        when(adminService.createPlan(any())).thenReturn(plan);
+        when(planMapper.toResponse(plan)).thenReturn(response);
 
-        PlanResponseDTO response = adminFacade.createPlan(request);
-        assertThat(response.id()).isEqualTo(1L);
+        PlanResponseDTO result = adminFacade.createPlan(request);
+        assertThat(result.id()).isEqualTo(1L);
     }
 
     @Test

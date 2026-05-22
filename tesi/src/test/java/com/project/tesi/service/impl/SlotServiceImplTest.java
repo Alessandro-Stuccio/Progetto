@@ -6,6 +6,7 @@ import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.model.WeeklySchedule;
+import com.project.tesi.mapper.SlotMapper;
 import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.repository.WeeklyScheduleRepository;
@@ -34,6 +35,7 @@ class SlotServiceImplTest {
     @Mock private SlotRepository slotRepository;
     @Mock private UserRepository userRepository;
     @Mock private WeeklyScheduleRepository weeklyScheduleRepository;
+    @Mock private SlotMapper slotMapper;
 
     @InjectMocks private SlotServiceImpl slotService;
 
@@ -54,6 +56,8 @@ class SlotServiceImplTest {
         Slot saved = Slot.builder().id(1L).professional(pt)
                 .startTime(dto.getStartTime()).endTime(dto.getEndTime()).build();
         when(slotRepository.saveAll(anyList())).thenReturn(List.of(saved));
+        when(slotMapper.toDto(saved)).thenReturn(
+                SlotDTO.builder().id(1L).startTime(dto.getStartTime()).endTime(dto.getEndTime()).isAvailable(true).professionalId(2L).build());
 
         List<SlotDTO> result = slotService.createSlots(2L, List.of(dto));
         assertThat(result).hasSize(1);
@@ -73,6 +77,7 @@ class SlotServiceImplTest {
                 .startTime(LocalDateTime.now().plusDays(1)).endTime(LocalDateTime.now().plusDays(1).plusMinutes(30))
                 .build();
         when(slotRepository.findByProfessionalAndBookedByIsNull(pt)).thenReturn(List.of(s));
+        when(slotMapper.toDto(s)).thenReturn(SlotDTO.builder().id(1L).isAvailable(true).professionalId(2L).build());
 
         List<SlotDTO> result = slotService.getAvailableSlots(2L);
         assertThat(result).hasSize(1);

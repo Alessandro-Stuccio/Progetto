@@ -3,7 +3,7 @@ package com.project.tesi.facade.impl;
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.dto.response.ChatMessageResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
-import com.project.tesi.facade.IChatFacade;
+import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.service.ChatService;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * Implementazione del facade per le operazioni di chat.
  */
 @Component
-public class ChatFacadeImpl implements IChatFacade {
+public class ChatFacadeImpl implements ChatFacade {
 
     private final ChatService chatService;
 

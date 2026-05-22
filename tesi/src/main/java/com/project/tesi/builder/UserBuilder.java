@@ -12,7 +12,6 @@ public interface UserBuilder {
     UserBuilder profilePicture(String profilePicture);
     UserBuilder firstName(String firstName);
     UserBuilder lastName(String lastName);
-    UserBuilder profilePictureUrl(String profilePictureUrl);
     UserBuilder role(Role role);
     UserBuilder professionalBio(String professionalBio);
     UserBuilder assignedPT(User assignedPT);

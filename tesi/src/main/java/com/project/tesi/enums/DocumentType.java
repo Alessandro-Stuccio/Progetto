@@ -1,18 +1,12 @@
 package com.project.tesi.enums;
 
-import javax.print.Doc;
-
-/**
- * Tipologia di documento gestito dalla piattaforma.
- * Determina chi può caricare il documento e dove viene visualizzato.
- */
 public enum DocumentType {
-    INSURANCE_POLICE("polizza"),   // Polizza
-    DIET_PLAN("dieta"),          // Piano nutrizionale
-    WORKOUT_PLAN("scheda di allenamento"),       // Scheda allenamento
-    MEDICAL_CERT("certificato medico");       // Certificato medico
+    INSURANCE_POLICE("polizza"),
+    DIET_PLAN("dieta"),
+    WORKOUT_PLAN("scheda di allenamento");
 
-    private String  desc;
+    private final String desc;
+
     public String getDesc() {
         return desc;
     }
@@ -20,6 +14,4 @@ public enum DocumentType {
     DocumentType(String desc) {
         this.desc = desc;
     }
-
-
 }

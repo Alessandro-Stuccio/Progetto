@@ -6,6 +6,7 @@ import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.review.ReviewNotAllowedException;
+import com.project.tesi.mapper.ReviewMapper;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.BookingRepository;
@@ -35,13 +36,16 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final ReviewMapper reviewMapper;
 
     public ReviewServiceImpl(ReviewRepository reviewRepository,
                              UserRepository userRepository,
-                             BookingRepository bookingRepository) {
+                             BookingRepository bookingRepository,
+                             ReviewMapper reviewMapper) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
+        this.reviewMapper = reviewMapper;
     }
 
     @Override
@@ -73,7 +77,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .build();
 
         Review savedReview = reviewRepository.save(review);
-        return mapToResponse(savedReview);
+        return reviewMapper.toResponse(savedReview);
     }
 
     @Override
@@ -83,7 +87,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("Professionista", professionalId));
 
         return reviewRepository.findByProfessional(professional).stream()
-                .map(this::mapToResponse)
+                .map(reviewMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -126,12 +130,4 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewRepository.existsByClientIdAndProfessionalId(clientId, professionalId);
     }
 
-    private ReviewResponse mapToResponse(Review review) {
-        return ReviewResponse.builder()
-                .authorName(review.getClient().getFirstName()) // Solo nome per privacy
-                .rating(review.getRating())
-                .comment(review.getComment())
-                .date(review.getCreatedAt())
-                .build();
-    }
 }

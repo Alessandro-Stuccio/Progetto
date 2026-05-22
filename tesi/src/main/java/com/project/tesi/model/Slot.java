@@ -52,7 +52,7 @@ public class Slot {
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
 
-    @Column(nullable = false)
+    @Column
     private String meetingLink;
 
     private boolean reminderSent = false;

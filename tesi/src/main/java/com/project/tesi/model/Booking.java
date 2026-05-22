@@ -2,11 +2,7 @@ package com.project.tesi.model;
 
 import com.project.tesi.builder.BookingBuilder;
 import com.project.tesi.builder.impl.BookingBuilderImpl;
-import com.project.tesi.enums.BookingStatus;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
@@ -31,7 +27,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"user", "professional", "slot"})
+@ToString(exclude = {"user", "slot"})
 public class Booking {
 
     @Id
@@ -46,15 +42,9 @@ public class Booking {
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_booking_user_id"))
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "professional_id", foreignKey = @ForeignKey(name = "fk_booking_professional_id"))
-    private User professional;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "slot_id", nullable = false, foreignKey = @ForeignKey(name = "fk_booking_slot_id"))
     private Slot slot;
-
-
 
     @CreationTimestamp
     private LocalDateTime bookedAt;

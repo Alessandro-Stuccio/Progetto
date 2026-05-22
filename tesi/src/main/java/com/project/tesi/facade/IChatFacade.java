@@ -1,18 +1,5 @@
 package com.project.tesi.facade;
 
-import com.project.tesi.dto.request.SendMessageRequest;
-import com.project.tesi.dto.response.ChatMessageResponse;
-import com.project.tesi.dto.response.ConversationPreviewResponse;
-
-import java.util.List;
-
-public interface IChatFacade {
-    Long createChat(Long senderId, Long receiverId);
-    ChatMessageResponse sendMessage(SendMessageRequest request, Long senderId);
-    List<ChatMessageResponse> getConversation(Long chatId, Long userId, int page, int size);
-    List<ConversationPreviewResponse> getUserConversations(Long userId);
-    void markAsRead(Long chatId, Long userId);
-    Integer getTotalUnreadCount(Long userId);
-
-    void closeChatByUser(Long chatId, Long userId);
-}
+/** @deprecated Use {@link ChatFacade} */
+@Deprecated
+public interface IChatFacade extends ChatFacade {}

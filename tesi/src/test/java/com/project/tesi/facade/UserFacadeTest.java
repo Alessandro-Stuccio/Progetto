@@ -30,7 +30,7 @@ class UserFacadeTest {
     @Mock private BookingService bookingService;
     @Mock private ReviewService reviewService;
     @Mock private SubscriptionService subscriptionService;
-    @Mock private ActivityFeedService activityFeedService;
+    @Mock private ActivityFeedService activityFeedService; // kept for injection compatibility
     @Mock private ProfessionalStatsService professionalStatsService;
     @Mock private SlotService slotService;
 
@@ -118,7 +118,7 @@ class UserFacadeTest {
     @Test
     @DisplayName("getSubscriptionStatus — delega al SubscriptionService")
     void getSubscriptionStatus() {
-        SubscriptionResponse resp = SubscriptionResponse.builder().isActive(true).build();
+        SubscriptionResponse resp = SubscriptionResponse.builder().active(true).build();
         when(subscriptionService.getSubscriptionStatus(1L)).thenReturn(resp);
 
         assertThat(userFacade.getSubscriptionStatus(1L)).isEqualTo(resp);
@@ -162,11 +162,5 @@ class UserFacadeTest {
         assertThat(userFacade.getProfessionalStats(2L)).isEqualTo(stats);
     }
 
-    @Test
-    @DisplayName("getActivityFeed — delega al ActivityFeedService")
-    void getActivityFeed() {
-        when(activityFeedService.getActivityFeed(1L, 7, 10)).thenReturn(List.of());
-        assertThat(userFacade.getActivityFeed(1L, 7, 10)).isEmpty();
-    }
 }
 

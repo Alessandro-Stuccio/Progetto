@@ -1,104 +1,71 @@
 package com.project.tesi.dto.response;
 
-import lombok.Data;
-
 import java.time.LocalDate;
 
-/**
- * DTO di risposta per lo stato dell'abbonamento di un cliente.
- * Mostra il piano attivo, le date di validità e i crediti residui
- * per prenotare consulenze con PT e Nutrizionisti.
- *
- * <p>Implementa manualmente il Design Pattern <b>Builder</b> tramite la classe
- * statica interna {@link Builder}, garantendo costruzione fluente e controllata
- * senza dipendere dalla generazione automatica di Lombok.</p>
- */
-@Data
 public class SubscriptionResponse {
 
     private Long id;
+    private Long userId;
+    private String userName;
     private String planName;
     private LocalDate startDate;
     private LocalDate endDate;
-    private boolean isActive;
-    private int remainingPtCredits;
-    private int remainingNutritionistCredits;
+    private boolean active;
+    private int currentCreditsPT;
+    private int currentCreditsNutri;
+    private Double monthlyPrice;
 
-    // Costruttore privato: la creazione è delegata al Builder
     private SubscriptionResponse() {}
 
-    // ──────────────────────────────────────────────────
-    //  Builder interno statico — Design Pattern Builder
-    // ──────────────────────────────────────────────────
+    public static Builder builder() { return new Builder(); }
 
-    /**
-     * Builder interno per la costruzione fluente di {@link SubscriptionResponse}.
-     */
+    public Long getId() { return id; }
+    public Long getUserId() { return userId; }
+    public String getUserName() { return userName; }
+    public String getPlanName() { return planName; }
+    public LocalDate getStartDate() { return startDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public boolean isActive() { return active; }
+    public int getCurrentCreditsPT() { return currentCreditsPT; }
+    public int getCurrentCreditsNutri() { return currentCreditsNutri; }
+    public Double getMonthlyPrice() { return monthlyPrice; }
+
     public static class Builder {
-
         private Long id;
+        private Long userId;
+        private String userName;
         private String planName;
         private LocalDate startDate;
         private LocalDate endDate;
-        private boolean isActive;
-        private int remainingPtCredits;
-        private int remainingNutritionistCredits;
+        private boolean active;
+        private int currentCreditsPT;
+        private int currentCreditsNutri;
+        private Double monthlyPrice;
 
-        public Builder id(Long id) {
-            this.id = id;
-            return this;
-        }
+        public Builder id(Long id) { this.id = id; return this; }
+        public Builder userId(Long userId) { this.userId = userId; return this; }
+        public Builder userName(String userName) { this.userName = userName; return this; }
+        public Builder planName(String planName) { this.planName = planName; return this; }
+        public Builder startDate(LocalDate startDate) { this.startDate = startDate; return this; }
+        public Builder endDate(LocalDate endDate) { this.endDate = endDate; return this; }
+        public Builder active(boolean active) { this.active = active; return this; }
+        public Builder currentCreditsPT(int credits) { this.currentCreditsPT = credits; return this; }
+        public Builder currentCreditsNutri(int credits) { this.currentCreditsNutri = credits; return this; }
+        public Builder monthlyPrice(Double price) { this.monthlyPrice = price; return this; }
 
-        public Builder planName(String planName) {
-            this.planName = planName;
-            return this;
-        }
-
-        public Builder startDate(LocalDate startDate) {
-            this.startDate = startDate;
-            return this;
-        }
-
-        public Builder endDate(LocalDate endDate) {
-            this.endDate = endDate;
-            return this;
-        }
-
-        public Builder isActive(boolean isActive) {
-            this.isActive = isActive;
-            return this;
-        }
-
-        public Builder remainingPtCredits(int remainingPtCredits) {
-            this.remainingPtCredits = remainingPtCredits;
-            return this;
-        }
-
-        public Builder remainingNutritionistCredits(int remainingNutritionistCredits) {
-            this.remainingNutritionistCredits = remainingNutritionistCredits;
-            return this;
-        }
-
-        /**
-         * Costruisce e restituisce l'istanza di {@link SubscriptionResponse}.
-         *
-         * @return una nuova istanza con i valori impostati tramite il Builder
-         */
         public SubscriptionResponse build() {
-            SubscriptionResponse response = new SubscriptionResponse();
-            response.id = this.id;
-            response.planName = this.planName;
-            response.startDate = this.startDate;
-            response.endDate = this.endDate;
-            response.isActive = this.isActive;
-            response.remainingPtCredits = this.remainingPtCredits;
-            response.remainingNutritionistCredits = this.remainingNutritionistCredits;
-            return response;
+            SubscriptionResponse r = new SubscriptionResponse();
+            r.id = this.id;
+            r.userId = this.userId;
+            r.userName = this.userName;
+            r.planName = this.planName;
+            r.startDate = this.startDate;
+            r.endDate = this.endDate;
+            r.active = this.active;
+            r.currentCreditsPT = this.currentCreditsPT;
+            r.currentCreditsNutri = this.currentCreditsNutri;
+            r.monthlyPrice = this.monthlyPrice;
+            return r;
         }
-    }
-
-    /** Punto di ingresso statico per la costruzione fluente. */
-    public static Builder builder() {
-        return new Builder();
     }
 }

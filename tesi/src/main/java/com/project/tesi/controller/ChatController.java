@@ -3,7 +3,7 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.dto.response.ChatMessageResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
-import com.project.tesi.facade.IChatFacade;
+import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,9 +30,9 @@ import java.util.List;
 @Tag(name = "Chat", description = "API per la messaggistica interna tra utenti")
 public class ChatController {
 
-    private final IChatFacade chatFacade;
+    private final ChatFacade chatFacade;
 
-    public ChatController(IChatFacade chatFacade) {
+    public ChatController(ChatFacade chatFacade) {
         this.chatFacade = chatFacade;
     }
 

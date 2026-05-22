@@ -210,12 +210,12 @@ class DocumentServiceImplTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1}));
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        Document saved = Document.builder().id(1L).fileName("cert.pdf").type(DocumentType.MEDICAL_CERT)
+        Document saved = Document.builder().id(1L).fileName("cert.pdf").type(DocumentType.INSURANCE_POLICE)
                 .owner(client).uploadedBy(client).uploadDate(LocalDateTime.now()).build();
         when(documentRepository.save(any())).thenReturn(saved);
 
-        DocumentUploadResponse result = documentService.uploadDocumentWithValidation(file, 1L, 1L, "MEDICAL_CERT");
-        assertThat(result.type()).isEqualTo("MEDICAL_CERT");
+        DocumentUploadResponse result = documentService.uploadDocumentWithValidation(file, 1L, 1L, "INSURANCE_POLICE");
+        assertThat(result.type()).isEqualTo("INSURANCE_POLICE");
     }
 
     @Test @DisplayName("saveDocument — salva e restituisce documento")
