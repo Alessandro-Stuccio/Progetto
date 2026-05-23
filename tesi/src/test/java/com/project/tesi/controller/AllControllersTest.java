@@ -10,10 +10,11 @@ import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.IAdminFacade;
-import com.project.tesi.facade.IChatFacade;
-import com.project.tesi.facade.IDocumentFacade;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.AdminFacade;
+import com.project.tesi.facade.ChatFacade;
+import com.project.tesi.facade.DocumentFacade;
+import com.project.tesi.facade.UserFacade;
+import com.project.tesi.facade.ActivityFeedFacade;
 import com.project.tesi.service.ChatService;
 import com.project.tesi.service.DocumentService;
 import com.project.tesi.service.EmailService;
@@ -43,7 +44,7 @@ class AllControllersTest {
 
     @Nested
     class AdminControllerTests {
-        @Mock private IAdminFacade adminFacade;
+        @Mock private AdminFacade adminFacade;
         @InjectMocks private AdminController adminController;
 
         @Test @DisplayName("getAllUsers")
@@ -92,7 +93,7 @@ class AllControllersTest {
 
     @Nested
     class AdminStatsControllerTests {
-        @Mock private IAdminFacade adminFacade;
+        @Mock private AdminFacade adminFacade;
         @InjectMocks private AdminStatsController adminStatsController;
 
         @Test @DisplayName("getStats")
@@ -107,7 +108,7 @@ class AllControllersTest {
 
     @Nested
     class UserControllerTests {
-        @Mock private IUserFacade userFacade;
+        @Mock private UserFacade userFacade;
         @InjectMocks private UserController userController;
 
         @Test @DisplayName("getDashboard")
@@ -137,7 +138,7 @@ class AllControllersTest {
 
     @Nested
     class SubscriptionControllerTests {
-        @Mock private IUserFacade userFacade;
+        @Mock private UserFacade userFacade;
         @InjectMocks private SubscriptionController subscriptionController;
 
         @Test @DisplayName("activateSubscription")
@@ -160,7 +161,7 @@ class AllControllersTest {
 
     @Nested
     class ProfessionalControllerTests {
-        @Mock private IUserFacade userFacade;
+        @Mock private UserFacade userFacade;
         @InjectMocks private ProfessionalController professionalController;
 
         @Test @DisplayName("getProfessionals")
@@ -194,7 +195,7 @@ class AllControllersTest {
 
     @Nested
     class ProfessionalStatsControllerTests {
-        @Mock private IUserFacade userFacade;
+        @Mock private UserFacade userFacade;
         @InjectMocks private ProfessionalStatsController professionalStatsController;
 
         @Test @DisplayName("getStats")
@@ -208,7 +209,7 @@ class AllControllersTest {
 
     @Nested
     class ActivityFeedControllerTests {
-        @Mock private com.project.tesi.facade.IActivityFeedFacade activityFeedFacade;
+        @Mock private ActivityFeedFacade activityFeedFacade;
         @InjectMocks private ActivityFeedController activityFeedController;
 
         @Test @DisplayName("getActivityFeed")
@@ -223,7 +224,7 @@ class AllControllersTest {
 
     @Nested
     class ChatControllerTest {
-        @Mock private IChatFacade chatFacade;
+        @Mock private ChatFacade chatFacade;
         private com.project.tesi.controller.ChatController controller;
 
         @BeforeEach
@@ -273,7 +274,7 @@ class AllControllersTest {
 
     @Nested
     class DocumentControllerTest {
-        @Mock private IDocumentFacade documentFacade;
+        @Mock private DocumentFacade documentFacade;
         private com.project.tesi.controller.DocumentController controller;
 
         @BeforeEach

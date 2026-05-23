@@ -24,7 +24,7 @@ class AdminStatsServiceImplTest {
 
     @Mock private UserRepository userRepository;
     @Mock private SubscriptionRepository subscriptionRepository;
-    @Mock private BookingRepository bookingRepository;
+    @Mock private SlotRepository slotRepository;
     @Mock private PlanRepository planRepository;
 
     @InjectMocks private AdminStatsServiceImpl adminStatsService;
@@ -52,7 +52,7 @@ class AdminStatsServiceImplTest {
         when(userRepository.findAll()).thenReturn(List.of(client, pt));
         when(subscriptionRepository.findAll()).thenReturn(List.of(sub));
         when(planRepository.findAll()).thenReturn(List.of(plan));
-        when(bookingRepository.findAll()).thenReturn(List.of());
+        when(slotRepository.findAllBooked()).thenReturn(List.of());
 
         AdminStatsResponse stats = adminStatsService.getAdminStats();
 
@@ -73,7 +73,7 @@ class AdminStatsServiceImplTest {
         when(userRepository.findAll()).thenReturn(List.of());
         when(subscriptionRepository.findAll()).thenReturn(List.of());
         when(planRepository.findAll()).thenReturn(List.of());
-        when(bookingRepository.findAll()).thenReturn(List.of());
+        when(slotRepository.findAllBooked()).thenReturn(List.of());
 
         AdminStatsResponse stats = adminStatsService.getAdminStats();
 
@@ -87,7 +87,7 @@ class AdminStatsServiceImplTest {
         when(userRepository.findAll()).thenReturn(List.of(client));
         when(subscriptionRepository.findAll()).thenReturn(List.of(sub));
         when(planRepository.findAll()).thenReturn(List.of(plan));
-        when(bookingRepository.findAll()).thenReturn(List.of());
+        when(slotRepository.findAllBooked()).thenReturn(List.of());
 
         AdminStatsResponse stats = adminStatsService.getAdminStats();
         AdminStatsResponse.CreditsStats credits = stats.credits();
@@ -107,7 +107,7 @@ class AdminStatsServiceImplTest {
         when(userRepository.findAll()).thenReturn(List.of(nutri, clientNutri));
         when(subscriptionRepository.findAll()).thenReturn(List.of());
         when(planRepository.findAll()).thenReturn(List.of());
-        when(bookingRepository.findAll()).thenReturn(List.of());
+        when(slotRepository.findAllBooked()).thenReturn(List.of());
 
         AdminStatsResponse stats = adminStatsService.getAdminStats();
         assertThat(stats.professionalWorkload()).hasSize(1);

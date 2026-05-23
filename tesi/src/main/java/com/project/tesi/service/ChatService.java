@@ -1,64 +1,46 @@
 package com.project.tesi.service;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.project.tesi.dto.request.SendMessageRequest;
-import com.project.tesi.dto.response.ChatMessageResponse;
-import com.project.tesi.dto.response.ConversationPreviewResponse;
+import com.project.tesi.model.Chat;
+import com.project.tesi.model.Message;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
-/**
- * Interfaccia del servizio di messaggistica chat.
- * Gestisce l'invio, il recupero, la lettura dei messaggi
- * e la lista delle conversazioni attive di un utente.
- */
 @Validated
 public interface ChatService {
 
-    /** Crea o recupera una chat tra due utenti. */
-    Long createChat(Long senderId, Long receiverId);
+    Long createChat(@NotNull @Min(1) Long senderId, @NotNull @Min(1) Long receiverId);
 
-    /** Invia un messaggio tramite endpoint REST (con validazione permessi). */
-    ChatMessageResponse sendMessage(SendMessageRequest request, Long senderId);
+    Message sendMessage(@NotNull @Valid SendMessageRequest request, @NotNull @Min(1) Long senderId);
 
-    /**
-     * Salva direttamente un messaggio (usato dal WebSocket controller).
-     * Gestisce la transazione correttamente tramite il proxy Spring.
-     *
-     * @param chatId     ID della chat
-     * @param senderId   ID del mittente
-     * @param content    contenuto del messaggio
-     */
-    void sendMessageDirect(Long chatId, Long senderId, String content);
+    void sendMessageDirect(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long senderId,
+                           @NotBlank String content);
 
-    /** Recupera la cronologia dei messaggi di una chat (paginata). */
-    List<ChatMessageResponse> getConversation(Long chatId, Long userId, int page, int size);
+    List<Message> getConversation(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId,
+                                  @Min(0) int page, @Min(1) int size);
 
-    /** Recupera la lista di tutte le conversazioni di un utente con anteprima. */
-    List<ConversationPreviewResponse> getUserConversations(Long userId);
+    List<Chat> getUserConversations(@NotNull @Min(1) Long userId);
 
-    /** Segna come letti tutti i messaggi ricevuti in una chat. */
-    void markAsRead(Long chatId, Long userId);
+    void markAsRead(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 
-    /** Restituisce il conteggio totale dei messaggi non letti per un utente. */
-    int getTotalUnreadCount(Long userId);
+    int getTotalUnreadCount(@NotNull @Min(1) Long userId);
 
-    /**
-     * Restituisce il nome completo di un utente (usato dal WebSocket controller
-     * per costruire il DTO del messaggio in tempo reale).
-     *
-     * @param userId ID dell'utente
-     * @return nome completo (nome + cognome)
-     */
-    String getUserFullName(Long userId);
+    String getUserFullName(@NotNull @Min(1) Long userId);
 
+    Chat getChatEntity(@NotNull @Min(1) Long chatId);
 
-    com.project.tesi.model.Chat getChatEntity(Long chatId);
+    void closeChat(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long moderatorId);
 
-    /** Chiude formalmente una sessione di chat (solo moderatori). */
-    void closeChat(Long chatId, Long moderatorId);
+    void closeChatByUser(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 
-    /** Chiude una chat da parte di qualunque partecipante (es. utente che ha contattato il moderatore). */
-    void closeChatByUser(Long chatId, Long userId);
+    Long getReceiverId(@NotNull Chat chat, @NotNull @Min(1) Long currentUserId);
+
+    Message getLastMessage(@NotNull @Min(1) Long chatId);
+
+    int getUnreadCount(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 }

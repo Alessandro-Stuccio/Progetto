@@ -1,4 +1,4 @@
-,# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -27,13 +27,13 @@ cd tesi
 
 **Prerequisites for dev profile:** Java 21, Docker Desktop running.
 
-**Test credentials** (from data.sql seed, dev only — password `password` per tutti):
-- Admin: `admin@test.com` / `password`
-- Client: `luca@test.com` / `password`
-- Personal Trainer: `pt1@test.com` / `password`
-- Nutritionist: `nutri1@test.com` / `password`
-- Moderator: `moderator1@test.com` / `password`
-- Insurance: `insurance@test.com` / `password`
+**Test credentials** (from `data.sql` seed, dev only — password `password` for all):
+- Admin: `admin@test.com`
+- Client: `luca@test.com`
+- Personal Trainer: `pt1@test.com`
+- Nutritionist: `nutri1@test.com`
+- Moderator: `moderator1@test.com`
+- Insurance Manager: `insurance@test.com`
 
 ## Architecture
 
@@ -41,36 +41,38 @@ Single Spring Boot 4 monolith with a strict layered flow:
 
 ```
 Controllers → Facades → Services → Builders → Repositories → PostgreSQL
+                                 ↕ Mappers (entities ↔ DTOs)
 ```
 
 - **Controllers** (`controller/`) — REST endpoints; delegate entirely to facades or services, no business logic.
-- **Facades** (`facade/`) — Orchestrate multiple services for complex operations (e.g., `AdminFacade` aggregates user, subscription and plan flows in a single coarse-grained entry point).
-- **Services** (`service/impl/`) — Business logic. Interfaces under `service/`, implementations under `service/impl/`.
-- **Builders** (`builder/impl/`) — Entity construction via the Builder pattern; all entities are assembled through builders.
+- **Facades** (`facade/` + `facade/impl/`) — Orchestrate multiple services for complex operations. Interfaces live in `facade/` (e.g., `AdminFacade`, `UserFacade`); implementations in `facade/impl/` (e.g., `AdminFacadeImpl`). `InsuranceController` is the only controller that injects a facade directly without a dedicated interface — it reuses `AdminFacade`.
+- **Mappers** (`mapper/`) — Per-entity converters between JPA entities and DTOs (e.g., `BookingMapper`, `UserMapper`). `FacadeMapper` in `facade/` is deprecated; use the dedicated mappers instead.
+- **Services** (`service/` + `service/impl/`) — Business logic. Interfaces under `service/`, implementations under `service/impl/`.
+- **Builders** (`builder/` + `builder/impl/`) — Entity construction via the Builder pattern; all entities are assembled through builders.
 - **Repositories** (`repository/`) — Spring Data JPA; no custom SQL except JPQL in `@Query` annotations.
 
 ### Key Design Patterns (GoF, framework-independent)
 
-- **Builder** — Every domain entity is assembled through a hand-written Builder: interface in `builder/` (`UserBuilder`, `BookingBuilder`, …), concrete implementation in `builder/impl/` (`UserBuilderImpl`, …). A `BookingDirector` orchestrates the construction of `Booking` instances for the `CONFIRMED`/`COMPLETED`/`CANCELED` variants, completing the GoF Builder structure with the Director role.
-- **Strategy** — `BookingStrategy` interface with `PersonalTrainerBookingStrategy` and `NutritionistBookingStrategy`; `BookingServiceImpl` selects the concrete strategy at runtime based on the professional's role (true dynamic dispatch, no Spring magic involved in the selection).
-- **Facade** — Contracts under `facade/` follow the `I<Name>Facade` convention (`IUserFacade`, `IAdminFacade`, `IChatFacade`, `IDocumentFacade`, `IModeratorFacade`, `IPlanFacade`, `IActivityFeedFacade`); implementations in `facade/impl/` provide a single coarse-grained API over multiple services so controllers stay thin.
+- **Builder** — Every domain entity is assembled through a hand-written Builder: interface in `builder/` (`SlotBuilder`, `UserBuilder`, …), concrete implementation in `builder/impl/`. The `SlotBuilder` covers the full slot lifecycle including the `bookedAt` field.
+- **Strategy** — `BookingStrategy` interface (`service/strategy/`) with `PersonalTrainerBookingStrategy` and `NutritionistBookingStrategy`; `SlotServiceImpl` selects the concrete strategy at runtime based on the professional's role (true dynamic dispatch).
+- **Facade** — Coarse-grained entry points over multiple services. Interface naming: `<Name>Facade` (e.g., `AdminFacade`). The `I<Name>Facade` files (e.g., `IAdminFacade`) are legacy aliases that simply extend the primary interface and should not be used in new code.
 
 ### Concurrency (requirement for grades ≥27)
 
-- **Optimistic locking** — `@Version` on `Booking`, `Slot`, `Subscription`, `User`; `ObjectOptimisticLockingFailureException` is caught and translated into `ConcurrentUpdateException`.
+- **Optimistic locking** — `@Version` on `Slot`, `Subscription`, `User`; `ObjectOptimisticLockingFailureException` is caught and translated into `ConcurrentUpdateException`.
 - **Pessimistic locking on hot rows** — `@Lock(LockModeType.PESSIMISTIC_WRITE)` on `SlotRepository.findByIdWithLock` and `SubscriptionRepository.findByUserAndActiveTrueWithLock`.
-- **Fine-grained in-process locking** — `BookingServiceImpl` keeps a `ConcurrentHashMap<Long, LockReference>` of per-slot `ReentrantLock`s plus a `synchronized` block on the map for safe acquire/release; this is the shared resource + lock combination required by the syllabus.
+- **Fine-grained in-process locking** — `SlotServiceImpl` keeps a `ConcurrentHashMap<Long, LockReference>` of per-slot `ReentrantLock`s plus a `synchronized` block on the map for safe acquire/release; this is the shared resource + lock combination required by the syllabus.
 
 ### Domain Overview
 
 | Concept | Key rules |
 |---|---|
 | **Subscription** | Plans are Basic (1+1 credits/month) or Premium (2+2 credits/month); semi-annual or annual, lump-sum or installments |
-| **Booking** | Deducts credits; uses slot locking to prevent overbooking |
+| **Booking** | Booking state lives entirely in `Slot` (fields: `bookedBy`, `status`, `meetingLink`, `bookedAt`, `reminderSent`). Booking deducts credits, uses per-slot `ReentrantLock` to prevent overbooking, and generates a Jitsi meeting link (`JitsiVideoConferenceServiceImpl`). |
 | **Slot** | 30-minute windows generated from a `WeeklySchedule`; max 50 clients per professional |
 | **Review** | One review per client–professional pair; only clients who have booked can review |
 | **Chat** | Real-time via STOMP/WebSocket; REST fallback for history |
-| **Document** | Files stored on filesystem with metadata in DB; separate types per role |
+| **Document** | Files stored on filesystem (`uploads/` dir) with metadata in DB; separate types per role |
 
 ### Roles
 
@@ -89,10 +91,15 @@ RabbitMQ handles async chat delivery: `ChatMessagePublisher` enqueues messages, 
 
 ## Profiles & Configuration
 
-| Profile | DB | Docker Compose |
-|---|---|---|
-| `dev` | Local PostgreSQL (`localhost:5432`) | Auto-started |
-| `prod` (default) | Supabase via Transaction Pooler | Disabled |
+| Profile | DB | Docker Compose | DDL |
+|---|---|---|---|
+| `dev` | Local PostgreSQL (`localhost:5432`) | Auto-started | `create` (schema dropped on each restart) |
+| `prod` (default) | Supabase via Transaction Pooler | Disabled | `validate` |
+
+**Dev Docker Compose services:**
+- PostgreSQL — `localhost:5432`
+- pgAdmin — `localhost:5050` (credentials: `a@a.a` / `root`)
+- RabbitMQ — `localhost:5672`; management UI at `localhost:15672` (guest/guest)
 
 Secrets come from environment variables: `JWT_SECRET`, `MAIL_FROM`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`.
 
@@ -111,7 +118,7 @@ Tests mirror the source tree under `src/test/java/com/project/tesi/`.
 
 ## Exception Handling
 
-All domain exceptions extend `BaseException` (which carries an HTTP status) and are organized by module under `exception/auth/`, `exception/booking/`, `exception/subscription/`, `exception/document/`. `GlobalExceptionHandler` (@RestControllerAdvice) maps them all centrally.
+All domain exceptions extend `BaseException` (which carries an HTTP status) and are organized by module under `exception/auth/`, `exception/booking/`, `exception/subscription/`, `exception/document/`. `GlobalExceptionHandler` (`@RestControllerAdvice`) maps them all centrally.
 
 ## Non-Obvious Constraints
 
@@ -120,6 +127,7 @@ All domain exceptions extend `BaseException` (which carries an HTTP status) and 
 - **IPv4 for SMTP** — `TesiApplication` sets `java.net.preferIPv4Stack=true` at startup to prevent IPv6-related SMTP hangs.
 - **WebSocket JWT validation** — `WebSocketChannelInterceptor` validates the JWT token on the STOMP CONNECT frame before allowing any subscription.
 - **Audit trail** — `AuditLog` entity + `AuditInterceptor` records all user actions; add new auditable operations there.
+- **Dev DDL** — `spring.jpa.hibernate.ddl-auto: create` in the dev profile means the database schema is dropped and recreated on every application startup; `data.sql` re-seeds it each time.
 
 ## API Documentation
 

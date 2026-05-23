@@ -1,6 +1,5 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.dto.response.DocumentResponse;
 import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
@@ -73,6 +72,7 @@ class DocumentServiceImplTest {
 
     @Test @DisplayName("uploadDocumentWithValidation — PT carica DIET_PLAN → InvalidFileException")
     void uploadDocument_ptWrongType() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
         when(userRepository.findById(2L)).thenReturn(Optional.of(pt));
         assertThatThrownBy(() -> documentService.uploadDocumentWithValidation(
                 mock(MultipartFile.class), 1L, 2L, "DIET_PLAN")).isInstanceOf(InvalidFileException.class);
@@ -80,6 +80,7 @@ class DocumentServiceImplTest {
 
     @Test @DisplayName("uploadDocumentWithValidation — Nutrizionista carica WORKOUT_PLAN → InvalidFileException")
     void uploadDocument_nutriWrongType() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
         when(userRepository.findById(3L)).thenReturn(Optional.of(nutri));
         assertThatThrownBy(() -> documentService.uploadDocumentWithValidation(
                 mock(MultipartFile.class), 1L, 3L, "WORKOUT_PLAN")).isInstanceOf(InvalidFileException.class);
@@ -145,7 +146,7 @@ class DocumentServiceImplTest {
                 .owner(client).uploadedBy(pt).uploadDate(LocalDateTime.now()).build();
         when(documentRepository.findByOwnerOrderByUploadDateDesc(client)).thenReturn(List.of(doc));
 
-        List<DocumentResponse> result = documentService.getUserDocumentsDto(1L);
+        List<Document> result = documentService.getUserDocuments(1L);
         assertThat(result).hasSize(1);
     }
 
@@ -155,7 +156,7 @@ class DocumentServiceImplTest {
         when(documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(client, DocumentType.WORKOUT_PLAN))
                 .thenReturn(List.of());
 
-        List<DocumentResponse> result = documentService.getUserDocumentsByTypeDto(1L, "WORKOUT_PLAN");
+        List<Document> result = documentService.getUserDocumentsByType(1L, "WORKOUT_PLAN");
         assertThat(result).isEmpty();
     }
 
@@ -233,6 +234,7 @@ class DocumentServiceImplTest {
 
     @Test @DisplayName("uploadDocumentWithValidation — uploader non trovato lancia eccezione")
     void uploadDocument_uploaderNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> documentService.uploadDocumentWithValidation(
                 mock(MultipartFile.class), 1L, 999L, "WORKOUT_PLAN"))

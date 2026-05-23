@@ -4,7 +4,7 @@ import com.project.tesi.dto.request.BookingRequest;
 import com.project.tesi.dto.response.BookingResponse;
 import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class BookingControllerTest {
 
-    @Mock private IUserFacade userFacade;
+    @Mock private UserFacade userFacade;
 
     @InjectMocks
     private BookingController bookingController;

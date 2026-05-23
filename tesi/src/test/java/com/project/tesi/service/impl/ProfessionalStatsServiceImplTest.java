@@ -6,8 +6,8 @@ import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.model.*;
-import com.project.tesi.repository.BookingRepository;
 import com.project.tesi.repository.DocumentRepository;
+import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 class ProfessionalStatsServiceImplTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private BookingRepository bookingRepository;
+    @Mock private SlotRepository slotRepository;
     @Mock private DocumentRepository documentRepository;
 
     @InjectMocks private ProfessionalStatsServiceImpl statsService;
@@ -52,8 +52,8 @@ class ProfessionalStatsServiceImplTest {
                 .endTime(LocalDateTime.now().withHour(10).withMinute(30)).build();
         slot.setStatus(BookingStatus.CONFIRMED);
         slot.setMeetingLink("https://meet.jit.si/test");
-        Booking booking = Booking.builder().id(1L).user(client).slot(slot).build();
-        when(bookingRepository.findTodayByProfessional(eq(pt), any(), any())).thenReturn(List.of(booking));
+        slot.setBookedBy(client);
+        when(slotRepository.findTodayByProfessional(eq(pt), any(), any())).thenReturn(List.of(slot));
         when(userRepository.findByAssignedPT(pt)).thenReturn(List.of(client));
         Document oldDoc = Document.builder().uploadDate(LocalDateTime.now().minusDays(10)).build();
         when(documentRepository.findLatestByOwnerAndType(client, DocumentType.WORKOUT_PLAN)).thenReturn(oldDoc);
@@ -70,7 +70,7 @@ class ProfessionalStatsServiceImplTest {
     @Test @DisplayName("getProfessionalStats — Nutrizionista senza prenotazioni")
     void getProfessionalStats_nutri() {
         when(userRepository.findById(3L)).thenReturn(Optional.of(nutri));
-        when(bookingRepository.findTodayByProfessional(eq(nutri), any(), any())).thenReturn(List.of());
+        when(slotRepository.findTodayByProfessional(eq(nutri), any(), any())).thenReturn(List.of());
         when(userRepository.findByAssignedNutritionist(nutri)).thenReturn(List.of(client));
         when(documentRepository.findLatestByOwnerAndType(client, DocumentType.DIET_PLAN)).thenReturn(null);
         when(documentRepository.countByUploaderSince(eq(nutri), any())).thenReturn(0);
@@ -99,7 +99,7 @@ class ProfessionalStatsServiceImplTest {
     @Test @DisplayName("getProfessionalStats — PT con documento recente → no attenzione necessaria")
     void getProfessionalStats_recentDoc() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(pt));
-        when(bookingRepository.findTodayByProfessional(eq(pt), any(), any())).thenReturn(List.of());
+        when(slotRepository.findTodayByProfessional(eq(pt), any(), any())).thenReturn(List.of());
         when(userRepository.findByAssignedPT(pt)).thenReturn(List.of(client));
         Document recentDoc = Document.builder().uploadDate(LocalDateTime.now().minusDays(2)).build();
         when(documentRepository.findLatestByOwnerAndType(client, DocumentType.WORKOUT_PLAN)).thenReturn(recentDoc);

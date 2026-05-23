@@ -1,18 +1,8 @@
 package com.project.tesi.dto.response;
 
 import com.project.tesi.enums.Role;
-import lombok.Data;
+import java.util.Objects;
 
-/**
- * DTO di risposta restituito dopo un login riuscito.
- * Contiene il token JWT e i dati principali dell'utente autenticato,
- * necessari al frontend per inizializzare la sessione.
- *
- * <p>Implementa manualmente il Design Pattern <b>Builder</b> tramite la classe
- * statica interna {@link Builder}, evitando la generazione automatica di Lombok.
- * Questo permette una costruzione fluente, leggibile e controllata dell'oggetto.</p>
- */
-@Data
 public class AuthResponse {
 
     private String token;
@@ -24,26 +14,55 @@ public class AuthResponse {
     private Role role;
     private String profilePicture;
 
-    // Costruttore privato: la creazione dell'oggetto è delegata al Builder
     private AuthResponse() {
-        this.type = "Bearer"; // valore di default — equivalente a @Builder.Default
+        this.type = "Bearer";
     }
 
-    // ──────────────────────────────────────────────────
-    //  Builder interno statico — Design Pattern Builder
-    // ──────────────────────────────────────────────────
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
-    /**
-     * Builder interno per la costruzione fluente di {@link AuthResponse}.
-     *
-     * <p>Garantisce che il campo {@code type} sia sempre inizializzato al valore
-     * di default {@code "Bearer"}, replicando il comportamento di {@code @Builder.Default}
-     * di Lombok senza dipendenze dal framework di generazione del codice.</p>
-     */
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+
+    public String getProfilePicture() { return profilePicture; }
+    public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AuthResponse that = (AuthResponse) o;
+        return Objects.equals(id, that.id) && Objects.equals(email, that.email) && Objects.equals(token, that.token);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, email, token);
+    }
+
+    @Override
+    public String toString() {
+        return "AuthResponse{id=" + id + ", email='" + email + "', role=" + role + ", type='" + type + "'}";
+    }
+
     public static class Builder {
-
         private String token;
-        private String type = "Bearer"; // default esplicito
+        private String type = "Bearer";
         private Long id;
         private String firstName;
         private String lastName;
@@ -51,51 +70,15 @@ public class AuthResponse {
         private Role role;
         private String profilePicture;
 
-        public Builder token(String token) {
-            this.token = token;
-            return this;
-        }
+        public Builder token(String token) { this.token = token; return this; }
+        public Builder type(String type) { this.type = type; return this; }
+        public Builder id(Long id) { this.id = id; return this; }
+        public Builder firstName(String firstName) { this.firstName = firstName; return this; }
+        public Builder lastName(String lastName) { this.lastName = lastName; return this; }
+        public Builder email(String email) { this.email = email; return this; }
+        public Builder role(Role role) { this.role = role; return this; }
+        public Builder profilePicture(String profilePicture) { this.profilePicture = profilePicture; return this; }
 
-        public Builder type(String type) {
-            this.type = type;
-            return this;
-        }
-
-        public Builder id(Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder firstName(String firstName) {
-            this.firstName = firstName;
-            return this;
-        }
-
-        public Builder lastName(String lastName) {
-            this.lastName = lastName;
-            return this;
-        }
-
-        public Builder email(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Builder role(Role role) {
-            this.role = role;
-            return this;
-        }
-
-        public Builder profilePicture(String profilePicture) {
-            this.profilePicture = profilePicture;
-            return this;
-        }
-
-        /**
-         * Costruisce e restituisce l'istanza di {@link AuthResponse}.
-         *
-         * @return una nuova istanza con i valori impostati tramite il Builder
-         */
         public AuthResponse build() {
             AuthResponse response = new AuthResponse();
             response.token = this.token;
@@ -110,7 +93,6 @@ public class AuthResponse {
         }
     }
 
-    /** Punto di ingresso statico per la costruzione fluente. */
     public static Builder builder() {
         return new Builder();
     }

@@ -1,13 +1,14 @@
 package com.project.tesi.facade;
 
+import com.project.tesi.dto.response.PlanResponseDTO;
 import com.project.tesi.model.Plan;
 
 import java.util.List;
 
 public interface PlanFacade {
-    List<Plan> getAllPlans();
-    Plan getPlanById(Long id);
-    Plan createPlan(Plan plan);
-    Plan updatePlan(Long id, Plan updated);
+    List<PlanResponseDTO> getAllPlans();
+    PlanResponseDTO getPlanById(Long id);
+    PlanResponseDTO createPlan(Plan plan);
+    PlanResponseDTO updatePlan(Long id, Plan updated);
     void deletePlan(Long id);
 }

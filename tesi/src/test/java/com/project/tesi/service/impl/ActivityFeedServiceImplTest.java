@@ -1,9 +1,8 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.model.Booking;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import com.project.tesi.repository.BookingRepository;
+import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ActivityFeedServiceImplTest {
 
-    @Mock private BookingRepository bookingRepository;
+    @Mock private SlotRepository slotRepository;
 
     @InjectMocks private ActivityFeedServiceImpl activityFeedService;
 
@@ -37,30 +36,29 @@ class ActivityFeedServiceImplTest {
     @Test
     @DisplayName("logBookingCreated — imposta bookedAt se assente e salva")
     void logBookingCreated_setsBookedAt() {
-        Slot slot = Slot.builder().professional(pt)
+        Slot slot = Slot.builder().id(1L).professional(pt).bookedBy(client)
                 .startTime(LocalDateTime.now().plusDays(1))
                 .endTime(LocalDateTime.now().plusDays(1).plusMinutes(30)).build();
-        Booking booking = Booking.builder().id(1L).user(client).slot(slot).build();
 
-        activityFeedService.logBookingCreated(booking);
+        activityFeedService.logBookingCreated(slot);
 
-        assertThat(booking.getBookedAt()).isNotNull();
-        verify(bookingRepository).save(booking);
+        assertThat(slot.getBookedAt()).isNotNull();
+        verify(slotRepository).save(slot);
     }
 
     @Test
     @DisplayName("logBookingCreated — non sovrascrive bookedAt già presente")
     void logBookingCreated_doesNotOverwrite() {
-        Slot slot = Slot.builder().professional(pt)
-                .startTime(LocalDateTime.now().plusDays(1))
-                .endTime(LocalDateTime.now().plusDays(1).plusMinutes(30)).build();
         LocalDateTime existing = LocalDateTime.now().minusHours(1);
-        Booking booking = Booking.builder().id(2L).user(client).slot(slot).bookedAt(existing).build();
+        Slot slot = Slot.builder().id(2L).professional(pt).bookedBy(client)
+                .startTime(LocalDateTime.now().plusDays(1))
+                .endTime(LocalDateTime.now().plusDays(1).plusMinutes(30))
+                .bookedAt(existing).build();
 
-        activityFeedService.logBookingCreated(booking);
+        activityFeedService.logBookingCreated(slot);
 
-        assertThat(booking.getBookedAt()).isEqualTo(existing);
-        verify(bookingRepository, never()).save(any());
+        assertThat(slot.getBookedAt()).isEqualTo(existing);
+        verify(slotRepository, never()).save(any());
     }
 
     @Test

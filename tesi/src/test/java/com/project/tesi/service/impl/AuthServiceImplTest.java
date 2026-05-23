@@ -6,11 +6,11 @@ import com.project.tesi.dto.response.AuthResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.security.CustomUserDetailsService;
 import com.project.tesi.security.JwtUtil;
-import com.project.tesi.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,14 +29,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Test unitari per {@link AuthServiceImpl}.
- */
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
 
     @Mock
-    private UserService userService;
+    private UserFacade userFacade;
     @Mock
     private AuthenticationManager authenticationManager;
     @Mock
@@ -68,16 +65,16 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("register — delega al UserService e restituisce il profilo creato")
-    void register_delegatesToUserService() {
+    @DisplayName("register — delega al UserFacade e restituisce il profilo creato")
+    void register_delegatesToUserFacade() {
         RegisterRequest request = new RegisterRequest(null, null, "mario@test.com", null, null, null, null, null, null);
         UserResponse expected = UserResponse.builder().id(1L).email("mario@test.com").build();
-        when(userService.registerUser(request)).thenReturn(expected);
+        when(userFacade.registerUser(request)).thenReturn(expected);
 
         UserResponse result = authService.register(request);
 
         assertThat(result).isEqualTo(expected);
-        verify(userService).registerUser(request);
+        verify(userFacade).registerUser(request);
     }
 
     @Test
@@ -120,5 +117,3 @@ class AuthServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }
-
-

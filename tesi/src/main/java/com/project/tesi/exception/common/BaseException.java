@@ -1,6 +1,5 @@
 package com.project.tesi.exception.common;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -9,7 +8,6 @@ import org.springframework.http.HttpStatus;
  * che viene poi usato dal {@link com.project.tesi.exception.GlobalExceptionHandler}
  * per costruire la risposta di errore.
  */
-@Getter
 public abstract class BaseException extends RuntimeException {
 
     /** Codice di stato HTTP associato all'eccezione (es. 404, 409, 422). */
@@ -32,6 +30,10 @@ public abstract class BaseException extends RuntimeException {
     protected BaseException(String message, HttpStatus status, Throwable cause) {
         super(message, cause);
         this.status = status;
+    }
+
+    public HttpStatus getStatus() {
+        return status;
     }
 }
 

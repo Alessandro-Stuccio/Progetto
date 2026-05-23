@@ -1,66 +1,47 @@
 package com.project.tesi.service;
 
-import com.project.tesi.model.User;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
-import org.springframework.validation.annotation.Validated;
-
-import com.project.tesi.dto.response.DocumentResponse;
 import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.model.Document;
+import com.project.tesi.model.User;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Interfaccia del servizio per la gestione dei documenti.
- * Gestisce caricamento, download, eliminazione e aggiornamento note
- * di file associati ai clienti (schede, piani alimentari, certificati, ecc.).
- */
 @Validated
 public interface DocumentService {
 
-    /** Carica un documento validando il ruolo dell'uploader rispetto al tipo di file. */
-    DocumentUploadResponse uploadDocumentWithValidation(MultipartFile file, Long clientId, Long uploaderId, String docType);
+    DocumentUploadResponse uploadDocumentWithValidation(@NotNull MultipartFile file,
+                                                        @NotNull @Min(1) Long clientId,
+                                                        @NotNull @Min(1) Long uploaderId,
+                                                        @NotBlank String docType);
 
-    /** Scarica il contenuto binario di un documento. */
-    byte[] downloadDocument(Long documentId);
+    byte[] downloadDocument(@NotNull @Min(1) Long documentId);
 
-    /** Recupera un documento per ID. */
-    Document getDocumentById(Long documentId);
+    Document getDocumentById(@NotNull @Min(1) Long documentId);
 
-    /** Restituisce tutti i documenti di un utente come lista di DTO. */
-    List<DocumentResponse> getUserDocumentsDto(Long userId);
+    void deleteDocument(@NotNull @Min(1) Long documentId);
 
-    /** Restituisce i documenti di un utente filtrati per tipo come lista di DTO. */
-    List<DocumentResponse> getUserDocumentsByTypeDto(Long userId, String docType);
+    UpdatedNotesResponse updateNotes(@NotNull @Min(1) Long documentId, @NotBlank String notes);
 
-    /** Elimina un documento dal database. */
-    void deleteDocument(Long documentId);
+    Document saveDocument(@NotNull Document document);
 
-    /** Aggiorna le note testuali di un documento. */
-    UpdatedNotesResponse updateNotes(Long documentId, String notes);
+    List<Document> getUserDocuments(@NotNull @Min(1) Long userId);
 
-    /** Converte un'entità Document nel DTO per la risposta. */
-    DocumentResponse toDto(Document doc);
+    List<Document> getUserDocumentsByType(@NotNull @Min(1) Long userId, @NotBlank String docType);
 
-    /** Salva un'entità Document nel database. */
-    Document saveDocument(Document document);
+    Document uploadDocument(@NotNull MultipartFile file,
+                            @NotNull @Min(1) Long clientId,
+                            @NotNull @Min(1) Long uploaderId,
+                            @NotBlank String docType);
 
-    /** Recupera tutti i documenti associati a un utente (entità). */
-    List<Document> getUserDocuments(Long userId);
+    List<Document> findRecentByOwner(@NotNull User owner, @NotNull @PastOrPresent LocalDateTime since);
 
-    /** Recupera i documenti associati a un utente filtrati per tipo (entità). */
-    List<Document> getUserDocumentsByType(Long userId, String docType);
-
-    /** Carica un documento senza validazione del ruolo (operazione base). */
-    Document uploadDocument(MultipartFile file, Long clientId, Long uploaderId, String docType);
-
-    List<Document> findRecentByOwner(@NotNull User owner,@NotNull @PastOrPresent LocalDateTime since);
-
-
-    List<Document> findRecentByProfessional(User professional, LocalDateTime since);
-
+    List<Document> findRecentByProfessional(@NotNull User professional, @NotNull LocalDateTime since);
 }

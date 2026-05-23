@@ -1,8 +1,7 @@
 package com.project.tesi.controller;
 
-import com.project.tesi.model.Plan;
-import com.project.tesi.enums.PlanDuration;
-import com.project.tesi.facade.IPlanFacade;
+import com.project.tesi.dto.response.PlanResponseDTO;
+import com.project.tesi.facade.PlanFacade;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +21,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PlanControllerTest {
 
-    @Mock private IPlanFacade planFacade;
+    @Mock private PlanFacade planFacade;
 
     @InjectMocks
     private PlanController planController;
@@ -30,14 +29,13 @@ class PlanControllerTest {
     @Test
     @DisplayName("getAllPlans — restituisce 200 con lista piani")
     void getAllPlans() {
-        Plan p = Plan.builder().name("plan").duration(com.project.tesi.enums.PlanDuration.ANNUALE).fullPrice(100.0).monthlyInstallmentPrice(10.0).id(1L).name("Premium").duration(PlanDuration.ANNUALE).build();
+        PlanResponseDTO p = new PlanResponseDTO(1L, "Premium", "ANNUALE", 100.0, 10.0, 5, 5);
         when(planFacade.getAllPlans()).thenReturn(List.of(p));
 
-        ResponseEntity<List<Plan>> response = planController.getAllPlans();
+        ResponseEntity<List<PlanResponseDTO>> response = planController.getAllPlans();
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).hasSize(1);
-        assertThat(response.getBody().get(0).getName()).isEqualTo("Premium");
+        assertThat(response.getBody().get(0).name()).isEqualTo("Premium");
     }
 }
-

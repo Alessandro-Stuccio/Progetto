@@ -12,5 +12,6 @@ public interface SlotBuilder {
     SlotBuilder endTime(LocalDateTime endTime);
     SlotBuilder bookedBy(User bookedBy);
     SlotBuilder version(Integer version);
+    SlotBuilder bookedAt(LocalDateTime bookedAt);
     Slot build();
 }

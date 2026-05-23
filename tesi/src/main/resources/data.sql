@@ -227,12 +227,13 @@ VALUES
 -- ============================================================
 -- Slot futuri (generati automaticamente dallo schedule settimanale)
 -- ============================================================
-INSERT INTO slots (professional_id, start_time, end_time, booked_by_id, version)
+INSERT INTO slots (professional_id, start_time, end_time, booked_by_id, reminder_sent, version)
 SELECT
     ws.professional_id,
     (CURRENT_DATE + offs + ws.start_time + (n * INTERVAL '30 minutes'))::timestamp,
     (CURRENT_DATE + offs + ws.start_time + (n * INTERVAL '30 minutes') + INTERVAL '30 minutes')::timestamp,
     NULL,
+    false,
     0
 FROM weekly_schedules ws
 CROSS JOIN generate_series(1, 14) AS offs
@@ -341,7 +342,13 @@ VALUES
     ((SELECT id FROM users WHERE email = 'pt1@test.com'), (CURRENT_DATE + 13 + TIME '09:00:00')::timestamp,(CURRENT_DATE + 13 + TIME '09:30:00')::timestamp,
      (SELECT id FROM users WHERE email = 'giulia.c@test.com'),  'CONFIRMED', 'https://meet.jit.si/Kore_giuliac_pt1_01',   false, 1),
     ((SELECT id FROM users WHERE email = 'pt1@test.com'), (CURRENT_DATE + 15 + TIME '09:00:00')::timestamp,(CURRENT_DATE + 15 + TIME '09:30:00')::timestamp,
-     (SELECT id FROM users WHERE email = 'marina@test.com'),    'CONFIRMED', 'https://meet.jit.si/Kore_marina_pt1_01',    false, 1);
+     (SELECT id FROM users WHERE email = 'marina@test.com'),    'CONFIRMED', 'https://meet.jit.si/Kore_marina_pt1_01',    false, 1)
+ON CONFLICT (professional_id, start_time) DO UPDATE SET
+    booked_by_id  = EXCLUDED.booked_by_id,
+    status        = EXCLUDED.status,
+    meeting_link  = EXCLUDED.meeting_link,
+    reminder_sent = EXCLUDED.reminder_sent,
+    version       = EXCLUDED.version;
 
 -- PT2 — slot futuri confermati
 INSERT INTO slots (professional_id, start_time, end_time, booked_by_id, status, meeting_link, reminder_sent, version)
@@ -359,7 +366,13 @@ VALUES
     ((SELECT id FROM users WHERE email = 'pt2@test.com'), (CURRENT_DATE + 13 + TIME '10:00:00')::timestamp,(CURRENT_DATE + 13 + TIME '10:30:00')::timestamp,
      (SELECT id FROM users WHERE email = 'antonio@test.com'),   'CONFIRMED', 'https://meet.jit.si/Kore_antonio_pt2_01',   false, 1),
     ((SELECT id FROM users WHERE email = 'pt2@test.com'), (CURRENT_DATE + 15 + TIME '10:00:00')::timestamp,(CURRENT_DATE + 15 + TIME '10:30:00')::timestamp,
-     (SELECT id FROM users WHERE email = 'roberto@test.com'),   'CONFIRMED', 'https://meet.jit.si/Kore_roberto_pt2_01',   false, 1);
+     (SELECT id FROM users WHERE email = 'roberto@test.com'),   'CONFIRMED', 'https://meet.jit.si/Kore_roberto_pt2_01',   false, 1)
+ON CONFLICT (professional_id, start_time) DO UPDATE SET
+    booked_by_id  = EXCLUDED.booked_by_id,
+    status        = EXCLUDED.status,
+    meeting_link  = EXCLUDED.meeting_link,
+    reminder_sent = EXCLUDED.reminder_sent,
+    version       = EXCLUDED.version;
 
 -- NUTRI1 — slot futuri confermati
 INSERT INTO slots (professional_id, start_time, end_time, booked_by_id, status, meeting_link, reminder_sent, version)
@@ -375,7 +388,13 @@ VALUES
     ((SELECT id FROM users WHERE email = 'nutri1@test.com'), (CURRENT_DATE + 12 + TIME '14:00:00')::timestamp,(CURRENT_DATE + 12 + TIME '14:30:00')::timestamp,
      (SELECT id FROM users WHERE email = 'roberto@test.com'),   'CONFIRMED', 'https://meet.jit.si/Kore_roberto_n1_01',  false, 1),
     ((SELECT id FROM users WHERE email = 'nutri1@test.com'), (CURRENT_DATE + 14 + TIME '14:00:00')::timestamp,(CURRENT_DATE + 14 + TIME '14:30:00')::timestamp,
-     (SELECT id FROM users WHERE email = 'giulia.c@test.com'),  'CONFIRMED', 'https://meet.jit.si/Kore_giuliac_n1_01',  false, 1);
+     (SELECT id FROM users WHERE email = 'giulia.c@test.com'),  'CONFIRMED', 'https://meet.jit.si/Kore_giuliac_n1_01',  false, 1)
+ON CONFLICT (professional_id, start_time) DO UPDATE SET
+    booked_by_id  = EXCLUDED.booked_by_id,
+    status        = EXCLUDED.status,
+    meeting_link  = EXCLUDED.meeting_link,
+    reminder_sent = EXCLUDED.reminder_sent,
+    version       = EXCLUDED.version;
 
 -- NUTRI2 — slot futuri confermati
 INSERT INTO slots (professional_id, start_time, end_time, booked_by_id, status, meeting_link, reminder_sent, version)
@@ -393,100 +412,97 @@ VALUES
     ((SELECT id FROM users WHERE email = 'nutri2@test.com'), (CURRENT_DATE + 14 + TIME '09:00:00')::timestamp,(CURRENT_DATE + 14 + TIME '09:30:00')::timestamp,
      (SELECT id FROM users WHERE email = 'antonio@test.com'),   'CONFIRMED', 'https://meet.jit.si/Kore_antonio_n2_01',  false, 1),
     ((SELECT id FROM users WHERE email = 'nutri2@test.com'), (CURRENT_DATE + 16 + TIME '09:00:00')::timestamp,(CURRENT_DATE + 16 + TIME '09:30:00')::timestamp,
-     (SELECT id FROM users WHERE email = 'marina@test.com'),    'CONFIRMED', 'https://meet.jit.si/Kore_marina_n2_01',   false, 1);
+     (SELECT id FROM users WHERE email = 'marina@test.com'),    'CONFIRMED', 'https://meet.jit.si/Kore_marina_n2_01',   false, 1)
+ON CONFLICT (professional_id, start_time) DO UPDATE SET
+    booked_by_id  = EXCLUDED.booked_by_id,
+    status        = EXCLUDED.status,
+    meeting_link  = EXCLUDED.meeting_link,
+    reminder_sent = EXCLUDED.reminder_sent,
+    version       = EXCLUDED.version;
 
 -- ============================================================
--- Bookings (solo user_id + slot_id; status/meeting_link sul slot)
--- Bookings passati (COMPLETED)
+-- Migra booked_at da Booking a Slot (solo slot prenotati)
 -- ============================================================
-INSERT INTO bookings (version, user_id, slot_id, booked_at)
-SELECT 0, s.booked_by_id, s.id, s.start_time - INTERVAL '3 days'
-FROM slots s
-WHERE s.status = 'COMPLETED' AND s.booked_by_id IS NOT NULL;
-
--- Bookings futuri (CONFIRMED)
-INSERT INTO bookings (version, user_id, slot_id, booked_at)
-SELECT 0, s.booked_by_id, s.id, NOW()
-FROM slots s
-WHERE s.status = 'CONFIRMED' AND s.booked_by_id IS NOT NULL;
+UPDATE slots SET booked_at = start_time - INTERVAL '3 days' WHERE status = 'COMPLETED';
+UPDATE slots SET booked_at = NOW()                           WHERE status = 'CONFIRMED';
 
 -- ============================================================
 -- Recensioni (solo per slot COMPLETED)
 -- ============================================================
-INSERT INTO reviews (version, client_id, professional_id, rating, comment, created_at)
+INSERT INTO reviews (client_id, professional_id, rating, comment, created_at)
 VALUES
-    (0, (SELECT id FROM users WHERE email = 'luca@test.com'),        (SELECT id FROM users WHERE email = 'pt1@test.com'),    5, 'Marco è eccezionale, consigliatissimo!',            NOW() - INTERVAL '9 days'),
-    (0, (SELECT id FROM users WHERE email = 'sofia@test.com'),       (SELECT id FROM users WHERE email = 'pt1@test.com'),    4, 'Ottima preparazione atletica, molto professionale.',  NOW() - INTERVAL '7 days'),
-    (0, (SELECT id FROM users WHERE email = 'testreview@test.com'),  (SELECT id FROM users WHERE email = 'pt1@test.com'),    5, 'Sessioni molto efficaci, super consigliato.',         NOW() - INTERVAL '5 days'),
-    (0, (SELECT id FROM users WHERE email = 'elena@test.com'),       (SELECT id FROM users WHERE email = 'pt1@test.com'),    4, 'Marco sa motivare e far lavorare bene.',              NOW() - INTERVAL '4 days'),
-    (0, (SELECT id FROM users WHERE email = 'matteo@test.com'),      (SELECT id FROM users WHERE email = 'pt2@test.com'),    5, 'Giulia è bravissima nel powerlifting!',               NOW() - INTERVAL '9 days'),
-    (0, (SELECT id FROM users WHERE email = 'chiara@test.com'),      (SELECT id FROM users WHERE email = 'pt2@test.com'),    4, 'Molto seria e preparata.',                            NOW() - INTERVAL '7 days'),
-    (0, (SELECT id FROM users WHERE email = 'davide@test.com'),      (SELECT id FROM users WHERE email = 'pt2@test.com'),    5, 'Ottimo PT, percorso personalizzato al top.',          NOW() - INTERVAL '5 days'),
-    (0, (SELECT id FROM users WHERE email = 'luca@test.com'),        (SELECT id FROM users WHERE email = 'nutri1@test.com'), 5, 'Laura ha rivoluzionato la mia alimentazione.',        NOW() - INTERVAL '8 days'),
-    (0, (SELECT id FROM users WHERE email = 'matteo@test.com'),      (SELECT id FROM users WHERE email = 'nutri1@test.com'), 4, 'Piano alimentare ottimo, mi trovo bene.',             NOW() - INTERVAL '6 days'),
-    (0, (SELECT id FROM users WHERE email = 'testreview@test.com'),  (SELECT id FROM users WHERE email = 'nutri1@test.com'), 5, 'Consigli pratici e piani adattati.',                  NOW() - INTERVAL '4 days'),
-    (0, (SELECT id FROM users WHERE email = 'sofia@test.com'),       (SELECT id FROM users WHERE email = 'nutri2@test.com'), 4, 'Andrea conosce bene le intolleranze.',                NOW() - INTERVAL '8 days'),
-    (0, (SELECT id FROM users WHERE email = 'chiara@test.com'),      (SELECT id FROM users WHERE email = 'nutri2@test.com'), 5, 'Dieta personalizzata e ottimi risultati.',            NOW() - INTERVAL '6 days')
+    ((SELECT id FROM users WHERE email = 'luca@test.com'),        (SELECT id FROM users WHERE email = 'pt1@test.com'),    5, 'Marco è eccezionale, consigliatissimo!',            NOW() - INTERVAL '9 days'),
+    ((SELECT id FROM users WHERE email = 'sofia@test.com'),       (SELECT id FROM users WHERE email = 'pt1@test.com'),    4, 'Ottima preparazione atletica, molto professionale.',  NOW() - INTERVAL '7 days'),
+    ((SELECT id FROM users WHERE email = 'testreview@test.com'),  (SELECT id FROM users WHERE email = 'pt1@test.com'),    5, 'Sessioni molto efficaci, super consigliato.',         NOW() - INTERVAL '5 days'),
+    ((SELECT id FROM users WHERE email = 'elena@test.com'),       (SELECT id FROM users WHERE email = 'pt1@test.com'),    4, 'Marco sa motivare e far lavorare bene.',              NOW() - INTERVAL '4 days'),
+    ((SELECT id FROM users WHERE email = 'matteo@test.com'),      (SELECT id FROM users WHERE email = 'pt2@test.com'),    5, 'Giulia è bravissima nel powerlifting!',               NOW() - INTERVAL '9 days'),
+    ((SELECT id FROM users WHERE email = 'chiara@test.com'),      (SELECT id FROM users WHERE email = 'pt2@test.com'),    4, 'Molto seria e preparata.',                            NOW() - INTERVAL '7 days'),
+    ((SELECT id FROM users WHERE email = 'davide@test.com'),      (SELECT id FROM users WHERE email = 'pt2@test.com'),    5, 'Ottimo PT, percorso personalizzato al top.',          NOW() - INTERVAL '5 days'),
+    ((SELECT id FROM users WHERE email = 'luca@test.com'),        (SELECT id FROM users WHERE email = 'nutri1@test.com'), 5, 'Laura ha rivoluzionato la mia alimentazione.',        NOW() - INTERVAL '8 days'),
+    ((SELECT id FROM users WHERE email = 'matteo@test.com'),      (SELECT id FROM users WHERE email = 'nutri1@test.com'), 4, 'Piano alimentare ottimo, mi trovo bene.',             NOW() - INTERVAL '6 days'),
+    ((SELECT id FROM users WHERE email = 'testreview@test.com'),  (SELECT id FROM users WHERE email = 'nutri1@test.com'), 5, 'Consigli pratici e piani adattati.',                  NOW() - INTERVAL '4 days'),
+    ((SELECT id FROM users WHERE email = 'sofia@test.com'),       (SELECT id FROM users WHERE email = 'nutri2@test.com'), 4, 'Andrea conosce bene le intolleranze.',                NOW() - INTERVAL '8 days'),
+    ((SELECT id FROM users WHERE email = 'chiara@test.com'),      (SELECT id FROM users WHERE email = 'nutri2@test.com'), 5, 'Dieta personalizzata e ottimi risultati.',            NOW() - INTERVAL '6 days')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- Documenti (12+)
 -- ============================================================
-INSERT INTO documents (version, file_name, content_type, type, upload_date, owner_id, uploaded_by_id, notes)
+INSERT INTO documents (file_name, content_type, type, upload_date, owner_id, uploaded_by_id, notes)
 VALUES
-    (0, 'polizza_luca.pdf',        'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '30 days',
+    ('polizza_luca.pdf',        'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '30 days',
      (SELECT id FROM users WHERE email = 'luca@test.com'),
      (SELECT id FROM users WHERE email = 'insurance@test.com'),
      'Polizza assicurativa attiva per Luca Ferri'),
-    (0, 'scheda_luca_pt1.pdf',     'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '20 days',
+    ('scheda_luca_pt1.pdf',     'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '20 days',
      (SELECT id FROM users WHERE email = 'luca@test.com'),
      (SELECT id FROM users WHERE email = 'pt1@test.com'),
      'Scheda funzionale settimana 1-4'),
-    (0, 'dieta_luca_n1.pdf',       'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '15 days',
+    ('dieta_luca_n1.pdf',       'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '15 days',
      (SELECT id FROM users WHERE email = 'luca@test.com'),
      (SELECT id FROM users WHERE email = 'nutri1@test.com'),
      'Piano alimentare mediterraneo fase 1'),
-    (0, 'polizza_sofia.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '28 days',
+    ('polizza_sofia.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '28 days',
      (SELECT id FROM users WHERE email = 'sofia@test.com'),
      (SELECT id FROM users WHERE email = 'insurance@test.com'),
      'Polizza assicurativa attiva per Sofia Conti'),
-    (0, 'scheda_sofia_pt1.pdf',    'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '18 days',
+    ('scheda_sofia_pt1.pdf',    'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '18 days',
      (SELECT id FROM users WHERE email = 'sofia@test.com'),
      (SELECT id FROM users WHERE email = 'pt1@test.com'),
      'Scheda powerlifting introduttivo'),
-    (0, 'dieta_sofia_n2.pdf',      'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '12 days',
+    ('dieta_sofia_n2.pdf',      'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '12 days',
      (SELECT id FROM users WHERE email = 'sofia@test.com'),
      (SELECT id FROM users WHERE email = 'nutri2@test.com'),
      'Dieta ipolipidica personalizzata'),
-    (0, 'polizza_matteo.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '25 days',
+    ('polizza_matteo.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '25 days',
      (SELECT id FROM users WHERE email = 'matteo@test.com'),
      (SELECT id FROM users WHERE email = 'insurance@test.com'),
      'Polizza assicurativa attiva per Matteo Galli'),
-    (0, 'scheda_matteo_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '16 days',
+    ('scheda_matteo_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '16 days',
      (SELECT id FROM users WHERE email = 'matteo@test.com'),
      (SELECT id FROM users WHERE email = 'pt2@test.com'),
      'Programma forza massimale 8 settimane'),
-    (0, 'dieta_matteo_n1.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '10 days',
+    ('dieta_matteo_n1.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '10 days',
      (SELECT id FROM users WHERE email = 'matteo@test.com'),
      (SELECT id FROM users WHERE email = 'nutri1@test.com'),
      'Piano sportivo ad alto contenuto proteico'),
-    (0, 'polizza_chiara.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '22 days',
+    ('polizza_chiara.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '22 days',
      (SELECT id FROM users WHERE email = 'chiara@test.com'),
      (SELECT id FROM users WHERE email = 'insurance@test.com'),
      'Polizza assicurativa attiva per Chiara Fontana'),
-    (0, 'scheda_chiara_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '14 days',
+    ('scheda_chiara_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '14 days',
      (SELECT id FROM users WHERE email = 'chiara@test.com'),
      (SELECT id FROM users WHERE email = 'pt2@test.com'),
      'Allenamento funzionale misto'),
-    (0, 'dieta_chiara_n2.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '8 days',
+    ('dieta_chiara_n2.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '8 days',
      (SELECT id FROM users WHERE email = 'chiara@test.com'),
      (SELECT id FROM users WHERE email = 'nutri2@test.com'),
      'Dieta per intolleranza al lattosio'),
-    (0, 'polizza_elena.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '20 days',
+    ('polizza_elena.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '20 days',
      (SELECT id FROM users WHERE email = 'elena@test.com'),
      (SELECT id FROM users WHERE email = 'insurance@test.com'),
      'Polizza assicurativa attiva per Elena Marino'),
-    (0, 'scheda_davide_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '11 days',
+    ('scheda_davide_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '11 days',
      (SELECT id FROM users WHERE email = 'davide@test.com'),
      (SELECT id FROM users WHERE email = 'pt2@test.com'),
      'Scheda ipertrofia muscolare 12 settimane')
@@ -512,3 +528,82 @@ WHERE user_id IN (
      'alessio@test.com','irene@test.com','antonio@test.com','giulia.c@test.com',
      'roberto@test.com','marina@test.com')
 ) AND current_credits_nutri > 0;
+
+-- ============================================================
+-- Edge-case abbonamenti: ≥2 scaduti, ≥2 con crediti=0, ≥2 con next_payment nel passato
+-- ============================================================
+UPDATE subscriptions SET active = false, end_date = CURRENT_DATE - INTERVAL '30 days'
+WHERE user_id IN (
+    SELECT id FROM users WHERE email IN ('giulia.c@test.com', 'roberto@test.com')
+);
+
+UPDATE subscriptions SET current_creditspt = 0, current_credits_nutri = 0
+WHERE user_id IN (
+    SELECT id FROM users WHERE email IN ('francesca@test.com', 'alessio@test.com')
+);
+
+UPDATE subscriptions SET next_payment_date = CURRENT_DATE - INTERVAL '10 days'
+WHERE user_id IN (
+    SELECT id FROM users WHERE email IN ('sofia@test.com', 'irene@test.com')
+) AND next_payment_date IS NOT NULL;
+
+-- ============================================================
+-- Chat e messaggi (3 conversazioni: cliente-moderatore, cliente-PT, cliente-admin)
+-- ============================================================
+INSERT INTO chats (user1_id, user2_id, created_at, status)
+VALUES (
+    (SELECT id FROM users WHERE email = 'luca@test.com'),
+    (SELECT id FROM users WHERE email = 'moderator1@test.com'),
+    NOW() - INTERVAL '5 days', 'OPEN'
+) ON CONFLICT DO NOTHING;
+
+INSERT INTO chats (user1_id, user2_id, created_at, status)
+VALUES (
+    (SELECT id FROM users WHERE email = 'matteo@test.com'),
+    (SELECT id FROM users WHERE email = 'pt2@test.com'),
+    NOW() - INTERVAL '3 days', 'OPEN'
+) ON CONFLICT DO NOTHING;
+
+INSERT INTO chats (user1_id, user2_id, created_at, status)
+VALUES (
+    (SELECT id FROM users WHERE email = 'chiara@test.com'),
+    (SELECT id FROM users WHERE email = 'admin@test.com'),
+    NOW() - INTERVAL '2 days', 'OPEN'
+) ON CONFLICT DO NOTHING;
+
+INSERT INTO messages (content, time_stamp, is_read, sent_by_user1, chat_id)
+VALUES
+    ('Ciao, avrei bisogno di assistenza con il mio abbonamento.',
+     NOW() - INTERVAL '5 days', true, true,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'luca@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'moderator1@test.com'))),
+    ('Certo, come posso aiutarti?',
+     NOW() - INTERVAL '5 days' + INTERVAL '10 minutes', true, false,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'luca@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'moderator1@test.com'))),
+    ('Ho un problema con la prenotazione dello slot di giovedì.',
+     NOW() - INTERVAL '4 days', false, true,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'luca@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'moderator1@test.com')));
+
+INSERT INTO messages (content, time_stamp, is_read, sent_by_user1, chat_id)
+VALUES
+    ('Ciao Giulia, posso spostare la sessione di martedì?',
+     NOW() - INTERVAL '3 days', true, true,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'matteo@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'pt2@test.com'))),
+    ('Certo Matteo, quando preferiresti?',
+     NOW() - INTERVAL '3 days' + INTERVAL '30 minutes', false, false,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'matteo@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'pt2@test.com')));
+
+INSERT INTO messages (content, time_stamp, is_read, sent_by_user1, chat_id)
+VALUES
+    ('Salve, vorrei richiedere informazioni sui piani disponibili.',
+     NOW() - INTERVAL '2 days', true, true,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'chiara@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'admin@test.com'))),
+    ('Buongiorno Chiara! Le invio a breve il catalogo aggiornato.',
+     NOW() - INTERVAL '2 days' + INTERVAL '15 minutes', false, false,
+     (SELECT id FROM chats WHERE user1_id = (SELECT id FROM users WHERE email = 'chiara@test.com')
+                              AND user2_id = (SELECT id FROM users WHERE email = 'admin@test.com')));

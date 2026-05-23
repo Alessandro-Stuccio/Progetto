@@ -1,6 +1,5 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.dto.response.DocumentResponse;
 import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.DocumentType;
@@ -27,20 +26,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-/**
- * Implementazione del servizio per la gestione dei documenti.
- *
- * Gestisce il ciclo di vita completo dei file:
- * <ul>
- *   <li>Upload con validazione ruolo-tipo (es. solo PT può caricare schede allenamento)</li>
- *   <li>Download con lettura dal filesystem</li>
- *   <li>Eliminazione con pulizia file dal disco</li>
- *   <li>Aggiornamento note testuali</li>
- * </ul>
- * I file vengono salvati nella directory configurata tramite {@code file.upload-dir}.
- */
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
@@ -55,14 +41,15 @@ public class DocumentServiceImpl implements DocumentService {
         this.userRepository = userRepository;
     }
 
-
     @Override
     @Transactional
     public DocumentUploadResponse uploadDocumentWithValidation(MultipartFile file, Long clientId, Long uploaderId, String docType) {
+        userRepository.findById(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente", clientId));
+
         User uploader = userRepository.findById(uploaderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Uploader", uploaderId));
 
-        // Validazione ruolo ↔ tipo documento
         if (uploader.getRole() == Role.PERSONAL_TRAINER && !"WORKOUT_PLAN".equals(docType)) {
             throw new InvalidFileException("Il Personal Trainer può caricare solo schede di allenamento.");
         }
@@ -120,7 +107,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public List<Document> findRecentByOwner(User owner, LocalDateTime since) {
-        return documentRepository.findRecentByOwner(owner,since);
+        return documentRepository.findRecentByOwner(owner, since);
     }
 
     @Override
@@ -155,21 +142,11 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public List<DocumentResponse> getUserDocumentsDto(Long userId) {
-        return getUserDocuments(userId).stream().map(this::toDto).collect(Collectors.toList());
-    }
-
-    @Override
     public List<Document> getUserDocumentsByType(Long userId, String docType) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Utente", userId));
         DocumentType type = DocumentType.valueOf(docType);
         return documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(user, type);
-    }
-
-    @Override
-    public List<DocumentResponse> getUserDocumentsByTypeDto(Long userId, String docType) {
-        return getUserDocumentsByType(userId, docType).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -201,21 +178,5 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public Document saveDocument(Document document) {
         return documentRepository.save(document);
-    }
-
-    @Override
-    public DocumentResponse toDto(Document doc) {
-        return new DocumentResponse(
-                doc.getId(),
-                doc.getFileName(),
-                doc.getContentType(),
-                doc.getType().name(),
-                doc.getUploadDate().toString(),
-                doc.getOwner().getId(),
-                doc.getOwner().getFullName(),
-                doc.getUploadedBy().getId(),
-                doc.getUploadedBy().getFullName(),
-                doc.getNotes()
-        );
     }
 }

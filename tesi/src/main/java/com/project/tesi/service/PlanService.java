@@ -1,23 +1,22 @@
 package com.project.tesi.service;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
 import com.project.tesi.model.Plan;
 import java.util.List;
 
-/**
- * Interfaccia del servizio per la gestione dei piani di abbonamento.
- */
 @Validated
 public interface PlanService {
 
     List<Plan> getAllPlans();
 
-    Plan getPlanById(Long id);
+    Plan getPlanById(@NotNull @Min(1) Long id);
 
-    Plan createPlan(Plan plan);
+    Plan createPlan(@NotNull Plan plan);
 
-    Plan updatePlan(Long id, Plan updated);
+    Plan updatePlan(@NotNull @Min(1) Long id, @NotNull Plan updated);
 
-    void deletePlan(Long id);
+    void deletePlan(@NotNull @Min(1) Long id);
 }

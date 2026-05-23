@@ -1,5 +1,8 @@
 package com.project.tesi.service;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
@@ -11,55 +14,35 @@ import com.project.tesi.model.User;
 
 import java.util.List;
 
-/**
- * Interfaccia del servizio per le operazioni CRUD di amministrazione.
- * Gestisce utenti, abbonamenti e piani commerciali.
- *
- * I metodi restituiscono entità di dominio tipizzate (User, Subscription, Plan)
- * anziché Map&lt;String, Object&gt; per garantire type-safety a compile-time.
- */
 @Validated
 public interface AdminService {
 
-    /** Restituisce la lista di tutti gli utenti registrati. */
     List<User> getAllUsers();
 
-    /** Restituisce gli utenti gestibili dal moderatore. */
     List<User> getModeratorManageableUsers();
 
-    /** Restituisce i contatti chat per il moderatore (Admin e Insurance Manager). */
     List<User> getModeratorChatContacts();
 
-    /** Crea un nuovo utente con i dati specificati. */
-    User createUser(UserCreateRequestDTO request);
+    User createUser(@NotNull @Valid UserCreateRequestDTO request);
 
-    /** Crea un nuovo utente come moderatore (solo ruoli consentiti). */
-    User createUserAsModerator(UserCreateRequestDTO request);
+    User createUserAsModerator(@NotNull @Valid UserCreateRequestDTO request);
 
-    /** Aggiorna un utente come moderatore (solo ruoli consentiti). */
-    User updateUserAsModerator(Long id, ModeratorUserUpdateRequest request);
+    User updateUserAsModerator(@NotNull @Min(1) Long id, @NotNull @Valid ModeratorUserUpdateRequest request);
 
-    /** Elimina un utente e le sue entità collegate. */
-    void deleteUser(Long id);
+    void deleteUser(@NotNull @Min(1) Long id);
 
-    /** Elimina un utente come moderatore (solo ruoli consentiti). */
-    void deleteUserAsModerator(Long id);
+    void deleteUserAsModerator(@NotNull @Min(1) Long id);
 
-    /** Restituisce la lista di tutti gli abbonamenti. */
     List<Subscription> getAllSubscriptions();
 
-    /** Aggiorna i crediti PT e Nutrizionista di un abbonamento. */
-    Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri);
+    Subscription updateSubscriptionCredits(@NotNull @Min(1) Long subscriptionId,
+                                           @Min(0) int creditsPT, @Min(0) int creditsNutri);
 
-    /** Crea un nuovo piano commerciale. */
-    Plan createPlan(PlanCreateRequestDTO request);
+    Plan createPlan(@NotNull @Valid PlanCreateRequestDTO request);
 
-    /** Aggiorna i dati di un piano commerciale esistente. */
-    Plan updatePlan(Long id, PlanCreateRequestDTO request);
+    Plan updatePlan(@NotNull @Min(1) Long id, @NotNull @Valid PlanCreateRequestDTO request);
 
-    /** Elimina un piano commerciale. */
-    void deletePlan(Long id);
+    void deletePlan(@NotNull @Min(1) Long id);
 
-    /** Aggiorna un utente come amministratore (senza restrizioni di ruolo). */
-    User updateUser(Long id, ModeratorUserUpdateRequest request);
+    User updateUser(@NotNull @Min(1) Long id, @NotNull @Valid ModeratorUserUpdateRequest request);
 }

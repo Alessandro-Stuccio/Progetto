@@ -15,7 +15,6 @@ import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.model.Chat;
-import com.project.tesi.repository.BookingRepository;
 import com.project.tesi.repository.ChatRepository;
 import com.project.tesi.repository.DocumentRepository;
 import com.project.tesi.repository.PlanRepository;
@@ -61,7 +60,6 @@ public class AdminServiceImpl implements AdminService {
     private final PlanRepository planRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final DocumentRepository documentRepository;
-    private final BookingRepository bookingRepository;
     private final ChatRepository chatRepository;
     private final ReviewRepository reviewRepository;
     private final SlotRepository slotRepository;
@@ -73,7 +71,6 @@ public class AdminServiceImpl implements AdminService {
                             PlanRepository planRepository,
                             SubscriptionRepository subscriptionRepository,
                             DocumentRepository documentRepository,
-                            BookingRepository bookingRepository,
                             ChatRepository chatRepository,
                             ReviewRepository reviewRepository,
                             SlotRepository slotRepository,
@@ -84,7 +81,6 @@ public class AdminServiceImpl implements AdminService {
         this.planRepository = planRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.documentRepository = documentRepository;
-        this.bookingRepository = bookingRepository;
         this.chatRepository = chatRepository;
         this.reviewRepository = reviewRepository;
         this.slotRepository = slotRepository;
@@ -307,10 +303,20 @@ public class AdminServiceImpl implements AdminService {
 
         if (targetRole == Role.CLIENT) {
             if (request.assignedPTId() != null) {
-                userRepository.findById(request.assignedPTId()).ifPresent(user::setAssignedPT);
+                User assignedPT = userRepository.findById(request.assignedPTId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Professionista", request.assignedPTId()));
+                if (assignedPT.getRole() != Role.PERSONAL_TRAINER) {
+                    throw new UnauthorizedAccessException("L'utente assegnato come PT non è un PERSONAL_TRAINER");
+                }
+                user.setAssignedPT(assignedPT);
             }
             if (request.assignedNutritionistId() != null) {
-                userRepository.findById(request.assignedNutritionistId()).ifPresent(user::setAssignedNutritionist);
+                User assignedNutri = userRepository.findById(request.assignedNutritionistId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Professionista", request.assignedNutritionistId()));
+                if (assignedNutri.getRole() != Role.NUTRITIONIST) {
+                    throw new UnauthorizedAccessException("L'utente assegnato come nutrizionista non è un NUTRITIONIST");
+                }
+                user.setAssignedNutritionist(assignedNutri);
             }
         }
 
@@ -396,8 +402,8 @@ public class AdminServiceImpl implements AdminService {
     }
 
     private void safeDeleteRelatedData(Long userId) {
-        if (bookingRepository != null) {
-            bookingRepository.deleteByUserId(userId);
+        if (slotRepository != null) {
+            slotRepository.clearBookingByUserId(userId);
         }
         if (chatRepository != null) {
             List<Chat> chats = chatRepository.findAllChatsByUserId(userId);

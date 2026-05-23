@@ -1,37 +1,44 @@
 package com.project.tesi.service;
 
+import com.project.tesi.dto.request.BookingRequest;
+import com.project.tesi.dto.response.BookingResponse;
+import com.project.tesi.dto.response.SlotDTO;
+import com.project.tesi.model.Slot;
+import com.project.tesi.model.User;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
-import com.project.tesi.dto.response.SlotDTO;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Interfaccia del servizio per la gestione degli slot del calendario dei professionisti.
- * Permette la creazione, il recupero e l'eliminazione degli slot disponibili.
- */
 @Validated
 public interface SlotService {
 
-    /** Crea nuovi slot nel calendario di un professionista. */
-    List<SlotDTO> createSlots(Long professionalId, List<SlotDTO> slotsDTO);
+    List<SlotDTO> createSlots(@NotNull @Min(1) Long professionalId, @NotNull @NotEmpty List<SlotDTO> slotsDTO);
 
-    /** Restituisce gli slot disponibili (futuri e non prenotati) di un professionista. */
-    List<SlotDTO> getAvailableSlots(Long professionalId);
+    List<SlotDTO> getAvailableSlots(@NotNull @Min(1) Long professionalId);
 
-    /** Elimina uno slot dal calendario. */
-    void deleteSlot(Long slotId);
+    void deleteSlot(@NotNull @Min(1) Long slotId);
 
-    /** Elimina uno slot dal calendario verificando che il richiedente sia il proprietario. */
-    void deleteSlot(Long slotId, Long requesterId);
+    void deleteSlot(@NotNull @Min(1) Long slotId, @NotNull @Min(1) Long requesterId);
 
-    /**
-     * Genera automaticamente gli slot di un professionista in base al suo
-     * orario settimanale per un intervallo di date.
-     *
-     * @param professionalId ID del professionista
-     * @param startDate      data di inizio generazione
-     * @param endDate        data di fine generazione
-     */
-    void generateSlotsFromSchedule(Long professionalId, LocalDate startDate, LocalDate endDate);
+    void generateSlotsFromSchedule(@NotNull @Min(1) Long professionalId,
+                                   @NotNull LocalDate startDate,
+                                   @NotNull LocalDate endDate);
+
+    BookingResponse createBooking(@NotNull @Valid BookingRequest request, @NotNull @Min(1) Long userId);
+
+    void cancelBooking(@NotNull @Min(1) Long slotId, @NotNull @Min(1) Long userId);
+
+    List<Slot> findRecentByUser(@NotNull User user, @NotNull LocalDateTime since);
+
+    List<Slot> findRecentByProfessional(@NotNull User professional, @NotNull LocalDateTime since);
+
+    List<Slot> findBookingsByProfessional(@NotNull User professional);
+
+    List<Slot> findFutureByUser(@NotNull User user, @NotNull LocalDateTime from);
 }

@@ -1,7 +1,6 @@
 package com.project.tesi.mapper;
 
 import com.project.tesi.dto.response.BookingResponse;
-import com.project.tesi.model.Booking;
 import com.project.tesi.model.Slot;
 import org.springframework.stereotype.Component;
 
@@ -14,20 +13,19 @@ public class BookingMapper {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public BookingResponse toResponse(Booking booking) {
-        if (booking == null) return null;
+    public BookingResponse toResponse(Slot slot) {
+        if (slot == null) return null;
 
-        Slot slot = booking.getSlot();
         LocalDateTime start = slot.getStartTime();
         LocalDateTime end = slot.getEndTime();
 
         return BookingResponse.builder()
-                .id(booking.getId())
+                .id(slot.getId())
                 .date(start.format(DATE_FORMATTER))
                 .startTime(start.format(TIME_FORMATTER))
                 .endTime(end.format(TIME_FORMATTER))
                 .professionalName(slot.getProfessional().getFullName())
-                .clientName(booking.getUser().getFullName())
+                .clientName(slot.getBookedBy() != null ? slot.getBookedBy().getFullName() : "")
                 .professionalRole(slot.getProfessional().getRole())
                 .meetingLink(slot.getMeetingLink())
                 .status(slot.getStatus())

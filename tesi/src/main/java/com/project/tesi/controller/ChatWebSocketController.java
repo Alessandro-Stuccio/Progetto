@@ -13,7 +13,8 @@ import com.project.tesi.model.Chat;
 import com.project.tesi.model.User;
 import com.project.tesi.service.ChatAsyncService;
 import com.project.tesi.service.ChatService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -24,10 +25,10 @@ import org.springframework.stereotype.Controller;
 import java.security.Principal;
 import java.time.LocalDateTime;
 
-@Slf4j
 @Controller
 public class ChatWebSocketController {
 
+    private static final Logger log = LoggerFactory.getLogger(ChatWebSocketController.class);
     private final SimpMessageSendingOperations messagingTemplate;
     private final WebSocketEventListener eventListener;
     private final ChatService chatService;

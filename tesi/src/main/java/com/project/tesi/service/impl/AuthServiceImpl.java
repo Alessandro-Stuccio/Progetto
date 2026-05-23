@@ -9,9 +9,9 @@ import com.project.tesi.model.User;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.security.CustomUserDetailsService;
 import com.project.tesi.security.JwtUtil;
+import com.project.tesi.facade.UserFacade;
 import com.project.tesi.service.AuthService;
 import com.project.tesi.service.EmailService;
-import com.project.tesi.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
-    private final UserService userService;
+    private final UserFacade userFacade;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
@@ -34,14 +34,14 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(UserService userService,
+    public AuthServiceImpl(UserFacade userFacade,
                            AuthenticationManager authenticationManager,
                            CustomUserDetailsService userDetailsService,
                            JwtUtil jwtUtil,
                            UserRepository userRepository,
                            EmailService emailService,
                            PasswordEncoder passwordEncoder) {
-        this.userService = userService;
+        this.userFacade = userFacade;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserResponse register(RegisterRequest request) {
-        return userService.registerUser(request);
+        return userFacade.registerUser(request);
     }
 
     @Override

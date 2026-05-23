@@ -8,7 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,12 +24,12 @@ import java.util.Map;
 /**
  * Endpoint REST per le prenotazioni.
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/bookings")
 @Tag(name = "Bookings", description = "Creazione e cancellazione prenotazioni")
 public class BookingController {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingController.class);
     private final UserFacade userFacade;
 
     public BookingController(UserFacade userFacade) {

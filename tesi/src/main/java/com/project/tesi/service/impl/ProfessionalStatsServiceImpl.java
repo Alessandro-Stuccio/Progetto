@@ -6,11 +6,11 @@ import com.project.tesi.dto.response.stats.ProfessionalStatsResponse.TodayBookin
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceNotFoundException;
-import com.project.tesi.model.Booking;
 import com.project.tesi.model.Document;
+import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import com.project.tesi.repository.BookingRepository;
 import com.project.tesi.repository.DocumentRepository;
+import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.ProfessionalStatsService;
 import org.springframework.stereotype.Service;
@@ -24,21 +24,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Implementazione del servizio per le statistiche della dashboard del professionista.
- */
 @Service
 public class ProfessionalStatsServiceImpl implements ProfessionalStatsService {
 
     private final UserRepository userRepository;
-    private final BookingRepository bookingRepository;
+    private final SlotRepository slotRepository;
     private final DocumentRepository documentRepository;
 
     public ProfessionalStatsServiceImpl(UserRepository userRepository,
-                                         BookingRepository bookingRepository,
+                                         SlotRepository slotRepository,
                                          DocumentRepository documentRepository) {
         this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
+        this.slotRepository = slotRepository;
         this.documentRepository = documentRepository;
     }
 
@@ -55,16 +52,16 @@ public class ProfessionalStatsServiceImpl implements ProfessionalStatsService {
         LocalDate today = LocalDate.now();
         LocalDateTime dayStart = today.atStartOfDay();
         LocalDateTime dayEnd = today.plusDays(1).atStartOfDay();
-        List<Booking> todayBookings = bookingRepository.findTodayByProfessional(professional, dayStart, dayEnd);
+        List<Slot> todaySlots = slotRepository.findTodayByProfessional(professional, dayStart, dayEnd);
 
-        List<TodayBookingItem> todayList = todayBookings.stream().map(b -> new TodayBookingItem(
-                b.getId(),
-                b.getUser().getFullName(),
-                b.getUser().getId(),
-                b.getSlot().getStartTime().toLocalTime().toString().substring(0, 5),
-                b.getSlot().getEndTime().toLocalTime().toString().substring(0, 5),
-                b.getSlot().getStatus().name(),
-                b.getSlot().getMeetingLink()
+        List<TodayBookingItem> todayList = todaySlots.stream().map(s -> new TodayBookingItem(
+                s.getId(),
+                s.getBookedBy() != null ? s.getBookedBy().getFullName() : "",
+                s.getBookedBy() != null ? s.getBookedBy().getId() : null,
+                s.getStartTime().toLocalTime().toString().substring(0, 5),
+                s.getEndTime().toLocalTime().toString().substring(0, 5),
+                s.getStatus() != null ? s.getStatus().name() : "",
+                s.getMeetingLink()
         )).collect(Collectors.toList());
 
         List<User> clients;

@@ -4,7 +4,8 @@ import com.project.tesi.model.AuditLog;
 import com.project.tesi.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,10 +23,10 @@ import java.util.Set;
  * (solo per POST/PUT/PATCH, troncato a 2000 caratteri).
  * Il body è leggibile grazie al {@link RequestBodyCachingFilter} che avvolge la request.
  */
-@Slf4j
 @Component
 public class AuditInterceptor implements HandlerInterceptor {
 
+    private static final Logger log = LoggerFactory.getLogger(AuditInterceptor.class);
     private static final int MAX_BODY_LENGTH = 2000;
     private static final Set<String> BODY_METHODS = Set.of("POST", "PUT", "PATCH");
 

@@ -6,12 +6,12 @@ import com.project.tesi.dto.response.stats.AdminStatsResponse.MonthlyUserCount;
 import com.project.tesi.dto.response.stats.AdminStatsResponse.PlanPopularityItem;
 import com.project.tesi.dto.response.stats.AdminStatsResponse.ProfessionalWorkloadItem;
 import com.project.tesi.enums.Role;
-import com.project.tesi.model.Booking;
 import com.project.tesi.model.Plan;
+import com.project.tesi.model.Slot;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
-import com.project.tesi.repository.BookingRepository;
 import com.project.tesi.repository.PlanRepository;
+import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.repository.SubscriptionRepository;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.AdminStatsService;
@@ -27,24 +27,21 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Implementazione del servizio per le statistiche del pannello Admin.
- */
 @Service
 public class AdminStatsServiceImpl implements AdminStatsService {
 
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
-    private final BookingRepository bookingRepository;
+    private final SlotRepository slotRepository;
     private final PlanRepository planRepository;
 
     public AdminStatsServiceImpl(UserRepository userRepository,
                                   SubscriptionRepository subscriptionRepository,
-                                  BookingRepository bookingRepository,
+                                  SlotRepository slotRepository,
                                   PlanRepository planRepository) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
-        this.bookingRepository = bookingRepository;
+        this.slotRepository = slotRepository;
         this.planRepository = planRepository;
     }
 
@@ -115,12 +112,12 @@ public class AdminStatsServiceImpl implements AdminStatsService {
         double monthlyRev = Math.round(monthlyRevenue * 100.0) / 100.0;
         double yearlyRev  = Math.round(monthlyRevenue * 12 * 100.0) / 100.0;
 
-        // 6. Prenotazioni
-        List<Booking> allBookings = bookingRepository.findAll();
+        // 6. Prenotazioni (ex bookingRepository.findAll())
+        List<Slot> allBooked = slotRepository.findAllBooked();
         YearMonth thisMonth = YearMonth.now();
-        long bookingsThisMonth = allBookings.stream()
-                .filter(b -> b.getBookedAt() != null)
-                .filter(b -> YearMonth.from(b.getBookedAt()).equals(thisMonth))
+        long bookingsThisMonth = allBooked.stream()
+                .filter(s -> s.getBookedAt() != null)
+                .filter(s -> YearMonth.from(s.getBookedAt()).equals(thisMonth))
                 .count();
 
         // 7. Carico professionisti
@@ -149,7 +146,7 @@ public class AdminStatsServiceImpl implements AdminStatsService {
                 monthlyRev,
                 yearlyRev,
                 bookingsThisMonth,
-                allBookings.size(),
+                allBooked.size(),
                 proWorkload);
     }
 }

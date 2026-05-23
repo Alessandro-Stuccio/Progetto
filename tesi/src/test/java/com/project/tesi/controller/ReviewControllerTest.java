@@ -3,7 +3,7 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.request.ReviewRequest;
 import com.project.tesi.dto.response.ReviewResponse;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.IUserFacade;
+import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ReviewControllerTest {
 
-    @Mock private IUserFacade userFacade;
+    @Mock private UserFacade userFacade;
 
     @InjectMocks
     private ReviewController reviewController;

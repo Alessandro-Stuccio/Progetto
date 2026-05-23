@@ -1,13 +1,10 @@
 package com.project.tesi.enums;
 
-import lombok.Getter;
-
 /**
  * Durata di un piano di abbonamento.
  * Ogni valore ha associato il numero di mesi corrispondente,
  * usato per calcolare automaticamente la data di scadenza.
  */
-@Getter
 public enum PlanDuration {
     /** Piano semestrale — 6 mesi. */
     SEMESTRALE(6),
@@ -19,5 +16,9 @@ public enum PlanDuration {
 
     PlanDuration(int months) {
         this.months = months;
+    }
+
+    public int getMonths() {
+        return months;
     }
 }

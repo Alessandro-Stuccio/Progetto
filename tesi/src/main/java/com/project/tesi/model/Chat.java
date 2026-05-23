@@ -18,30 +18,20 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "chats", uniqueConstraints = {
         @UniqueConstraint(name = "uq_chat_users", columnNames = {"user1_id", "user2_id"})
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"user1", "user2", "messages"})
 public class Chat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne
@@ -67,7 +57,51 @@ public class Chat {
     @JoinColumn(name = "closed_by_id", foreignKey = @ForeignKey(name = "fk_chat_closed_by_id"))
     private User closedBy;
 
+    public Chat() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public User getUser1() { return user1; }
+    public void setUser1(User user1) { this.user1 = user1; }
+
+    public User getUser2() { return user2; }
+    public void setUser2(User user2) { this.user2 = user2; }
+
+    public List<Message> getMessages() { return messages; }
+    public void setMessages(List<Message> messages) { this.messages = messages; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public ChatStatus getStatus() { return status; }
+    public void setStatus(ChatStatus status) { this.status = status; }
+
+    public LocalDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
+
+    public User getClosedBy() { return closedBy; }
+    public void setClosedBy(User closedBy) { this.closedBy = closedBy; }
+
     public static ChatBuilder builder() {
         return new ChatBuilderImpl();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Chat that = (Chat) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Chat{id=" + id + ", createdAt=" + createdAt + ", status=" + status + "}";
     }
 }

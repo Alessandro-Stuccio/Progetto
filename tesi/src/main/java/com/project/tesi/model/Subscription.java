@@ -18,28 +18,18 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = {
         @UniqueConstraint(name = "uq_subscription_user", columnNames = {"user_id"})
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"user", "plan"})
 public class Subscription {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @Version
@@ -67,7 +57,69 @@ public class Subscription {
     private int currentCreditsNutri;
     private LocalDate lastRenewalDate;
 
+    public Subscription() {}
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Integer getVersion() { return version; }
+    public void setVersion(Integer version) { this.version = version; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public Plan getPlan() { return plan; }
+    public void setPlan(Plan plan) { this.plan = plan; }
+
+    public PaymentFrequency getPaymentFrequency() { return paymentFrequency; }
+    public void setPaymentFrequency(PaymentFrequency paymentFrequency) { this.paymentFrequency = paymentFrequency; }
+
+    public int getInstallmentsPaid() { return installmentsPaid; }
+    public void setInstallmentsPaid(int installmentsPaid) { this.installmentsPaid = installmentsPaid; }
+
+    public int getTotalInstallments() { return totalInstallments; }
+    public void setTotalInstallments(int totalInstallments) { this.totalInstallments = totalInstallments; }
+
+    public LocalDate getNextPaymentDate() { return nextPaymentDate; }
+    public void setNextPaymentDate(LocalDate nextPaymentDate) { this.nextPaymentDate = nextPaymentDate; }
+
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+
+    public int getCurrentCreditsPT() { return currentCreditsPT; }
+    public void setCurrentCreditsPT(int currentCreditsPT) { this.currentCreditsPT = currentCreditsPT; }
+
+    public int getCurrentCreditsNutri() { return currentCreditsNutri; }
+    public void setCurrentCreditsNutri(int currentCreditsNutri) { this.currentCreditsNutri = currentCreditsNutri; }
+
+    public LocalDate getLastRenewalDate() { return lastRenewalDate; }
+    public void setLastRenewalDate(LocalDate lastRenewalDate) { this.lastRenewalDate = lastRenewalDate; }
+
     public static SubscriptionBuilder builder() {
         return new SubscriptionBuilderImpl();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Subscription that = (Subscription) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Subscription{id=" + id + ", paymentFrequency=" + paymentFrequency + ", active=" + active + ", currentCreditsPT=" + currentCreditsPT + ", currentCreditsNutri=" + currentCreditsNutri + "}";
     }
 }

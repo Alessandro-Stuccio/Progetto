@@ -1,9 +1,9 @@
 package com.project.tesi.controller;
 
+import com.project.tesi.dto.response.PlanResponseDTO;
 import com.project.tesi.facade.PlanFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.project.tesi.model.Plan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +27,7 @@ public class PlanController {
 
     /** Restituisce la lista di tutti i piani di abbonamento disponibili. */
     @GetMapping
-    public ResponseEntity<List<Plan>> getAllPlans() {
+    public ResponseEntity<List<PlanResponseDTO>> getAllPlans() {
         return ResponseEntity.ok(planFacade.getAllPlans());
     }
 }

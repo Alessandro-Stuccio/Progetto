@@ -3,7 +3,8 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.request.ProfileUpdateRequest;
 import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ClientDashboardResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,12 +24,12 @@ import java.util.List;
 /**
  * Endpoint REST per il profilo utente. Gestisce i dati anagrafici e il recupero della dashboard cliente.
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "Profilo utente e dashboard cliente")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final UserFacade userFacade;
 
     public UserController(UserFacade userFacade) {

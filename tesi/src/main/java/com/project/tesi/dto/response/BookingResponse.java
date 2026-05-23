@@ -2,18 +2,8 @@ package com.project.tesi.dto.response;
 
 import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.enums.Role;
-import lombok.Data;
+import java.util.Objects;
 
-/**
- * DTO di risposta per una prenotazione.
- * Usato nella dashboard del cliente per mostrare gli appuntamenti futuri
- * e nella dashboard del professionista per gli appuntamenti di oggi.
- *
- * <p>Implementa manualmente il Design Pattern <b>Builder</b> tramite la classe
- * statica interna {@link Builder}, garantendo costruzione fluente e controllata
- * senza dipendere dalla generazione automatica di Lombok.</p>
- */
-@Data
 public class BookingResponse {
 
     private Long id;
@@ -27,18 +17,57 @@ public class BookingResponse {
     private BookingStatus status;
     private boolean canJoin;
 
-    // Costruttore privato: la creazione è delegata al Builder
     private BookingResponse() {}
 
-    // ──────────────────────────────────────────────────
-    //  Builder interno statico — Design Pattern Builder
-    // ──────────────────────────────────────────────────
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    /**
-     * Builder interno per la costruzione fluente di {@link BookingResponse}.
-     */
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
+
+    public String getStartTime() { return startTime; }
+    public void setStartTime(String startTime) { this.startTime = startTime; }
+
+    public String getEndTime() { return endTime; }
+    public void setEndTime(String endTime) { this.endTime = endTime; }
+
+    public String getProfessionalName() { return professionalName; }
+    public void setProfessionalName(String professionalName) { this.professionalName = professionalName; }
+
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
+
+    public Role getProfessionalRole() { return professionalRole; }
+    public void setProfessionalRole(Role professionalRole) { this.professionalRole = professionalRole; }
+
+    public String getMeetingLink() { return meetingLink; }
+    public void setMeetingLink(String meetingLink) { this.meetingLink = meetingLink; }
+
+    public BookingStatus getStatus() { return status; }
+    public void setStatus(BookingStatus status) { this.status = status; }
+
+    public boolean isCanJoin() { return canJoin; }
+    public void setCanJoin(boolean canJoin) { this.canJoin = canJoin; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BookingResponse that = (BookingResponse) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "BookingResponse{id=" + id + ", date='" + date + "', status=" + status + ", canJoin=" + canJoin + "}";
+    }
+
     public static class Builder {
-
         private Long id;
         private String date;
         private String startTime;
@@ -50,61 +79,17 @@ public class BookingResponse {
         private BookingStatus status;
         private boolean canJoin;
 
-        public Builder id(Long id) {
-            this.id = id;
-            return this;
-        }
+        public Builder id(Long id) { this.id = id; return this; }
+        public Builder date(String date) { this.date = date; return this; }
+        public Builder startTime(String startTime) { this.startTime = startTime; return this; }
+        public Builder endTime(String endTime) { this.endTime = endTime; return this; }
+        public Builder professionalName(String professionalName) { this.professionalName = professionalName; return this; }
+        public Builder clientName(String clientName) { this.clientName = clientName; return this; }
+        public Builder professionalRole(Role professionalRole) { this.professionalRole = professionalRole; return this; }
+        public Builder meetingLink(String meetingLink) { this.meetingLink = meetingLink; return this; }
+        public Builder status(BookingStatus status) { this.status = status; return this; }
+        public Builder canJoin(boolean canJoin) { this.canJoin = canJoin; return this; }
 
-        public Builder date(String date) {
-            this.date = date;
-            return this;
-        }
-
-        public Builder startTime(String startTime) {
-            this.startTime = startTime;
-            return this;
-        }
-
-        public Builder endTime(String endTime) {
-            this.endTime = endTime;
-            return this;
-        }
-
-        public Builder professionalName(String professionalName) {
-            this.professionalName = professionalName;
-            return this;
-        }
-
-        public Builder clientName(String clientName) {
-            this.clientName = clientName;
-            return this;
-        }
-
-        public Builder professionalRole(Role professionalRole) {
-            this.professionalRole = professionalRole;
-            return this;
-        }
-
-        public Builder meetingLink(String meetingLink) {
-            this.meetingLink = meetingLink;
-            return this;
-        }
-
-        public Builder status(BookingStatus status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder canJoin(boolean canJoin) {
-            this.canJoin = canJoin;
-            return this;
-        }
-
-        /**
-         * Costruisce e restituisce l'istanza di {@link BookingResponse}.
-         *
-         * @return una nuova istanza con i valori impostati tramite il Builder
-         */
         public BookingResponse build() {
             BookingResponse response = new BookingResponse();
             response.id = this.id;
@@ -121,7 +106,6 @@ public class BookingResponse {
         }
     }
 
-    /** Punto di ingresso statico per la costruzione fluente. */
     public static Builder builder() {
         return new Builder();
     }

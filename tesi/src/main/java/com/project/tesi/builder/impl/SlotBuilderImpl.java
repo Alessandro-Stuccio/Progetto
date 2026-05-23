@@ -14,6 +14,7 @@ public class SlotBuilderImpl implements SlotBuilder {
     private LocalDateTime endTime;
     private User bookedBy;
     private Integer version;
+    private LocalDateTime bookedAt;
 
     @Override
     public SlotBuilder id(Long id) {
@@ -52,6 +53,12 @@ public class SlotBuilderImpl implements SlotBuilder {
     }
 
     @Override
+    public SlotBuilder bookedAt(LocalDateTime bookedAt) {
+        this.bookedAt = bookedAt;
+        return this;
+    }
+
+    @Override
     public Slot build() {
         Objects.requireNonNull(this.professional, "professional è obbligatorio");
         Objects.requireNonNull(this.startTime, "startTime è obbligatorio");
@@ -67,6 +74,7 @@ public class SlotBuilderImpl implements SlotBuilder {
         obj.setEndTime(this.endTime);
         obj.setBookedBy(this.bookedBy);
         obj.setVersion(this.version);
+        if (this.bookedAt != null) obj.setBookedAt(this.bookedAt);
         return obj;
     }
 }
