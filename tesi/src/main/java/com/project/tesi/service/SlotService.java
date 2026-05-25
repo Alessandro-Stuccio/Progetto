@@ -1,12 +1,9 @@
 package com.project.tesi.service;
 
-import com.project.tesi.dto.request.BookingRequest;
-import com.project.tesi.dto.response.BookingResponse;
-import com.project.tesi.dto.response.SlotDTO;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
@@ -18,9 +15,13 @@ import java.util.List;
 @Validated
 public interface SlotService {
 
-    List<SlotDTO> createSlots(@NotNull @Min(1) Long professionalId, @NotNull @NotEmpty List<SlotDTO> slotsDTO);
+    List<Slot> createSlots(@NotNull @NotEmpty List<Slot> slots);
 
-    List<SlotDTO> getAvailableSlots(@NotNull @Min(1) Long professionalId);
+    List<Slot> getAvailableSlots(@NotNull @Min(1) Long professionalId);
+
+    Slot getSlot(@NotNull @Min(1) Long slotId);
+
+    Slot saveBooking(@NotNull @Min(1) Long slotId, @NotNull User user, @NotBlank String meetingLink);
 
     void deleteSlot(@NotNull @Min(1) Long slotId);
 
@@ -29,8 +30,6 @@ public interface SlotService {
     void generateSlotsFromSchedule(@NotNull @Min(1) Long professionalId,
                                    @NotNull LocalDate startDate,
                                    @NotNull LocalDate endDate);
-
-    BookingResponse createBooking(@NotNull @Valid BookingRequest request, @NotNull @Min(1) Long userId);
 
     void cancelBooking(@NotNull @Min(1) Long slotId, @NotNull @Min(1) Long userId);
 

@@ -2,7 +2,6 @@ package com.project.tesi.service.impl;
 
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.enums.ChatStatus;
-import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
@@ -40,20 +39,17 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public Long createChat(Long senderId, Long receiverId) {
-        if (senderId.equals(receiverId)) {
-            throw new IllegalArgumentException("Non puoi avviare una chat con te stesso");
-        }
-
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Mittente", senderId));
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Destinatario", receiverId));
-
-        validateChatPermission(sender, receiver);
-
-        Chat chat = getOrCreateChat(sender, receiver);
-        return chat.getId();
+    public Long getOrCreateChat(User sender, User receiver) {
+        return chatRepository.findChatBetweenUsers(sender.getId(), receiver.getId())
+                .orElseGet(() -> {
+                    Chat newChat = Chat.builder()
+                            .user1(sender)
+                            .user2(receiver)
+                            .createdAt(LocalDateTime.now())
+                            .build();
+                    return chatRepository.save(newChat);
+                })
+                .getId();
     }
 
     @Override
@@ -73,19 +69,14 @@ public class ChatServiceImpl implements ChatService {
             throw new ChatNotAllowedException("Non sei parte di questa chat");
         }
 
-        boolean sentByUser1 = chat.getUser1().getId().equals(sender.getId());
-
-        Message message = Message.builder()
-                .chat(chat)
-                .sentByUser1(sentByUser1)
-                .content(request.content())
-                .timeStamp(LocalDateTime.now())
-                .isRead(false)
-                .build();
-
-        return messageRepository.save(message);
+        return buildAndSaveMessage(chat, sender, request.content());
     }
 
+    /**
+     * Versione fire-and-forget di sendMessage: usata da ChatAsyncService e ChatMessageConsumer
+     * in contesti asincroni dove un'eccezione non sarebbe gestita. Usa orElse(null) invece di
+     * orElseThrow per fallire silenziosamente con log warning invece di propagare eccezioni.
+     */
     @Override
     @Transactional
     public void sendMessageDirect(Long chatId, Long senderId, String content) {
@@ -99,19 +90,21 @@ public class ChatServiceImpl implements ChatService {
             log.warn("[Chat] sendMessageDirect: sender {} non trovato.", senderId);
             return;
         }
-
         if (chat.getStatus() == ChatStatus.CLOSED) {
             log.warn("[Chat] sendMessageDirect: chat {} è CLOSED, save annullato.", chatId);
             return;
         }
-
         if (!chat.getUser1().getId().equals(sender.getId()) && !chat.getUser2().getId().equals(sender.getId())) {
             log.warn("[Chat] sendMessageDirect: utente {} non è parte della chat {}.", senderId, chatId);
             return;
         }
 
-        boolean sentByUser1 = chat.getUser1().getId().equals(sender.getId());
+        Message saved = buildAndSaveMessage(chat, sender, content);
+        log.info("[Chat] Messaggio persistito id={} chatId={} senderId={}", saved.getId(), chatId, senderId);
+    }
 
+    private Message buildAndSaveMessage(Chat chat, User sender, String content) {
+        boolean sentByUser1 = chat.getUser1().getId().equals(sender.getId());
         Message message = Message.builder()
                 .chat(chat)
                 .sentByUser1(sentByUser1)
@@ -119,9 +112,7 @@ public class ChatServiceImpl implements ChatService {
                 .timeStamp(LocalDateTime.now())
                 .isRead(false)
                 .build();
-
-        Message saved = messageRepository.save(message);
-        log.info("[Chat] Messaggio persistito id={} chatId={} senderId={}", saved.getId(), chatId, senderId);
+        return messageRepository.save(message);
     }
 
     @Override
@@ -175,14 +166,9 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public void closeChat(Long chatId, Long moderatorId) {
+    public void closeChat(Long chatId, User moderator) {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
-        User moderator = userRepository.findById(moderatorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Moderatore", moderatorId));
-        if (moderator.getRole() != Role.MODERATOR && moderator.getRole() != Role.ADMIN) {
-            throw new UnauthorizedAccessException("Solo i moderatori possono chiudere le chat");
-        }
         chat.setStatus(ChatStatus.CLOSED);
         chat.setClosedAt(LocalDateTime.now());
         chat.setClosedBy(moderator);
@@ -191,7 +177,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public void closeChatByUser(Long chatId, Long userId) {
+    public void deleteChatByUser(Long chatId, Long userId) {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
         boolean isParticipant = chat.getUser1().getId().equals(userId)
@@ -221,46 +207,10 @@ public class ChatServiceImpl implements ChatService {
         return messageRepository.countUnreadMessagesByChatIdAndUserId(chatId, userId);
     }
 
-    private Chat getOrCreateChat(User user1, User user2) {
-        return chatRepository.findChatBetweenUsers(user1.getId(), user2.getId())
-                .orElseGet(() -> {
-                    Chat newChat = Chat.builder()
-                            .user1(user1)
-                            .user2(user2)
-                            .createdAt(LocalDateTime.now())
-                            .build();
-                    return chatRepository.save(newChat);
-                });
-    }
-
-    private void validateChatPermission(User uA, User uB) {
-        if (uA.getRole() == Role.ADMIN || uB.getRole() == Role.ADMIN) return;
-
-        if (uA.getRole() == Role.INSURANCE_MANAGER || uB.getRole() == Role.INSURANCE_MANAGER) {
-            throw new ChatNotAllowedException("Insurance manager può contattare solo l'amministratore.");
-        }
-
-        if (uA.getRole() == Role.MODERATOR || uB.getRole() == Role.MODERATOR) return;
-
-        boolean professionalAssigned = false;
-        User client = null;
-        User prof = null;
-        if (uA.getRole() == Role.CLIENT) { client = uA; prof = uB; }
-        else if (uB.getRole() == Role.CLIENT) { client = uB; prof = uA; }
-
-        if (client != null && prof != null) {
-            if (prof.getRole() == Role.PERSONAL_TRAINER && client.getAssignedPT() != null
-                    && client.getAssignedPT().getId().equals(prof.getId())) {
-                professionalAssigned = true;
-            }
-            if (prof.getRole() == Role.NUTRITIONIST && client.getAssignedNutritionist() != null
-                    && client.getAssignedNutritionist().getId().equals(prof.getId())) {
-                professionalAssigned = true;
-            }
-        }
-
-        if (!professionalAssigned) {
-            throw new ChatNotAllowedException("Non sei assegnato a questo utente");
-        }
+    @Override
+    @Transactional(readOnly = true)
+    public long countOpenChatsByModerator(Long moderatorId) {
+        return chatRepository.countOpenChatsByModerator(moderatorId);
     }
 }
+

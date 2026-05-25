@@ -1,6 +1,6 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.dto.response.DocumentUploadResponse;
+import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceNotFoundException;
@@ -43,47 +43,33 @@ class DocumentServiceImplTest {
     @InjectMocks private DocumentServiceImpl documentService;
 
     @TempDir Path tempDir;
-    private User client, pt, nutri;
+    private User client, pt;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(documentService, "uploadDir", tempDir.toString());
-        pt = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(2L).firstName("Luca").role(Role.PERSONAL_TRAINER).build();
-        nutri = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(3L).firstName("Sara").role(Role.NUTRITIONIST).build();
-        client = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(1L).firstName("Mario").role(Role.CLIENT).build();
+        pt = User.builder().email("pt@test.com").password("testpass").id(2L).firstName("Luca").lastName("Bianchi").role(Role.PERSONAL_TRAINER).build();
+        client = User.builder().email("client@test.com").password("testpass").id(1L).firstName("Mario").lastName("Rossi").role(Role.CLIENT).build();
     }
 
-    @Test @DisplayName("uploadDocumentWithValidation — PT carica WORKOUT_PLAN OK")
-    void uploadDocument_ptWorkoutPlan() throws IOException {
+    // ─── uploadDocument ───────────────────────────────────────────────────────
+
+    @Test @DisplayName("uploadDocument — salva file e restituisce Document")
+    void uploadDocument_success() throws IOException {
         MultipartFile file = mock(MultipartFile.class);
         when(file.getOriginalFilename()).thenReturn("scheda.pdf");
         when(file.getContentType()).thenReturn("application/pdf");
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2}));
 
-        when(userRepository.findById(2L)).thenReturn(Optional.of(pt));
         when(userRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(pt));
         Document saved = Document.builder().id(1L).fileName("scheda.pdf").type(DocumentType.WORKOUT_PLAN)
                 .owner(client).uploadedBy(pt).uploadDate(LocalDateTime.now()).build();
         when(documentRepository.save(any())).thenReturn(saved);
 
-        DocumentUploadResponse result = documentService.uploadDocumentWithValidation(file, 1L, 2L, "WORKOUT_PLAN");
-        assertThat(result.fileName()).isEqualTo("scheda.pdf");
-    }
-
-    @Test @DisplayName("uploadDocumentWithValidation — PT carica DIET_PLAN → InvalidFileException")
-    void uploadDocument_ptWrongType() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(pt));
-        assertThatThrownBy(() -> documentService.uploadDocumentWithValidation(
-                mock(MultipartFile.class), 1L, 2L, "DIET_PLAN")).isInstanceOf(InvalidFileException.class);
-    }
-
-    @Test @DisplayName("uploadDocumentWithValidation — Nutrizionista carica WORKOUT_PLAN → InvalidFileException")
-    void uploadDocument_nutriWrongType() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        when(userRepository.findById(3L)).thenReturn(Optional.of(nutri));
-        assertThatThrownBy(() -> documentService.uploadDocumentWithValidation(
-                mock(MultipartFile.class), 1L, 3L, "WORKOUT_PLAN")).isInstanceOf(InvalidFileException.class);
+        Document result = documentService.uploadDocument(file, 1L, 2L, "WORKOUT_PLAN");
+        assertThat(result.getFileName()).isEqualTo("scheda.pdf");
+        assertThat(result.getType()).isEqualTo(DocumentType.WORKOUT_PLAN);
     }
 
     @Test @DisplayName("uploadDocument — nome file null → InvalidFileException")
@@ -107,6 +93,18 @@ class DocumentServiceImplTest {
         assertThatThrownBy(() -> documentService.uploadDocument(file, 1L, 2L, "WORKOUT_PLAN"))
                 .isInstanceOf(InvalidFileException.class);
     }
+
+    @Test @DisplayName("uploadDocument — uploader non trovato lancia ResourceNotFoundException")
+    void uploadDocument_uploaderNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> documentService.uploadDocument(
+                mock(MultipartFile.class), 1L, 999L, "WORKOUT_PLAN"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ─── downloadDocument ─────────────────────────────────────────────────────
 
     @Test @DisplayName("downloadDocument — documento trovato")
     void downloadDocument_success() throws IOException {
@@ -132,12 +130,16 @@ class DocumentServiceImplTest {
         assertThatThrownBy(() -> documentService.downloadDocument(1L)).isInstanceOf(DocumentStorageException.class);
     }
 
+    // ─── getDocumentById ──────────────────────────────────────────────────────
+
     @Test @DisplayName("getDocumentById — trovato")
     void getDocumentById_success() {
         Document doc = Document.builder().id(1L).build();
         when(documentRepository.findById(1L)).thenReturn(Optional.of(doc));
         assertThat(documentService.getDocumentById(1L)).isEqualTo(doc);
     }
+
+    // ─── getUserDocuments ─────────────────────────────────────────────────────
 
     @Test @DisplayName("getUserDocuments — restituisce documenti dell'utente")
     void getUserDocuments() {
@@ -160,6 +162,8 @@ class DocumentServiceImplTest {
         assertThat(result).isEmpty();
     }
 
+    // ─── deleteDocument ───────────────────────────────────────────────────────
+
     @Test @DisplayName("deleteDocument — elimina dal db e dal filesystem")
     void deleteDocument_success() throws IOException {
         Path testFile = tempDir.resolve("to-delete.pdf");
@@ -173,6 +177,14 @@ class DocumentServiceImplTest {
         assertThat(Files.exists(testFile)).isFalse();
     }
 
+    @Test @DisplayName("deleteDocument — documento non trovato lancia eccezione")
+    void deleteDocument_notFound() {
+        when(documentRepository.findById(999L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> documentService.deleteDocument(999L)).isInstanceOf(DocumentNotFoundException.class);
+    }
+
+    // ─── updateNotes ──────────────────────────────────────────────────────────
+
     @Test @DisplayName("updateNotes — aggiorna le note")
     void updateNotes() {
         Document doc = Document.builder().id(1L).fileName("f.pdf").type(DocumentType.WORKOUT_PLAN)
@@ -184,40 +196,7 @@ class DocumentServiceImplTest {
         assertThat(doc.getNotes()).isEqualTo("Nuove note");
     }
 
-    // ══════════════ BRANCH AGGIUNTIVE ══════════════
-
-    @Test @DisplayName("uploadDocumentWithValidation — Nutrizionista carica DIET_PLAN OK")
-    void uploadDocument_nutriDietPlan() throws IOException {
-        MultipartFile file = mock(MultipartFile.class);
-        when(file.getOriginalFilename()).thenReturn("dieta.pdf");
-        when(file.getContentType()).thenReturn("application/pdf");
-        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1}));
-
-        when(userRepository.findById(3L)).thenReturn(Optional.of(nutri));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        Document saved = Document.builder().id(1L).fileName("dieta.pdf").type(DocumentType.DIET_PLAN)
-                .owner(client).uploadedBy(nutri).uploadDate(LocalDateTime.now()).build();
-        when(documentRepository.save(any())).thenReturn(saved);
-
-        DocumentUploadResponse result = documentService.uploadDocumentWithValidation(file, 1L, 3L, "DIET_PLAN");
-        assertThat(result.fileName()).isEqualTo("dieta.pdf");
-    }
-
-    @Test @DisplayName("uploadDocumentWithValidation — CLIENT può caricare qualsiasi tipo")
-    void uploadDocument_clientAnyType() throws IOException {
-        MultipartFile file = mock(MultipartFile.class);
-        when(file.getOriginalFilename()).thenReturn("cert.pdf");
-        when(file.getContentType()).thenReturn("application/pdf");
-        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1}));
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        Document saved = Document.builder().id(1L).fileName("cert.pdf").type(DocumentType.INSURANCE_POLICE)
-                .owner(client).uploadedBy(client).uploadDate(LocalDateTime.now()).build();
-        when(documentRepository.save(any())).thenReturn(saved);
-
-        DocumentUploadResponse result = documentService.uploadDocumentWithValidation(file, 1L, 1L, "INSURANCE_POLICE");
-        assertThat(result.type()).isEqualTo("INSURANCE_POLICE");
-    }
+    // ─── saveDocument ─────────────────────────────────────────────────────────
 
     @Test @DisplayName("saveDocument — salva e restituisce documento")
     void saveDocument() {
@@ -225,21 +204,4 @@ class DocumentServiceImplTest {
         when(documentRepository.save(doc)).thenReturn(doc);
         assertThat(documentService.saveDocument(doc)).isEqualTo(doc);
     }
-
-    @Test @DisplayName("deleteDocument — documento non trovato lancia eccezione")
-    void deleteDocument_notFound() {
-        when(documentRepository.findById(999L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> documentService.deleteDocument(999L)).isInstanceOf(DocumentNotFoundException.class);
-    }
-
-    @Test @DisplayName("uploadDocumentWithValidation — uploader non trovato lancia eccezione")
-    void uploadDocument_uploaderNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> documentService.uploadDocumentWithValidation(
-                mock(MultipartFile.class), 1L, 999L, "WORKOUT_PLAN"))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
 }
-
-

@@ -1,7 +1,5 @@
 package com.project.tesi.service;
 
-import com.project.tesi.dto.response.DocumentUploadResponse;
-import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import jakarta.validation.constraints.Min;
@@ -17,18 +15,13 @@ import java.util.List;
 @Validated
 public interface DocumentService {
 
-    DocumentUploadResponse uploadDocumentWithValidation(@NotNull MultipartFile file,
-                                                        @NotNull @Min(1) Long clientId,
-                                                        @NotNull @Min(1) Long uploaderId,
-                                                        @NotBlank String docType);
-
     byte[] downloadDocument(@NotNull @Min(1) Long documentId);
 
     Document getDocumentById(@NotNull @Min(1) Long documentId);
 
     void deleteDocument(@NotNull @Min(1) Long documentId);
 
-    UpdatedNotesResponse updateNotes(@NotNull @Min(1) Long documentId, @NotBlank String notes);
+    Document updateNotes(@NotNull @Min(1) Long documentId, @NotBlank String notes);
 
     Document saveDocument(@NotNull Document document);
 

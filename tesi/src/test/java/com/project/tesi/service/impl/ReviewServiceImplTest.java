@@ -1,12 +1,10 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.review.ReviewNotAllowedException;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ReviewRepository;
 import com.project.tesi.repository.SlotRepository;
-import com.project.tesi.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,7 +24,6 @@ import static org.mockito.Mockito.*;
 class ReviewServiceImplTest {
 
     @Mock private ReviewRepository reviewRepository;
-    @Mock private UserRepository userRepository;
     @Mock private SlotRepository slotRepository;
 
     @InjectMocks
@@ -95,52 +91,17 @@ class ReviewServiceImplTest {
     }
 
     @Test
-    @DisplayName("canClientReview — true quando cliente è assegnato al professionista")
-    void canClientReview_trueViaAssignment() {
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(false);
-        when(slotRepository.existsByBookedByIdAndProfessionalId(1L, 2L)).thenReturn(false);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(client));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(professional));
-
-        assertThat(reviewService.canClientReview(1L, 2L)).isTrue();
-    }
-
-    @Test
-    @DisplayName("canClientReview — true tramite storico prenotazioni")
-    void canClientReview_trueViaBookings() {
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(false);
+    @DisplayName("hasBookingRelationship — true quando esiste uno slot prenotato")
+    void hasBookingRelationship_true() {
         when(slotRepository.existsByBookedByIdAndProfessionalId(1L, 2L)).thenReturn(true);
-
-        assertThat(reviewService.canClientReview(1L, 2L)).isTrue();
+        assertThat(reviewService.hasBookingRelationship(1L, 2L)).isTrue();
     }
 
     @Test
-    @DisplayName("canClientReview — false quando ha già recensito")
-    void canClientReview_alreadyReviewed() {
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(true);
-        assertThat(reviewService.canClientReview(1L, 2L)).isFalse();
-    }
-
-    @Test
-    @DisplayName("canClientReview — false senza prenotazioni né assegnazione")
-    void canClientReview_noRelationship() {
-        User unassignedClient = User.builder().id(1L).email("x@x.com").password("testpass")
-                .role(Role.CLIENT).build();
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(false);
+    @DisplayName("hasBookingRelationship — false quando nessuno slot prenotato")
+    void hasBookingRelationship_false() {
         when(slotRepository.existsByBookedByIdAndProfessionalId(1L, 2L)).thenReturn(false);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(unassignedClient));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(professional));
-
-        assertThat(reviewService.canClientReview(1L, 2L)).isFalse();
+        assertThat(reviewService.hasBookingRelationship(1L, 2L)).isFalse();
     }
 
-    @Test
-    @DisplayName("hasClientReviewed — delega al repository")
-    void hasClientReviewed() {
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(true);
-        assertThat(reviewService.hasClientReviewed(1L, 2L)).isTrue();
-
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 3L)).thenReturn(false);
-        assertThat(reviewService.hasClientReviewed(1L, 3L)).isFalse();
-    }
 }

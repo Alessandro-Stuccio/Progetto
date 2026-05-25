@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,8 @@ class UserServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -117,5 +120,13 @@ class UserServiceImplTest {
     void countByAssignedNutritionist_delegates() {
         when(userRepository.countByAssignedNutritionist(nutri)).thenReturn(3L);
         assertThat(userService.countByAssignedNutritionist(nutri)).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("encodePassword — delega al PasswordEncoder")
+    void encodePassword_delegates() {
+        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
+        assertThat(userService.encodePassword("rawPassword")).isEqualTo("encodedPassword");
+        verify(passwordEncoder).encode("rawPassword");
     }
 }

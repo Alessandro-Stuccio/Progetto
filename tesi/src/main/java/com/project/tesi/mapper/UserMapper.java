@@ -1,6 +1,8 @@
 package com.project.tesi.mapper;
 
 import com.project.tesi.dto.request.RegisterRequest;
+import com.project.tesi.dto.response.ClientBasicInfoResponse;
+import com.project.tesi.dto.response.ProfessionalSummaryDTO;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.model.User;
@@ -100,6 +102,25 @@ public class UserMapper {
                 .password(request.password())
                 .profilePicture(request.profilePicture())
                 .role(Role.CLIENT)
+                .build();
+    }
+
+    public ClientBasicInfoResponse toBasicInfoResponse(User user) {
+        return ClientBasicInfoResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .profilePictureUrl(user.getProfilePicture())
+                .role(user.getRole() != null ? user.getRole().name() : null)
+                .build();
+    }
+
+    public ProfessionalSummaryDTO toProfessionalSummary(User pro) {
+        return ProfessionalSummaryDTO.builder()
+                .id(pro.getId())
+                .fullName(pro.getFullName())
+                .role(pro.getRole())
                 .build();
     }
 }

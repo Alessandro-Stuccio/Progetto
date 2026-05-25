@@ -13,5 +13,6 @@ public interface ChatFacade {
     List<ConversationPreviewResponse> getUserConversations(Long userId);
     void markAsRead(Long chatId, Long userId);
     Integer getTotalUnreadCount(Long userId);
-    void closeChatByUser(Long chatId, Long userId);
+    void closeChat(Long chatId, Long moderatorId);
+    void deleteChatByUser(Long chatId, Long userId);
 }

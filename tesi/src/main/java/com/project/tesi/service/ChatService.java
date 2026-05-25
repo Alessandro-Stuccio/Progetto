@@ -3,6 +3,7 @@ package com.project.tesi.service;
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.model.Chat;
 import com.project.tesi.model.Message;
+import com.project.tesi.model.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -14,7 +15,7 @@ import java.util.List;
 @Validated
 public interface ChatService {
 
-    Long createChat(@NotNull @Min(1) Long senderId, @NotNull @Min(1) Long receiverId);
+    Long getOrCreateChat(@NotNull User sender, @NotNull User receiver);
 
     Message sendMessage(@NotNull @Valid SendMessageRequest request, @NotNull @Min(1) Long senderId);
 
@@ -34,13 +35,15 @@ public interface ChatService {
 
     Chat getChatEntity(@NotNull @Min(1) Long chatId);
 
-    void closeChat(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long moderatorId);
+    void closeChat(@NotNull @Min(1) Long chatId, @NotNull User moderator);
 
-    void closeChatByUser(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
+    void deleteChatByUser(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 
     Long getReceiverId(@NotNull Chat chat, @NotNull @Min(1) Long currentUserId);
 
     Message getLastMessage(@NotNull @Min(1) Long chatId);
 
     int getUnreadCount(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
+
+    long countOpenChatsByModerator(@NotNull @Min(1) Long moderatorId);
 }

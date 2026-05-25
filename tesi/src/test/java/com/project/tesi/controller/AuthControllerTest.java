@@ -5,6 +5,9 @@ import com.project.tesi.dto.request.RegisterRequest;
 import com.project.tesi.dto.response.AuthResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
+import com.project.tesi.facade.UserFacade;
+import com.project.tesi.model.User;
+import com.project.tesi.service.AuthResult;
 import com.project.tesi.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,23 +22,21 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-/**
- * Test unitari per {@link AuthController}.
- */
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
     @Mock private AuthService authService;
+    @Mock private UserFacade userFacade;
 
     @InjectMocks
     private AuthController authController;
 
     @Test
-    @DisplayName("register — restituisce 200 con il profilo creato")
+    @DisplayName("register — chiama UserFacade e restituisce 200 con il profilo creato")
     void register() {
         RegisterRequest req = new RegisterRequest(null, null, "mario@test.com", null, null, null, null, null, null);
         UserResponse userResp = UserResponse.builder().id(1L).email("mario@test.com").role(Role.CLIENT).build();
-        when(authService.register(req)).thenReturn(userResp);
+        when(userFacade.registerUser(req)).thenReturn(userResp);
 
         ResponseEntity<UserResponse> response = authController.register(req);
 
@@ -47,8 +48,10 @@ class AuthControllerTest {
     @DisplayName("login — restituisce 200 con token JWT")
     void login() {
         LoginRequest req = new LoginRequest("mario@test.com", "password");
-        AuthResponse authResp = AuthResponse.builder().token("jwt-123").id(1L).build();
-        when(authService.login(req)).thenReturn(authResp);
+        User user = User.builder().id(1L).email("mario@test.com").password("password123")
+                .firstName("Mario").lastName("Rossi").role(Role.CLIENT).build();
+        AuthResult authResult = new AuthResult("jwt-123", user);
+        when(authService.login(req)).thenReturn(authResult);
 
         ResponseEntity<AuthResponse> response = authController.login(req);
 
@@ -65,4 +68,3 @@ class AuthControllerTest {
         assertThat(response.getBody().get("status")).isEqualTo("UP");
     }
 }
-

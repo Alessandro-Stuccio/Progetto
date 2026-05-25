@@ -1,19 +1,20 @@
 package com.project.tesi.service;
 
-import com.project.tesi.dto.request.PlanRequest;
-import com.project.tesi.model.Slot;
 import com.project.tesi.model.Subscription;
+import com.project.tesi.model.User;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.Optional;
 
 @Validated
 public interface SubscriptionService {
 
-    Subscription activateSubscription(@NotNull PlanRequest request, @NotNull Long userId);
-
     Subscription getSubscriptionStatus(@NotNull Long userId);
 
-    void deductCredits(@NotNull Slot slot);
+    Subscription save(@NotNull Subscription sub);
 
-    void refundCredits(@NotNull Slot slot);
+    Optional<Subscription> findActiveByUser(@NotNull User user);
+
+    Optional<Subscription> findActiveByUserWithLock(@NotNull User user);
 }

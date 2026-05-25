@@ -3,7 +3,7 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.request.ReviewRequest;
 import com.project.tesi.dto.response.ReviewResponse;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.UserFacade;
+import com.project.tesi.facade.ReviewFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,13 +19,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-/**
- * Test unitari per {@link ReviewController}.
- */
 @ExtendWith(MockitoExtension.class)
 class ReviewControllerTest {
 
-    @Mock private UserFacade userFacade;
+    @Mock private ReviewFacade reviewFacade;
 
     @InjectMocks
     private ReviewController reviewController;
@@ -36,7 +33,7 @@ class ReviewControllerTest {
         User mockUser = User.builder().id(1L).email("test@test.com").password("testpass").role(Role.CLIENT).build();
         ReviewRequest req = new ReviewRequest(2L, 5, null);
         ReviewResponse resp = ReviewResponse.builder().rating(5).authorName("Mario").build();
-        when(userFacade.addReview(req, 1L)).thenReturn(resp);
+        when(reviewFacade.addReview(req, 1L)).thenReturn(resp);
 
         ResponseEntity<ReviewResponse> response = reviewController.addReview(req, mockUser);
 
@@ -48,7 +45,7 @@ class ReviewControllerTest {
     @DisplayName("getReviewsForProfessional — restituisce lista recensioni")
     void getReviewsForProfessional() {
         ReviewResponse r = ReviewResponse.builder().rating(4).build();
-        when(userFacade.getReviewsForProfessional(2L)).thenReturn(List.of(r));
+        when(reviewFacade.getReviewsForProfessional(2L)).thenReturn(List.of(r));
 
         ResponseEntity<List<ReviewResponse>> response = reviewController.getReviewsForProfessional(2L);
 
@@ -59,8 +56,8 @@ class ReviewControllerTest {
     @DisplayName("canReview — true quando può recensire e non ha ancora recensito")
     void canReview_canReview() {
         User mockUser = User.builder().id(1L).email("test@test.com").password("testpass").role(Role.CLIENT).build();
-        when(userFacade.hasClientReviewed(1L, 2L)).thenReturn(false);
-        when(userFacade.canClientReview(1L, 2L)).thenReturn(true);
+        when(reviewFacade.hasClientReviewed(1L, 2L)).thenReturn(false);
+        when(reviewFacade.canClientReview(1L, 2L)).thenReturn(true);
 
         ResponseEntity<Map<String, Object>> response = reviewController.canReview(mockUser, 2L);
 
@@ -72,7 +69,7 @@ class ReviewControllerTest {
     @DisplayName("canReview — false quando ha già recensito")
     void canReview_alreadyReviewed() {
         User mockUser = User.builder().id(1L).email("test@test.com").password("testpass").role(Role.CLIENT).build();
-        when(userFacade.hasClientReviewed(1L, 2L)).thenReturn(true);
+        when(reviewFacade.hasClientReviewed(1L, 2L)).thenReturn(true);
 
         ResponseEntity<Map<String, Object>> response = reviewController.canReview(mockUser, 2L);
 

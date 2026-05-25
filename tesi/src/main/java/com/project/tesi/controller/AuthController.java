@@ -6,6 +6,9 @@ import com.project.tesi.dto.request.RegisterRequest;
 import com.project.tesi.dto.request.ResetPasswordRequest;
 import com.project.tesi.dto.response.AuthResponse;
 import com.project.tesi.dto.response.UserResponse;
+import com.project.tesi.facade.UserFacade;
+import com.project.tesi.model.User;
+import com.project.tesi.service.AuthResult;
 import com.project.tesi.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,9 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * Endpoint REST per l'autenticazione. Include login, registrazione, recupero password e una rotta /ping per check-up.
- */
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Auth", description = "Registrazione, login, recupero e reset password")
@@ -33,9 +33,11 @@ public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
+    private final UserFacade userFacade;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, UserFacade userFacade) {
         this.authService = authService;
+        this.userFacade = userFacade;
     }
 
     @Operation(summary = "Registra un nuovo utente", description = "Crea un account CLIENT e restituisce il profilo appena creato.")
@@ -47,7 +49,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
         log.info("Registrazione nuovo utente: {}", request.email());
-        UserResponse response = authService.register(request);
+        UserResponse response = userFacade.registerUser(request);
         log.info("Utente registrato con successo: id={}", response.getId());
         return ResponseEntity.ok(response);
     }
@@ -60,7 +62,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         log.info("Tentativo di login: {}", request.email());
-        return ResponseEntity.ok(authService.login(request));
+        AuthResult result = authService.login(request);
+        User u = result.user();
+        return ResponseEntity.ok(AuthResponse.builder()
+                .token(result.token())
+                .id(u.getId())
+                .firstName(u.getFirstName())
+                .lastName(u.getLastName())
+                .email(u.getEmail())
+                .role(u.getRole())
+                .profilePicture(u.getProfilePicture())
+                .build());
     }
 
     @Operation(summary = "Richiesta reset password", description = "Invia un link di reset all'email indicata (valido 30 minuti).")

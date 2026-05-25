@@ -11,6 +11,7 @@ import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
 import com.project.tesi.facade.AdminFacade;
+import com.project.tesi.facade.BookingFacade;
 import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.facade.UserFacade;
@@ -162,6 +163,7 @@ class AllControllersTest {
     @Nested
     class ProfessionalControllerTests {
         @Mock private UserFacade userFacade;
+        @Mock private BookingFacade bookingFacade;
         @InjectMocks private ProfessionalController professionalController;
 
         @Test @DisplayName("getProfessionals")
@@ -172,7 +174,7 @@ class AllControllersTest {
 
         @Test @DisplayName("getProfessionalSlots")
         void getProfessionalSlots() {
-            when(userFacade.getAvailableSlots(2L)).thenReturn(List.of());
+            when(bookingFacade.getAvailableSlots(2L)).thenReturn(List.of());
             assertThat(professionalController.getProfessionalSlots(2L).getBody()).isEmpty();
         }
 
@@ -180,7 +182,7 @@ class AllControllersTest {
         void createSlots() {
             User mockUser = User.builder().id(2L).email("pt@test.com").password("testpass").role(Role.PERSONAL_TRAINER).build();
             List<SlotDTO> slots = List.of();
-            when(userFacade.createSlots(2L, slots)).thenReturn(List.of());
+            when(bookingFacade.createSlots(2L, slots)).thenReturn(List.of());
             assertThat(professionalController.createSlots(mockUser, slots).getBody()).isEmpty();
         }
 
@@ -188,7 +190,7 @@ class AllControllersTest {
         void deleteSlot() {
             User mockUser = User.builder().id(2L).email("pt@test.com").password("testpass").role(Role.PERSONAL_TRAINER).build();
             ResponseEntity<Void> resp = professionalController.deleteSlot(10L, mockUser);
-            verify(userFacade).deleteSlot(10L, 2L);
+            verify(bookingFacade).deleteSlot(10L, 2L);
             assertThat(resp.getStatusCode().value()).isEqualTo(204);
         }
     }

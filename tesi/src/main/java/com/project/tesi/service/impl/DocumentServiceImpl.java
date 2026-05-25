@@ -1,9 +1,6 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.dto.response.DocumentUploadResponse;
-import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.DocumentType;
-import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.document.DocumentNotFoundException;
 import com.project.tesi.exception.document.DocumentStorageException;
@@ -39,27 +36,6 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
-    }
-
-    @Override
-    @Transactional
-    public DocumentUploadResponse uploadDocumentWithValidation(MultipartFile file, Long clientId, Long uploaderId, String docType) {
-        userRepository.findById(clientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente", clientId));
-
-        User uploader = userRepository.findById(uploaderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Uploader", uploaderId));
-
-        if (uploader.getRole() == Role.PERSONAL_TRAINER && !"WORKOUT_PLAN".equals(docType)) {
-            throw new InvalidFileException("Il Personal Trainer può caricare solo schede di allenamento.");
-        }
-        if (uploader.getRole() == Role.NUTRITIONIST && !"DIET_PLAN".equals(docType)) {
-            throw new InvalidFileException("Il Nutrizionista può caricare solo piani alimentari.");
-        }
-
-        Document doc = uploadDocument(file, clientId, uploaderId, docType);
-        return new DocumentUploadResponse(doc.getId(), doc.getFileName(),
-                doc.getType().name(), doc.getUploadDate().toString());
     }
 
     @Override
@@ -167,11 +143,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public UpdatedNotesResponse updateNotes(Long documentId, String notes) {
+    public Document updateNotes(Long documentId, String notes) {
         Document doc = getDocumentById(documentId);
         doc.setNotes(notes);
-        documentRepository.save(doc);
-        return new UpdatedNotesResponse(doc.getId(), doc.getNotes());
+        return documentRepository.save(doc);
     }
 
     @Override

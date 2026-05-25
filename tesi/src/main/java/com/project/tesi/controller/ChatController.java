@@ -91,7 +91,7 @@ public class ChatController {
     @PostMapping("/{chatId}/close")
     public ResponseEntity<Void> closeChat(@PathVariable Long chatId,
                                            @AuthenticationPrincipal User user) {
-        chatFacade.closeChatByUser(chatId, user.getId());
+        chatFacade.deleteChatByUser(chatId, user.getId());
         return ResponseEntity.noContent().build();
     }
 }

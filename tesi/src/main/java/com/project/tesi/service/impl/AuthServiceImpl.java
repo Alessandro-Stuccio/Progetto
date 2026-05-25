@@ -1,15 +1,12 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.dto.request.LoginRequest;
-import com.project.tesi.dto.request.RegisterRequest;
-import com.project.tesi.dto.response.AuthResponse;
-import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.service.AuthResult;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.security.CustomUserDetailsService;
 import com.project.tesi.security.JwtUtil;
-import com.project.tesi.facade.UserFacade;
 import com.project.tesi.service.AuthService;
 import com.project.tesi.service.EmailService;
 import org.slf4j.Logger;
@@ -26,7 +23,6 @@ public class AuthServiceImpl implements AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
-    private final UserFacade userFacade;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
@@ -34,14 +30,12 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(UserFacade userFacade,
-                           AuthenticationManager authenticationManager,
+    public AuthServiceImpl(AuthenticationManager authenticationManager,
                            CustomUserDetailsService userDetailsService,
                            JwtUtil jwtUtil,
                            UserRepository userRepository,
                            EmailService emailService,
                            PasswordEncoder passwordEncoder) {
-        this.userFacade = userFacade;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
@@ -51,12 +45,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserResponse register(RegisterRequest request) {
-        return userFacade.registerUser(request);
-    }
-
-    @Override
-    public AuthResponse login(LoginRequest request) {
+    public AuthResult login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
@@ -67,15 +56,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new ResourceNotFoundException("Utente", "email", request.email()));
 
-        return AuthResponse.builder()
-                .token(jwtToken)
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .profilePicture(user.getProfilePicture())
-                .build();
+        return new AuthResult(jwtToken, user);
     }
 
     @Override

@@ -18,7 +18,5 @@ public interface ReviewService {
 
     double getAverageRating(@NotNull Long professionalId);
 
-    boolean canClientReview(@NotNull Long clientId, @NotNull Long professionalId);
-
-    boolean hasClientReviewed(@NotNull Long clientId, @NotNull Long professionalId);
+    boolean hasBookingRelationship(@NotNull Long clientId, @NotNull Long professionalId);
 }

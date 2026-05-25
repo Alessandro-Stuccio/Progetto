@@ -4,6 +4,8 @@ import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.dto.response.ChatMessageResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
 import com.project.tesi.enums.Role;
+import com.project.tesi.exception.chat.ChatNotAllowedException;
+import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.mapper.ChatMapper;
 import com.project.tesi.model.Chat;
@@ -31,7 +33,13 @@ public class ChatFacadeImpl implements ChatFacade {
 
     @Override
     public Long createChat(Long senderId, Long receiverId) {
-        return chatService.createChat(senderId, receiverId);
+        if (senderId.equals(receiverId)) {
+            throw new IllegalArgumentException("Non puoi avviare una chat con te stesso");
+        }
+        User sender = userService.getUserById(senderId);
+        User receiver = userService.getUserById(receiverId);
+        validateChatPermission(sender, receiver);
+        return chatService.getOrCreateChat(sender, receiver);
     }
 
     @Override
@@ -85,7 +93,39 @@ public class ChatFacadeImpl implements ChatFacade {
     }
 
     @Override
-    public void closeChatByUser(Long chatId, Long userId) {
-        chatService.closeChatByUser(chatId, userId);
+    public void closeChat(Long chatId, Long moderatorId) {
+        User moderator = userService.getUserById(moderatorId);
+        if (moderator.getRole() != Role.MODERATOR && moderator.getRole() != Role.ADMIN) {
+            throw new UnauthorizedAccessException("Solo i moderatori possono chiudere le chat");
+        }
+        chatService.closeChat(chatId, moderator);
+    }
+
+    @Override
+    public void deleteChatByUser(Long chatId, Long userId) {
+        chatService.deleteChatByUser(chatId, userId);
+    }
+
+    private void validateChatPermission(User uA, User uB) {
+        if (uA.getRole() == Role.ADMIN || uB.getRole() == Role.ADMIN) return;
+
+        if (uA.getRole() == Role.INSURANCE_MANAGER || uB.getRole() == Role.INSURANCE_MANAGER) {
+            throw new ChatNotAllowedException("Insurance manager può contattare solo l'amministratore.");
+        }
+
+        if (uA.getRole() == Role.MODERATOR || uB.getRole() == Role.MODERATOR) return;
+
+        User client = null, prof = null;
+        if (uA.getRole() == Role.CLIENT) { client = uA; prof = uB; }
+        else if (uB.getRole() == Role.CLIENT) { client = uB; prof = uA; }
+
+        boolean assigned = false;
+        if (client != null && prof != null) {
+            if (prof.getRole() == Role.PERSONAL_TRAINER && client.getAssignedPT() != null
+                    && client.getAssignedPT().getId().equals(prof.getId())) assigned = true;
+            if (prof.getRole() == Role.NUTRITIONIST && client.getAssignedNutritionist() != null
+                    && client.getAssignedNutritionist().getId().equals(prof.getId())) assigned = true;
+        }
+        if (!assigned) throw new ChatNotAllowedException("Non sei assegnato a questo utente");
     }
 }

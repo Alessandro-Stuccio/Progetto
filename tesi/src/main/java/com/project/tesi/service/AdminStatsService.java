@@ -1,16 +1,17 @@
 package com.project.tesi.service;
 
+import com.project.tesi.model.Plan;
+import com.project.tesi.model.Slot;
+import com.project.tesi.model.Subscription;
+import com.project.tesi.model.User;
 import org.springframework.validation.annotation.Validated;
 
-import com.project.tesi.dto.response.stats.AdminStatsResponse;
+import java.util.List;
 
-/**
- * Interfaccia del servizio per le statistiche del pannello Admin.
- * Calcola metriche aggregate: distribuzione utenti, fatturato, crediti, prenotazioni.
- */
 @Validated
 public interface AdminStatsService {
-
-    /** Restituisce tutte le statistiche aggregate per la dashboard admin. */
-    AdminStatsResponse getAdminStats();
+    List<User> getAllUsers();
+    List<Subscription> getAllSubscriptions();
+    List<Plan> getAllPlans();
+    List<Slot> getAllBookedSlots();
 }

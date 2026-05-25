@@ -56,4 +56,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
      * @return un Optional contenente l'abbonamento, vuoto se non presente
      */
     Optional<Subscription> findByUserId(Long userId);
+
+    boolean existsByPlanId(Long planId);
 }

@@ -2,7 +2,7 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.BookingRequest;
 import com.project.tesi.dto.response.BookingResponse;
-import com.project.tesi.facade.UserFacade;
+import com.project.tesi.facade.BookingFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,19 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * Endpoint REST per le prenotazioni.
- */
 @RestController
 @RequestMapping("/api/bookings")
 @Tag(name = "Bookings", description = "Creazione e cancellazione prenotazioni")
 public class BookingController {
 
     private static final Logger log = LoggerFactory.getLogger(BookingController.class);
-    private final UserFacade userFacade;
+    private final BookingFacade bookingFacade;
 
-    public BookingController(UserFacade userFacade) {
-        this.userFacade = userFacade;
+    public BookingController(BookingFacade bookingFacade) {
+        this.bookingFacade = bookingFacade;
     }
 
     @Operation(summary = "Crea prenotazione", description = "Prenota uno slot. Deduce i crediti dall'abbonamento attivo. Usa locking per evitare double-booking.")
@@ -47,7 +44,7 @@ public class BookingController {
     public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request,
                                                           @AuthenticationPrincipal User user) {
         log.info("Richiesta prenotazione slot {} da utente {}", request.slotId(), user.getId());
-        BookingResponse response = userFacade.createBooking(request, user.getId());
+        BookingResponse response = bookingFacade.createBooking(request, user.getId());
         log.info("Prenotazione confermata: id={} utente={}", response.getId(), user.getId());
         return ResponseEntity.ok(response);
     }
@@ -63,7 +60,7 @@ public class BookingController {
     public ResponseEntity<Map<String, String>> cancelBooking(@PathVariable Long id,
                                                               @AuthenticationPrincipal User user) {
         log.info("Annullamento prenotazione id={} richiesto da utente {}", id, user.getId());
-        userFacade.cancelBooking(id, user.getId());
+        bookingFacade.cancelBooking(id, user.getId());
         return ResponseEntity.ok(Map.of("message", "Prenotazione annullata con successo. Lo slot è stato liberato e il credito riaccreditato."));
     }
 

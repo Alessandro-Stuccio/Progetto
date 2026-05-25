@@ -5,6 +5,7 @@ import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
+import com.project.tesi.exception.document.InvalidFileException;
 import com.project.tesi.facade.ActivityFeedFacade;
 import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.mapper.DocumentMapper;
@@ -37,9 +38,18 @@ public class DocumentFacadeImpl implements DocumentFacade {
 
     @Override
     public DocumentUploadResponse uploadDocumentWithValidation(MultipartFile file, Long clientId, Long uploaderId, String type) {
-        DocumentUploadResponse result = documentService.uploadDocumentWithValidation(file, clientId, uploaderId, type);
+        User uploader = userService.getUserById(uploaderId);
+
+        if (uploader.getRole() == Role.PERSONAL_TRAINER && !"WORKOUT_PLAN".equals(type)) {
+            throw new InvalidFileException("Il Personal Trainer può caricare solo schede di allenamento.");
+        }
+        if (uploader.getRole() == Role.NUTRITIONIST && !"DIET_PLAN".equals(type)) {
+            throw new InvalidFileException("Il Nutrizionista può caricare solo piani alimentari.");
+        }
+
+        Document doc = documentService.uploadDocument(file, clientId, uploaderId, type);
         activityFeedFacade.logDocumentUploaded(clientId, uploaderId, type);
-        return result;
+        return new DocumentUploadResponse(doc.getId(), doc.getFileName(), doc.getType().name(), doc.getUploadDate().toString());
     }
 
     @Override
@@ -123,6 +133,6 @@ public class DocumentFacadeImpl implements DocumentFacade {
         if (!isOwner && !isUploader && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a modificare le note di questo documento");
         }
-        return documentService.updateNotes(id, notes);
+        return documentMapper.toUpdatedNotesResponse(documentService.updateNotes(id, notes));
     }
 }

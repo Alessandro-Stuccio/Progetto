@@ -28,4 +28,10 @@ public interface UserService {
     long countByAssignedPT(@NotNull User pt);
 
     long countByAssignedNutritionist(@NotNull User nutritionist);
+
+    List<User> findByAssignedPT(@NotNull User pt);
+
+    List<User> findByAssignedNutritionist(@NotNull User nutritionist);
+
+    String encodePassword(@NotNull String rawPassword);
 }

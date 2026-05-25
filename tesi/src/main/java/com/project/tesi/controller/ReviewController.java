@@ -2,7 +2,7 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.ReviewRequest;
 import com.project.tesi.dto.response.ReviewResponse;
-import com.project.tesi.facade.UserFacade;
+import com.project.tesi.facade.ReviewFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,19 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Endpoint REST per le recensioni. Permette ai clienti di valutare i professionisti post-appuntamento.
- */
 @RestController
 @RequestMapping("/api/reviews")
 @Tag(name = "Reviews", description = "Recensioni dei clienti verso i professionisti")
 public class ReviewController {
 
     private static final Logger log = LoggerFactory.getLogger(ReviewController.class);
-    private final UserFacade userFacade;
+    private final ReviewFacade reviewFacade;
 
-    public ReviewController(UserFacade userFacade) {
-        this.userFacade = userFacade;
+    public ReviewController(ReviewFacade reviewFacade) {
+        this.reviewFacade = reviewFacade;
     }
 
     @Operation(summary = "Aggiungi recensione", description = "Il cliente lascia una recensione (1-5 stelle) a un professionista con cui ha avuto almeno un appuntamento.")
@@ -48,7 +45,7 @@ public class ReviewController {
     public ResponseEntity<ReviewResponse> addReview(@RequestBody ReviewRequest request,
                                                      @AuthenticationPrincipal User user) {
         log.info("Aggiunta recensione per professionista {} da utente {}", request.professionalId(), user.getId());
-        return ResponseEntity.ok(userFacade.addReview(request, user.getId()));
+        return ResponseEntity.ok(reviewFacade.addReview(request, user.getId()));
     }
 
     @Operation(summary = "Recensioni professionista", description = "Restituisce tutte le recensioni ricevute dal professionista specificato.")
@@ -58,7 +55,7 @@ public class ReviewController {
     })
     @GetMapping("/professional/{professionalId}")
     public ResponseEntity<List<ReviewResponse>> getReviewsForProfessional(@PathVariable Long professionalId) {
-        return ResponseEntity.ok(userFacade.getReviewsForProfessional(professionalId));
+        return ResponseEntity.ok(reviewFacade.getReviewsForProfessional(professionalId));
     }
 
     @Operation(summary = "Verifica possibilità di recensire", description = "Indica se il cliente può ancora recensire il professionista (canReview) e se lo ha già fatto (hasReviewed).")
@@ -69,8 +66,8 @@ public class ReviewController {
     @GetMapping("/can-review")
     public ResponseEntity<Map<String, Object>> canReview(@AuthenticationPrincipal User user,
                                                           @RequestParam Long professionalId) {
-        boolean hasReviewed = userFacade.hasClientReviewed(user.getId(), professionalId);
-        boolean can = !hasReviewed && userFacade.canClientReview(user.getId(), professionalId);
+        boolean hasReviewed = reviewFacade.hasClientReviewed(user.getId(), professionalId);
+        boolean can = !hasReviewed && reviewFacade.canClientReview(user.getId(), professionalId);
         return ResponseEntity.ok(Map.of("canReview", can, "hasReviewed", hasReviewed));
     }
 }
