@@ -6,6 +6,7 @@ import com.project.tesi.mapper.PlanMapper;
 import com.project.tesi.model.Plan;
 import com.project.tesi.service.PlanService;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,26 +22,38 @@ public class PlanFacadeImpl implements PlanFacade {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PlanResponseDTO> getAllPlans() {
         return planMapper.toResponseList(planService.getAllPlans());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PlanResponseDTO getPlanById(Long id) {
         return planMapper.toResponse(planService.getPlanById(id));
     }
 
     @Override
+    @Transactional
     public PlanResponseDTO createPlan(Plan plan) {
         return planMapper.toResponse(planService.createPlan(plan));
     }
 
     @Override
+    @Transactional
     public PlanResponseDTO updatePlan(Long id, Plan updated) {
-        return planMapper.toResponse(planService.updatePlan(id, updated));
+        Plan existing = planService.getPlanById(id);
+        if (updated.getName() != null) existing.setName(updated.getName());
+        if (updated.getDuration() != null) existing.setDuration(updated.getDuration());
+        if (updated.getFullPrice() != null) existing.setFullPrice(updated.getFullPrice());
+        if (updated.getMonthlyInstallmentPrice() != null) existing.setMonthlyInstallmentPrice(updated.getMonthlyInstallmentPrice());
+        existing.setMonthlyCreditsPT(updated.getMonthlyCreditsPT());
+        existing.setMonthlyCreditsNutri(updated.getMonthlyCreditsNutri());
+        return planMapper.toResponse(planService.createPlan(existing));
     }
 
     @Override
+    @Transactional
     public void deletePlan(Long id) {
         planService.deletePlan(id);
     }

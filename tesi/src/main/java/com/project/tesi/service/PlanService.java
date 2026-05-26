@@ -16,13 +16,9 @@ public interface PlanService {
 
     Plan createPlan(@NotNull Plan plan);
 
-    Plan updatePlan(@NotNull @Min(1) Long id, @NotNull Plan updated);
-
     void deletePlan(@NotNull @Min(1) Long id);
 
     boolean existsByName(@NotNull String name);
 
     boolean hasSubscribers(@NotNull @Min(1) Long planId);
-
-    Plan save(@NotNull Plan plan);
 }

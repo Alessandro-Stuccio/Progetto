@@ -10,6 +10,7 @@ import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.facade.AdminFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,12 +43,12 @@ public class AdminController {
 
     @Operation(summary = "Crea un nuovo utente")
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequestDTO request) {
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO request) {
         return ResponseEntity.ok(adminFacade.createUser(request));
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody ModeratorUserUpdateRequest request) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody ModeratorUserUpdateRequest request) {
         return ResponseEntity.ok(adminFacade.updateUser(id, request));
     }
 
@@ -63,7 +64,7 @@ public class AdminController {
     }
 
     @PutMapping("/subscriptions/{id}/credits")
-    public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id, @RequestBody SubscriptionCreditsUpdateDTO request) {
+    public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id, @Valid @RequestBody SubscriptionCreditsUpdateDTO request) {
         return ResponseEntity.ok(adminFacade.updateSubscriptionCredits(
                 id,
                 request.creditsPT() != null ? request.creditsPT() : 0,
@@ -72,12 +73,12 @@ public class AdminController {
     }
 
     @PostMapping("/plans")
-    public ResponseEntity<PlanResponseDTO> createPlan(@RequestBody PlanCreateRequestDTO request) {
+    public ResponseEntity<PlanResponseDTO> createPlan(@Valid @RequestBody PlanCreateRequestDTO request) {
         return ResponseEntity.ok(adminFacade.createPlan(request));
     }
 
     @PutMapping("/plans/{id}")
-    public ResponseEntity<PlanResponseDTO> updatePlan(@PathVariable Long id, @RequestBody PlanCreateRequestDTO request) {
+    public ResponseEntity<PlanResponseDTO> updatePlan(@PathVariable Long id, @Valid @RequestBody PlanCreateRequestDTO request) {
         return ResponseEntity.ok(adminFacade.updatePlan(id, request));
     }
 

@@ -6,14 +6,16 @@ import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.exception.document.InvalidFileException;
-import com.project.tesi.facade.ActivityFeedFacade;
 import com.project.tesi.facade.DocumentFacade;
+import com.project.tesi.service.ActivityFeedService;
 import com.project.tesi.mapper.DocumentMapper;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import com.project.tesi.service.DocumentService;
+import com.project.tesi.service.FileStorageService;
 import com.project.tesi.service.UserService;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -22,21 +24,25 @@ import java.util.List;
 public class DocumentFacadeImpl implements DocumentFacade {
 
     private final DocumentService documentService;
-    private final ActivityFeedFacade activityFeedFacade;
+    private final FileStorageService fileStorageService;
+    private final ActivityFeedService activityFeedService;
     private final UserService userService;
     private final DocumentMapper documentMapper;
 
     public DocumentFacadeImpl(DocumentService documentService,
-                              ActivityFeedFacade activityFeedFacade,
+                              FileStorageService fileStorageService,
+                              ActivityFeedService activityFeedService,
                               UserService userService,
                               DocumentMapper documentMapper) {
         this.documentService = documentService;
-        this.activityFeedFacade = activityFeedFacade;
+        this.fileStorageService = fileStorageService;
+        this.activityFeedService = activityFeedService;
         this.userService = userService;
         this.documentMapper = documentMapper;
     }
 
     @Override
+    @Transactional
     public DocumentUploadResponse uploadDocumentWithValidation(MultipartFile file, Long clientId, Long uploaderId, String type) {
         User uploader = userService.getUserById(uploaderId);
 
@@ -47,32 +53,48 @@ public class DocumentFacadeImpl implements DocumentFacade {
             throw new InvalidFileException("Il Nutrizionista può caricare solo piani alimentari.");
         }
 
-        Document doc = documentService.uploadDocument(file, clientId, uploaderId, type);
-        activityFeedFacade.logDocumentUploaded(clientId, uploaderId, type);
+        String filePath = fileStorageService.store(file);
+
+        Document doc;
+        try {
+            doc = documentService.uploadDocument(filePath, file.getOriginalFilename(),
+                    file.getContentType(), type, clientId, uploaderId);
+        } catch (Exception e) {
+            fileStorageService.delete(filePath);
+            throw e;
+        }
+
+        activityFeedService.logDocumentUploaded(clientId, uploaderId, type);
         return new DocumentUploadResponse(doc.getId(), doc.getFileName(), doc.getType().name(), doc.getUploadDate().toString());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Document getDocumentById(Long id) {
         return documentService.getDocumentById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] downloadDocument(Long id) {
-        return documentService.downloadDocument(id);
+        Document doc = documentService.getDocumentById(id);
+        return fileStorageService.load(doc.getFilePath());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DocumentResponse> getUserDocumentsDto(Long userId) {
         return documentMapper.toResponseList(documentService.getUserDocuments(userId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DocumentResponse> getUserDocumentsByTypeDto(Long userId, String type) {
         return documentMapper.toResponseList(documentService.getUserDocumentsByType(userId, type));
     }
 
     @Override
+    @Transactional
     public void deleteDocument(Long id, Long callerId) {
         Document doc = documentService.getDocumentById(id);
         User caller = userService.getUserById(callerId);
@@ -82,10 +104,13 @@ public class DocumentFacadeImpl implements DocumentFacade {
         if (!isOwner && !isUploader && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a eliminare questo documento");
         }
+        String filePath = doc.getFilePath();
         documentService.deleteDocument(id);
+        fileStorageService.delete(filePath);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] downloadDocumentSecure(Long id, Long callerId) {
         Document doc = documentService.getDocumentById(id);
         User caller = userService.getUserById(callerId);
@@ -96,10 +121,11 @@ public class DocumentFacadeImpl implements DocumentFacade {
         if (!isOwner && !isUploader && !isProfessional && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a scaricare questo documento");
         }
-        return documentService.downloadDocument(id);
+        return fileStorageService.load(doc.getFilePath());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DocumentResponse> getUserDocumentsDtoSecure(Long targetUserId, Long callerId) {
         User caller = userService.getUserById(callerId);
         boolean isSelf = callerId.equals(targetUserId);
@@ -112,6 +138,7 @@ public class DocumentFacadeImpl implements DocumentFacade {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DocumentResponse> getUserDocumentsByTypeDtoSecure(Long targetUserId, String type, Long callerId) {
         User caller = userService.getUserById(callerId);
         boolean isSelf = callerId.equals(targetUserId);
@@ -124,6 +151,7 @@ public class DocumentFacadeImpl implements DocumentFacade {
     }
 
     @Override
+    @Transactional
     public UpdatedNotesResponse updateNotes(Long id, String notes, Long callerId) {
         Document doc = documentService.getDocumentById(id);
         User caller = userService.getUserById(callerId);

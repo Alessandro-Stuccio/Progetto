@@ -2,6 +2,7 @@ package com.project.tesi.service.impl;
 
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.enums.ChatStatus;
+import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
@@ -10,8 +11,8 @@ import com.project.tesi.model.Message;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ChatRepository;
 import com.project.tesi.repository.MessageRepository;
-import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.ChatService;
+import com.project.tesi.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -27,18 +28,17 @@ public class ChatServiceImpl implements ChatService {
     private static final Logger log = LoggerFactory.getLogger(ChatServiceImpl.class);
     private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     public ChatServiceImpl(ChatRepository chatRepository,
                            MessageRepository messageRepository,
-                           UserRepository userRepository) {
+                           UserService userService) {
         this.chatRepository = chatRepository;
         this.messageRepository = messageRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @Override
-    @Transactional
     public Long getOrCreateChat(User sender, User receiver) {
         return chatRepository.findChatBetweenUsers(sender.getId(), receiver.getId())
                 .orElseGet(() -> {
@@ -53,7 +53,6 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    @Transactional
     public Message sendMessage(SendMessageRequest request, Long senderId) {
         Chat chat = chatRepository.findById(request.chatId())
                 .orElseThrow(() -> new ResourceNotFoundException("Chat", request.chatId()));
@@ -62,8 +61,7 @@ public class ChatServiceImpl implements ChatService {
             throw new ChatNotAllowedException("La chat è chiusa e non accetta nuovi messaggi.");
         }
 
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Mittente", senderId));
+        User sender = userService.getUserById(senderId);
 
         if (!chat.getUser1().getId().equals(sender.getId()) && !chat.getUser2().getId().equals(sender.getId())) {
             throw new ChatNotAllowedException("Non sei parte di questa chat");
@@ -81,7 +79,7 @@ public class ChatServiceImpl implements ChatService {
     @Transactional
     public void sendMessageDirect(Long chatId, Long senderId, String content) {
         Chat chat = chatRepository.findById(chatId).orElse(null);
-        User sender = userRepository.findById(senderId).orElse(null);
+        User sender = userService.findById(senderId).orElse(null);
         if (chat == null) {
             log.warn("[Chat] sendMessageDirect: chat {} non trovata.", chatId);
             return;
@@ -116,7 +114,6 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Message> getConversation(Long chatId, Long userId, int page, int size) {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
@@ -129,7 +126,6 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Chat> getUserConversations(Long userId) {
         return chatRepository.findAllChatsByUserId(userId);
     }
@@ -145,38 +141,27 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public int getTotalUnreadCount(Long userId) {
         return messageRepository.countTotalUnreadMessagesByUserId(userId);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public String getUserFullName(Long userId) {
-        return userRepository.findById(userId)
-                .map(User::getFullName)
-                .orElse("Utente");
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Chat getChatEntity(Long chatId) {
         return chatRepository.findById(chatId).orElse(null);
     }
 
     @Override
-    @Transactional
-    public void closeChat(Long chatId, User moderator) {
-        Chat chat = chatRepository.findById(chatId)
-                .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
-        chat.setStatus(ChatStatus.CLOSED);
-        chat.setClosedAt(LocalDateTime.now());
-        chat.setClosedBy(moderator);
-        chatRepository.save(chat);
+    public Chat save(Chat chat) {
+        return chatRepository.save(chat);
     }
 
     @Override
-    @Transactional
+    public void deleteChatsForUser(Long userId) {
+        List<Chat> chats = chatRepository.findAllChatsByUserId(userId);
+        chatRepository.deleteAll(chats);
+    }
+
+    @Override
     public void deleteChatByUser(Long chatId, Long userId) {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
@@ -189,28 +174,31 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public Long getReceiverId(Chat chat, Long currentUserId) {
-        return chat.getUser1().getId().equals(currentUserId)
-                ? chat.getUser2().getId()
-                : chat.getUser1().getId();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Message getLastMessage(Long chatId) {
         return messageRepository.findLastMessageByChatId(chatId);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public int getUnreadCount(Long chatId, Long userId) {
         return messageRepository.countUnreadMessagesByChatIdAndUserId(chatId, userId);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public long countOpenChatsByModerator(Long moderatorId) {
         return chatRepository.countOpenChatsByModerator(moderatorId);
     }
-}
 
+    @Override
+    public void closeChat(Long chatId, Long moderatorId) {
+        User moderator = userService.getUserById(moderatorId);
+        if (moderator.getRole() != Role.MODERATOR && moderator.getRole() != Role.ADMIN) {
+            throw new UnauthorizedAccessException("Solo i moderatori possono chiudere le chat");
+        }
+        Chat chat = chatRepository.findById(chatId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
+        chat.setStatus(ChatStatus.CLOSED);
+        chat.setClosedAt(LocalDateTime.now());
+        chat.setClosedBy(moderator);
+        chatRepository.save(chat);
+    }
+}

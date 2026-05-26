@@ -3,8 +3,10 @@ package com.project.tesi.facade.impl;
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.dto.response.ChatMessageResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
+import com.project.tesi.enums.ChatStatus;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
+import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.mapper.ChatMapper;
@@ -14,6 +16,9 @@ import com.project.tesi.model.User;
 import com.project.tesi.service.ChatService;
 import com.project.tesi.service.UserService;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +37,7 @@ public class ChatFacadeImpl implements ChatFacade {
     }
 
     @Override
+    @Transactional
     public Long createChat(Long senderId, Long receiverId) {
         if (senderId.equals(receiverId)) {
             throw new IllegalArgumentException("Non puoi avviare una chat con te stesso");
@@ -43,21 +49,24 @@ public class ChatFacadeImpl implements ChatFacade {
     }
 
     @Override
+    @Transactional
     public ChatMessageResponse sendMessage(SendMessageRequest request, Long senderId) {
         Message message = chatService.sendMessage(request, senderId);
-        Long receiverId = chatService.getReceiverId(message.getChat(), senderId);
+        Long receiverId = getReceiverId(message.getChat(), senderId);
         return chatMapper.toMessageResponse(message, receiverId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ChatMessageResponse> getConversation(Long chatId, Long userId, int page, int size) {
         List<Message> messages = chatService.getConversation(chatId, userId, page, size);
         Chat chat = chatService.getChatEntity(chatId);
-        Long receiverId = chatService.getReceiverId(chat, userId);
+        Long receiverId = getReceiverId(chat, userId);
         return chatMapper.toMessageResponseList(messages, receiverId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ConversationPreviewResponse> getUserConversations(Long userId) {
         List<Chat> chats = chatService.getUserConversations(userId);
         User currentUser = userService.getUserById(userId);
@@ -83,27 +92,44 @@ public class ChatFacadeImpl implements ChatFacade {
     }
 
     @Override
+    @Transactional
     public void markAsRead(Long chatId, Long userId) {
         chatService.markAsRead(chatId, userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer getTotalUnreadCount(Long userId) {
         return chatService.getTotalUnreadCount(userId);
     }
 
     @Override
+    @Transactional
     public void closeChat(Long chatId, Long moderatorId) {
         User moderator = userService.getUserById(moderatorId);
         if (moderator.getRole() != Role.MODERATOR && moderator.getRole() != Role.ADMIN) {
             throw new UnauthorizedAccessException("Solo i moderatori possono chiudere le chat");
         }
-        chatService.closeChat(chatId, moderator);
+        Chat chat = chatService.getChatEntity(chatId);
+        if (chat == null) {
+            throw new ResourceNotFoundException("Chat", chatId);
+        }
+        chat.setStatus(ChatStatus.CLOSED);
+        chat.setClosedAt(LocalDateTime.now());
+        chat.setClosedBy(moderator);
+        chatService.save(chat);
     }
 
     @Override
+    @Transactional
     public void deleteChatByUser(Long chatId, Long userId) {
         chatService.deleteChatByUser(chatId, userId);
+    }
+
+    private Long getReceiverId(Chat chat, Long currentUserId) {
+        return chat.getUser1().getId().equals(currentUserId)
+                ? chat.getUser2().getId()
+                : chat.getUser1().getId();
     }
 
     private void validateChatPermission(User uA, User uB) {

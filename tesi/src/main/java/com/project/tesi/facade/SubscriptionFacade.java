@@ -10,9 +10,13 @@ public interface SubscriptionFacade {
 
     Subscription activateSubscription(PlanRequest request, Long userId);
 
+    Subscription getSubscriptionStatus(Long userId);
+
     void deductCredits(Slot slot);
 
     void refundCredits(Slot slot);
 
     void refundCreditsIfActive(User client, Role professionalRole);
+
+    void deleteByUser(Long userId);
 }

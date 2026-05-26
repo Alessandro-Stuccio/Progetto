@@ -7,10 +7,8 @@ import com.project.tesi.exception.booking.SlotAlreadyBookedException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import com.project.tesi.model.WeeklySchedule;
 import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.repository.WeeklyScheduleRepository;
-import com.project.tesi.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,10 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +30,6 @@ class SlotServiceImplTest {
 
     @Mock private SlotRepository slotRepository;
     @Mock private WeeklyScheduleRepository weeklyScheduleRepository;
-    @Mock private UserService userService;
 
     private SlotServiceImpl slotService;
 
@@ -52,7 +47,7 @@ class SlotServiceImplTest {
                 .endTime(LocalDateTime.now().plusDays(2).plusMinutes(30))
                 .build();
 
-        slotService = new SlotServiceImpl(slotRepository, weeklyScheduleRepository, userService);
+        slotService = new SlotServiceImpl(slotRepository, weeklyScheduleRepository);
     }
 
     // ─── createSlots ──────────────────────────────────────────────────────────
@@ -80,18 +75,10 @@ class SlotServiceImplTest {
     @Test
     @DisplayName("getAvailableSlots — restituisce slot disponibili")
     void getAvailableSlots_success() {
-        when(userService.getUserById(2L)).thenReturn(pt);
         when(slotRepository.findByProfessionalAndBookedByIsNull(pt)).thenReturn(List.of(slot));
 
-        List<Slot> result = slotService.getAvailableSlots(2L);
+        List<Slot> result = slotService.getAvailableSlots(pt);
         assertThat(result).hasSize(1);
-    }
-
-    @Test
-    @DisplayName("getAvailableSlots — professionista non trovato lancia ResourceNotFoundException")
-    void getAvailableSlots_notFound() {
-        when(userService.getUserById(999L)).thenThrow(new ResourceNotFoundException("Utente", 999L));
-        assertThatThrownBy(() -> slotService.getAvailableSlots(999L)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ─── getSlot ─────────────────────────────────────────────────────────────
@@ -175,38 +162,4 @@ class SlotServiceImplTest {
         verify(slotRepository).deleteById(10L);
     }
 
-    // ─── generateSlotsFromSchedule ────────────────────────────────────────────
-
-    @Test
-    @DisplayName("generateSlotsFromSchedule — genera slot da orario settimanale")
-    void generateSlotsFromSchedule_success() {
-        when(userService.getUserById(2L)).thenReturn(pt);
-
-        LocalDate nextMonday = LocalDate.now().with(java.time.temporal.TemporalAdjusters.next(DayOfWeek.MONDAY));
-        WeeklySchedule schedule = WeeklySchedule.builder()
-                .professional(pt).dayOfWeek(DayOfWeek.MONDAY)
-                .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(10, 0)).build();
-        when(weeklyScheduleRepository.findByProfessional(pt)).thenReturn(List.of(schedule));
-        when(slotRepository.existsByProfessionalAndStartTime(any(), any())).thenReturn(false);
-
-        slotService.generateSlotsFromSchedule(2L, nextMonday, nextMonday);
-
-        verify(slotRepository).saveAll(argThat(list -> ((List<?>) list).size() == 2));
-    }
-
-    @Test
-    @DisplayName("generateSlotsFromSchedule — slot già esistente non viene duplicato")
-    void generateSlotsFromSchedule_noDuplicates() {
-        when(userService.getUserById(2L)).thenReturn(pt);
-        LocalDate nextMon = LocalDate.now().with(java.time.temporal.TemporalAdjusters.next(DayOfWeek.MONDAY));
-        WeeklySchedule schedule = WeeklySchedule.builder()
-                .professional(pt).dayOfWeek(DayOfWeek.MONDAY)
-                .startTime(LocalTime.of(9, 0)).endTime(LocalTime.of(9, 30)).build();
-        when(weeklyScheduleRepository.findByProfessional(pt)).thenReturn(List.of(schedule));
-        when(slotRepository.existsByProfessionalAndStartTime(any(), any())).thenReturn(true);
-
-        slotService.generateSlotsFromSchedule(2L, nextMon, nextMon);
-
-        verify(slotRepository, never()).saveAll(any());
-    }
 }

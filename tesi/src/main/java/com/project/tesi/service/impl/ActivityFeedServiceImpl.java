@@ -6,7 +6,6 @@ import com.project.tesi.service.ActivityFeedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +21,6 @@ public class ActivityFeedServiceImpl implements ActivityFeedService {
     }
 
     @Override
-    @Transactional
     public void logBookingCreated(Slot slot) {
         if (slot.getBookedAt() == null) {
             slot.setBookedAt(LocalDateTime.now());

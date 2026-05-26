@@ -31,19 +31,19 @@ public interface ChatService {
 
     int getTotalUnreadCount(@NotNull @Min(1) Long userId);
 
-    String getUserFullName(@NotNull @Min(1) Long userId);
-
     Chat getChatEntity(@NotNull @Min(1) Long chatId);
 
-    void closeChat(@NotNull @Min(1) Long chatId, @NotNull User moderator);
+    Chat save(@NotNull Chat chat);
 
     void deleteChatByUser(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
-
-    Long getReceiverId(@NotNull Chat chat, @NotNull @Min(1) Long currentUserId);
 
     Message getLastMessage(@NotNull @Min(1) Long chatId);
 
     int getUnreadCount(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 
     long countOpenChatsByModerator(@NotNull @Min(1) Long moderatorId);
+
+    void deleteChatsForUser(@NotNull @Min(1) Long userId);
+
+    void closeChat(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long moderatorId);
 }

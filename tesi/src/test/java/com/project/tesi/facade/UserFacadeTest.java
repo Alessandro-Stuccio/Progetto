@@ -5,6 +5,7 @@ import com.project.tesi.dto.response.*;
 import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
+import com.project.tesi.facade.impl.SecurityContextHelper;
 import com.project.tesi.facade.impl.UserFacadeImpl;
 import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SubscriptionMapper;
@@ -32,7 +33,6 @@ class UserFacadeTest {
     @Mock private PlanService planService;
     @Mock private ReviewService reviewService;
     @Mock private SubscriptionService subscriptionService;
-    @Mock private SubscriptionFacade subscriptionFacade;
     @Mock private ChatService chatService;
     @Mock private ProfessionalStatsService professionalStatsService;
     @Mock private SlotService slotService;
@@ -40,6 +40,7 @@ class UserFacadeTest {
     @Mock private SubscriptionMapper subscriptionMapper;
     @Mock private BookingMapper bookingMapper;
     @Mock private EmailService emailService;
+    @Mock private SecurityContextHelper securityContextHelper;
 
     @InjectMocks
     private UserFacadeImpl userFacade;
@@ -51,7 +52,7 @@ class UserFacadeTest {
         Subscription sub = new Subscription();
         sub.setId(1L);
         SubscriptionResponse expected = SubscriptionResponse.builder().id(1L).build();
-        when(subscriptionFacade.activateSubscription(req, 1L)).thenReturn(sub);
+        when(subscriptionService.activateSubscription(req, 1L)).thenReturn(sub);
         when(subscriptionMapper.toResponse(sub)).thenReturn(expected);
 
         assertThat(userFacade.activateSubscription(req, 1L)).isEqualTo(expected);

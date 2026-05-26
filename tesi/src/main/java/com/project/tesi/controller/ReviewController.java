@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +43,7 @@ public class ReviewController {
         @ApiResponse(responseCode = "401", description = "Non autenticato")
     })
     @PostMapping
-    public ResponseEntity<ReviewResponse> addReview(@RequestBody ReviewRequest request,
+    public ResponseEntity<ReviewResponse> addReview(@Valid @RequestBody ReviewRequest request,
                                                      @AuthenticationPrincipal User user) {
         log.info("Aggiunta recensione per professionista {} da utente {}", request.professionalId(), user.getId());
         return ResponseEntity.ok(reviewFacade.addReview(request, user.getId()));

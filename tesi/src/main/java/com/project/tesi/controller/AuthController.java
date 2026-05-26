@@ -6,10 +6,10 @@ import com.project.tesi.dto.request.RegisterRequest;
 import com.project.tesi.dto.request.ResetPasswordRequest;
 import com.project.tesi.dto.response.AuthResponse;
 import com.project.tesi.dto.response.UserResponse;
+import com.project.tesi.facade.AuthFacade;
 import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
 import com.project.tesi.service.AuthResult;
-import com.project.tesi.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -32,11 +32,11 @@ import java.util.Map;
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
-    private final AuthService authService;
+    private final AuthFacade authFacade;
     private final UserFacade userFacade;
 
-    public AuthController(AuthService authService, UserFacade userFacade) {
-        this.authService = authService;
+    public AuthController(AuthFacade authFacade, UserFacade userFacade) {
+        this.authFacade = authFacade;
         this.userFacade = userFacade;
     }
 
@@ -47,7 +47,7 @@ public class AuthController {
         @ApiResponse(responseCode = "409", description = "Email già in uso")
     })
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.info("Registrazione nuovo utente: {}", request.email());
         UserResponse response = userFacade.registerUser(request);
         log.info("Utente registrato con successo: id={}", response.getId());
@@ -60,9 +60,9 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Credenziali non valide")
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("Tentativo di login: {}", request.email());
-        AuthResult result = authService.login(request);
+        AuthResult result = authFacade.login(request);
         User u = result.user();
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(result.token())
@@ -82,7 +82,7 @@ public class AuthController {
     })
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        authService.forgotPassword(request.email());
+        authFacade.forgotPassword(request.email());
         return ResponseEntity.ok(Map.of("message", "Link di reset inviato. Controlla la tua casella di posta."));
     }
 
@@ -93,7 +93,7 @@ public class AuthController {
     })
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        authService.resetPassword(request.token(), request.newPassword());
+        authFacade.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok(Map.of("message", "Password reimpostata con successo."));
     }
 

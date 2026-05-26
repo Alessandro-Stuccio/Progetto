@@ -10,7 +10,6 @@ import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.ProfessionalStatsService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,13 +30,11 @@ public class ProfessionalStatsServiceImpl implements ProfessionalStatsService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Slot> getTodaySlots(User professional, LocalDateTime dayStart, LocalDateTime dayEnd) {
         return slotRepository.findTodayByProfessional(professional, dayStart, dayEnd);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<User> getAssignedClients(User professional) {
         if (professional.getRole() == Role.PERSONAL_TRAINER) {
             return userRepository.findByAssignedPT(professional);
@@ -46,13 +43,11 @@ public class ProfessionalStatsServiceImpl implements ProfessionalStatsService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Document getLatestDocumentByOwnerAndType(User owner, DocumentType type) {
         return documentRepository.findLatestByOwnerAndType(owner, type);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public int countDocumentsUploadedSince(User professional, LocalDateTime since) {
         return documentRepository.countByUploaderSince(professional, since);
     }

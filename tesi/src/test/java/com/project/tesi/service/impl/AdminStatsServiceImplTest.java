@@ -21,56 +21,21 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AdminStatsServiceImplTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private SubscriptionRepository subscriptionRepository;
     @Mock private SlotRepository slotRepository;
     @Mock private PlanRepository planRepository;
 
     @InjectMocks private AdminStatsServiceImpl adminStatsService;
 
-    private User client, pt;
+    private User pt;
     private Plan plan;
-    private Subscription sub;
 
     @BeforeEach
     void setUp() {
         pt = User.builder().email("pt@test.com").password("testpass").id(2L).firstName("Luca").lastName("Bianchi")
                 .role(Role.PERSONAL_TRAINER).build();
-        client = User.builder().email("mario@test.com").password("testpass").id(1L).firstName("Mario").lastName("Rossi")
-                .role(Role.CLIENT).assignedPT(pt).build();
         plan = Plan.builder().id(1L).name("Premium").duration(PlanDuration.ANNUALE)
                 .monthlyCreditsPT(8).monthlyCreditsNutri(4)
                 .fullPrice(1200.0).monthlyInstallmentPrice(100.0).build();
-        sub = Subscription.builder().id(1L).user(client).plan(plan)
-                .paymentFrequency(com.project.tesi.enums.PaymentFrequency.UNICA_SOLUZIONE)
-                .active(true).currentCreditsPT(5).currentCreditsNutri(2).build();
-    }
-
-    @Test @DisplayName("getAllUsers — restituisce tutti gli utenti dal repository")
-    void getAllUsers() {
-        when(userRepository.findAll()).thenReturn(List.of(client, pt));
-        List<User> result = adminStatsService.getAllUsers();
-        assertThat(result).hasSize(2);
-    }
-
-    @Test @DisplayName("getAllUsers — lista vuota se nessun utente")
-    void getAllUsers_empty() {
-        when(userRepository.findAll()).thenReturn(List.of());
-        assertThat(adminStatsService.getAllUsers()).isEmpty();
-    }
-
-    @Test @DisplayName("getAllSubscriptions — restituisce tutte le sottoscrizioni")
-    void getAllSubscriptions() {
-        when(subscriptionRepository.findAll()).thenReturn(List.of(sub));
-        List<Subscription> result = adminStatsService.getAllSubscriptions();
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getPlan().getName()).isEqualTo("Premium");
-    }
-
-    @Test @DisplayName("getAllSubscriptions — lista vuota se nessuna sottoscrizione")
-    void getAllSubscriptions_empty() {
-        when(subscriptionRepository.findAll()).thenReturn(List.of());
-        assertThat(adminStatsService.getAllSubscriptions()).isEmpty();
     }
 
     @Test @DisplayName("getAllPlans — restituisce tutti i piani")

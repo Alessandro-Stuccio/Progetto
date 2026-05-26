@@ -19,10 +19,7 @@ import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
-import com.project.tesi.service.AdminService;
-import com.project.tesi.service.AdminStatsService;
-import com.project.tesi.service.PlanService;
-import com.project.tesi.service.UserService;
+import com.project.tesi.service.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,10 +28,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,12 +43,15 @@ class AdminFacadeTest {
     @Mock private AdminService adminService;
     @Mock private AdminStatsService adminStatsService;
     @Mock private UserService userService;
-    @Mock private SubscriptionFacade subscriptionFacade;
+    @Mock private SubscriptionService subscriptionService;
     @Mock private PlanService planService;
+    @Mock private SlotService slotService;
+    @Mock private ChatService chatService;
+    @Mock private ReviewService reviewService;
+    @Mock private DocumentService documentService;
     @Mock private UserMapper userMapper;
     @Mock private SubscriptionMapper subscriptionMapper;
     @Mock private PlanMapper planMapper;
-    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private AdminFacadeImpl adminFacade;
@@ -81,13 +79,13 @@ class AdminFacadeTest {
         UserResponse response = UserResponse.builder().id(1L).build();
 
         when(adminService.existsUserByEmail("mod@test.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encodedpass");
+        when(userService.encodePassword("password123")).thenReturn("encodedpass");
         when(adminService.saveUser(any())).thenReturn(saved);
         when(userMapper.toAdminResponse(saved)).thenReturn(response);
 
         UserResponse result = adminFacade.createUser(request);
         assertThat(result.getId()).isEqualTo(1L);
-        verify(subscriptionFacade, never()).activateSubscription(any(), any());
+        verify(subscriptionService, never()).activateSubscription(any(), any());
     }
 
     @Test
@@ -101,14 +99,14 @@ class AdminFacadeTest {
         Subscription sub = new Subscription();
 
         when(adminService.existsUserByEmail("client@test.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encodedpass");
+        when(userService.encodePassword("password123")).thenReturn("encodedpass");
         when(adminService.saveUser(any())).thenReturn(saved);
-        when(subscriptionFacade.activateSubscription(any(), eq(2L))).thenReturn(sub);
+        when(subscriptionService.activateSubscription(any(), eq(2L))).thenReturn(sub);
         when(userMapper.toAdminResponse(saved)).thenReturn(response);
 
         UserResponse result = adminFacade.createUser(request);
         assertThat(result.getId()).isEqualTo(2L);
-        verify(subscriptionFacade).activateSubscription(any(), eq(2L));
+        verify(subscriptionService).activateSubscription(any(), eq(2L));
     }
 
     @Test
@@ -255,7 +253,8 @@ class AdminFacadeTest {
         PlanResponseDTO response = new PlanResponseDTO(1L, "Premium", "ANNUALE", 100.0, 100.0, 5, 5);
 
         when(planService.existsByName("Premium")).thenReturn(false);
-        when(planService.save(any())).thenReturn(plan);
+        when(planMapper.toPlan(request)).thenReturn(plan);
+        when(planService.createPlan(any())).thenReturn(plan);
         when(planMapper.toResponse(plan)).thenReturn(response);
 
         PlanResponseDTO result = adminFacade.createPlan(request);
@@ -268,7 +267,7 @@ class AdminFacadeTest {
         PlanCreateRequestDTO request = new PlanCreateRequestDTO(null, "ANNUALE", 100.0, 100.0, 5, 5);
         assertThatThrownBy(() -> adminFacade.createPlan(request))
                 .isInstanceOf(IllegalArgumentException.class);
-        verify(planService, never()).save(any());
+        verify(planService, never()).createPlan(any());
     }
 
     @Test
@@ -291,8 +290,8 @@ class AdminFacadeTest {
     @Test
     @DisplayName("getAdminStats — aggrega dati dai 4 metodi raw di AdminStatsService")
     void getAdminStats() {
-        when(adminStatsService.getAllUsers()).thenReturn(List.of());
-        when(adminStatsService.getAllSubscriptions()).thenReturn(List.of());
+        when(adminService.getAllUsers()).thenReturn(List.of());
+        when(adminService.getAllSubscriptions()).thenReturn(List.of());
         when(adminStatsService.getAllPlans()).thenReturn(List.of());
         when(adminStatsService.getAllBookedSlots()).thenReturn(List.of());
 

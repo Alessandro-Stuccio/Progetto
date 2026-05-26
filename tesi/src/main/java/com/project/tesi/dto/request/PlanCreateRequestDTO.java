@@ -6,7 +6,7 @@ public record PlanCreateRequestDTO(
         @NotBlank @Size(min = 2, max = 100) String name,
         @NotBlank String duration,
         @NotNull @Positive Double fullPrice,
-        @Positive Double monthlyInstallmentPrice,
+        @NotNull @Positive Double monthlyInstallmentPrice,
         @Min(0) Integer monthlyCreditsPT,
         @Min(0) Integer monthlyCreditsNutri
 ) {}

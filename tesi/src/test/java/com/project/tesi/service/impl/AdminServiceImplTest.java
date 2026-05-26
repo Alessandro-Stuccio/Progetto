@@ -98,10 +98,9 @@ class AdminServiceImplTest {
         verify(userRepository).save(user);
     }
 
-    @Test @DisplayName("deleteUser — elimina utente con documenti e abbonamento")
+    @Test @DisplayName("deleteUser — elimina utente")
     void deleteUser_success() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(subscriptionRepository.findByUserId(1L)).thenReturn(Optional.empty());
         adminService.deleteUser(1L);
         verify(userRepository).delete(user);
     }
@@ -112,14 +111,11 @@ class AdminServiceImplTest {
         assertThatThrownBy(() -> adminService.deleteUser(999L)).isInstanceOf(ResourceNotFoundException.class);
     }
 
-    @Test @DisplayName("deleteUser — con abbonamento presente lo elimina")
+    @Test @DisplayName("deleteUser — elimina solo l'utente (gestione abbonamenti delegata alla facade)")
     void deleteUser_withSubscription() {
-        Subscription sub = Subscription.builder().id(1L).user(user).plan(plan).paymentFrequency(com.project.tesi.enums.PaymentFrequency.UNICA_SOLUZIONE).active(true).build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(subscriptionRepository.findByUserId(1L)).thenReturn(Optional.of(sub));
 
         adminService.deleteUser(1L);
-        verify(subscriptionRepository).delete(sub);
         verify(userRepository).delete(user);
     }
 

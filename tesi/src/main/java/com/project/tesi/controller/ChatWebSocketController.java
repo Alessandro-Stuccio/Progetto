@@ -13,6 +13,7 @@ import com.project.tesi.model.Chat;
 import com.project.tesi.model.User;
 import com.project.tesi.service.ChatAsyncService;
 import com.project.tesi.service.ChatService;
+import com.project.tesi.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -34,17 +35,20 @@ public class ChatWebSocketController {
     private final ChatService chatService;
     private final ChatAsyncService chatAsyncService;
     private final ChatMessagePublisher chatMessagePublisher;
+    private final UserService userService;
 
     public ChatWebSocketController(SimpMessageSendingOperations messagingTemplate,
                                    WebSocketEventListener eventListener,
                                    ChatService chatService,
                                    ChatAsyncService chatAsyncService,
-                                   ChatMessagePublisher chatMessagePublisher) {
+                                   ChatMessagePublisher chatMessagePublisher,
+                                   UserService userService) {
         this.messagingTemplate = messagingTemplate;
         this.eventListener = eventListener;
         this.chatService = chatService;
         this.chatAsyncService = chatAsyncService;
         this.chatMessagePublisher = chatMessagePublisher;
+        this.userService = userService;
     }
 
     @MessageMapping("/chat.join")
@@ -82,7 +86,7 @@ public class ChatWebSocketController {
         WsMessageResponse msg = WsMessageResponse.builder()
                 .id(System.currentTimeMillis())
                 .senderId(senderId)
-                .senderName(chatService.getUserFullName(senderId))
+                .senderName(userService.getUserById(senderId).getFullName())
                 .chatId(chatId)
                 .content(content)
                 .status("SENT")
@@ -112,7 +116,7 @@ public class ChatWebSocketController {
                         .createdAt(msg.getCreatedAt())
                         .roomId(msg.getRoomId())
                         .receiverId(receiverId)
-                        .receiverName(chatService.getUserFullName(receiverId))
+                        .receiverName(userService.getUserById(receiverId).getFullName())
                         .build();
             }
         } catch (Exception e) {

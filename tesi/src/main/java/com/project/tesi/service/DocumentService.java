@@ -7,15 +7,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Validated
 public interface DocumentService {
-
-    byte[] downloadDocument(@NotNull @Min(1) Long documentId);
 
     Document getDocumentById(@NotNull @Min(1) Long documentId);
 
@@ -29,10 +26,14 @@ public interface DocumentService {
 
     List<Document> getUserDocumentsByType(@NotNull @Min(1) Long userId, @NotBlank String docType);
 
-    Document uploadDocument(@NotNull MultipartFile file,
+    Document uploadDocument(@NotBlank String filePath,
+                            @NotBlank String originalName,
+                            String contentType,
+                            @NotBlank String docType,
                             @NotNull @Min(1) Long clientId,
-                            @NotNull @Min(1) Long uploaderId,
-                            @NotBlank String docType);
+                            @NotNull @Min(1) Long uploaderId);
+
+    void deleteByUser(@NotNull @Min(1) Long userId);
 
     List<Document> findRecentByOwner(@NotNull User owner, @NotNull @PastOrPresent LocalDateTime since);
 

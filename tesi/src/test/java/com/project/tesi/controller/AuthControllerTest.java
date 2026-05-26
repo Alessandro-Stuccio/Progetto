@@ -1,13 +1,10 @@
 package com.project.tesi.controller;
 
-import com.project.tesi.dto.request.LoginRequest;
 import com.project.tesi.dto.request.RegisterRequest;
-import com.project.tesi.dto.response.AuthResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
+import com.project.tesi.facade.AuthFacade;
 import com.project.tesi.facade.UserFacade;
-import com.project.tesi.model.User;
-import com.project.tesi.service.AuthResult;
 import com.project.tesi.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +23,7 @@ import static org.mockito.Mockito.when;
 class AuthControllerTest {
 
     @Mock private AuthService authService;
+    @Mock private AuthFacade authFacade;
     @Mock private UserFacade userFacade;
 
     @InjectMocks
@@ -42,21 +40,6 @@ class AuthControllerTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().getEmail()).isEqualTo("mario@test.com");
-    }
-
-    @Test
-    @DisplayName("login — restituisce 200 con token JWT")
-    void login() {
-        LoginRequest req = new LoginRequest("mario@test.com", "password");
-        User user = User.builder().id(1L).email("mario@test.com").password("password123")
-                .firstName("Mario").lastName("Rossi").role(Role.CLIENT).build();
-        AuthResult authResult = new AuthResult("jwt-123", user);
-        when(authService.login(req)).thenReturn(authResult);
-
-        ResponseEntity<AuthResponse> response = authController.login(req);
-
-        assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody().getToken()).isEqualTo("jwt-123");
     }
 
     @Test

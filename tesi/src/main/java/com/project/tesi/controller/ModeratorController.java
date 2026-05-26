@@ -55,7 +55,7 @@ public class ModeratorController {
 
     @Operation(summary = "Crea un nuovo utente")
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequestDTO body) {
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body) {
         return ResponseEntity.ok(moderatorFacade.createUser(body));
     }
 

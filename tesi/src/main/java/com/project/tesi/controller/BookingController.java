@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +42,7 @@ public class BookingController {
         @ApiResponse(responseCode = "404", description = "Slot o utente non trovato")
     })
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request,
+    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request,
                                                           @AuthenticationPrincipal User user) {
         log.info("Richiesta prenotazione slot {} da utente {}", request.slotId(), user.getId());
         BookingResponse response = bookingFacade.createBooking(request, user.getId());

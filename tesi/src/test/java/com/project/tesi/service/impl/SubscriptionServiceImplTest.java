@@ -3,13 +3,11 @@ package com.project.tesi.service.impl;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.PlanDuration;
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SubscriptionRepository;
-import com.project.tesi.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +27,6 @@ import static org.mockito.Mockito.*;
 class SubscriptionServiceImplTest {
 
     @Mock private SubscriptionRepository subscriptionRepository;
-    @Mock private UserRepository userRepository;
 
     @InjectMocks
     private SubscriptionServiceImpl subscriptionService;
@@ -59,10 +56,9 @@ class SubscriptionServiceImplTest {
     @Test
     @DisplayName("getSubscriptionStatus — restituisce l'entità abbonamento attivo")
     void getSubscriptionStatus_success() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.of(subscription));
 
-        Subscription result = subscriptionService.getSubscriptionStatus(1L);
+        Subscription result = subscriptionService.getSubscriptionStatus(user);
 
         assertThat(result).isNotNull();
         assertThat(result.isActive()).isTrue();
@@ -72,20 +68,10 @@ class SubscriptionServiceImplTest {
     @Test
     @DisplayName("getSubscriptionStatus — nessun abbonamento attivo lancia SubscriptionNotFoundException")
     void getSubscriptionStatus_noSubscription() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> subscriptionService.getSubscriptionStatus(1L))
+        assertThatThrownBy(() -> subscriptionService.getSubscriptionStatus(user))
                 .isInstanceOf(SubscriptionNotFoundException.class);
-    }
-
-    @Test
-    @DisplayName("getSubscriptionStatus — utente non trovato lancia ResourceNotFoundException")
-    void getSubscriptionStatus_userNotFound() {
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> subscriptionService.getSubscriptionStatus(999L))
-                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ── save ─────────────────────────────────────────────────────────────────

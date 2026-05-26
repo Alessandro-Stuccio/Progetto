@@ -11,7 +11,7 @@ import com.project.tesi.model.Message;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ChatRepository;
 import com.project.tesi.repository.MessageRepository;
-import com.project.tesi.repository.UserRepository;
+import com.project.tesi.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class ChatServiceImplTest {
 
     @Mock private ChatRepository chatRepository;
     @Mock private MessageRepository messageRepository;
-    @Mock private UserRepository userRepository;
+    @Mock private UserService userService;
 
     private ChatServiceImpl chatService;
 
@@ -39,7 +39,7 @@ class ChatServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        chatService = new ChatServiceImpl(chatRepository, messageRepository, userRepository);
+        chatService = new ChatServiceImpl(chatRepository, messageRepository, userService);
         user1 = User.builder().id(1L).email("u1@test.com").password("password123").firstName("Mario").lastName("Rossi").role(Role.CLIENT).build();
         user2 = User.builder().id(2L).email("u2@test.com").password("password123").firstName("Luca").lastName("Bianchi").role(Role.PERSONAL_TRAINER).build();
         moderator = User.builder().id(3L).email("mod@test.com").password("password123").firstName("Sara").lastName("Verdi").role(Role.MODERATOR).build();
@@ -84,7 +84,7 @@ class ChatServiceImplTest {
         SendMessageRequest req = new SendMessageRequest(10L, "Ciao!");
 
         when(chatRepository.findById(10L)).thenReturn(Optional.of(chat));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+        when(userService.getUserById(1L)).thenReturn(user1);
         when(messageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Message result = chatService.sendMessage(req, 1L);
@@ -112,7 +112,7 @@ class ChatServiceImplTest {
         chat.setId(10L);
 
         when(chatRepository.findById(10L)).thenReturn(Optional.of(chat));
-        when(userRepository.findById(99L)).thenReturn(Optional.of(outsider));
+        when(userService.getUserById(99L)).thenReturn(outsider);
 
         assertThatThrownBy(() -> chatService.sendMessage(new SendMessageRequest(10L, "msg"), 99L))
                 .isInstanceOf(ChatNotAllowedException.class);
@@ -126,10 +126,11 @@ class ChatServiceImplTest {
         Chat chat = Chat.builder().user1(user1).user2(user2).createdAt(LocalDateTime.now()).build();
         chat.setId(10L);
 
+        when(userService.getUserById(3L)).thenReturn(moderator);
         when(chatRepository.findById(10L)).thenReturn(Optional.of(chat));
         when(chatRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        chatService.closeChat(10L, moderator);
+        chatService.closeChat(10L, 3L);
 
         assertThat(chat.getStatus()).isEqualTo(ChatStatus.CLOSED);
         assertThat(chat.getClosedBy()).isEqualTo(moderator);

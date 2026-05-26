@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -23,27 +24,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utente", id));
     }
 
     @Override
-    @Transactional(readOnly = true)
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Utente con email " + email + " non trovato."));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.findByEmail(email).isPresent();
     }
 
     @Override
-    @Transactional
     public User save(User user) {
         return userRepository.save(user);
     }
@@ -55,33 +57,38 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<User> findAll() {
         return userRepository.findAll();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public long countByAssignedPT(User pt) {
         return userRepository.countByAssignedPT(pt);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public long countByAssignedNutritionist(User nutritionist) {
         return userRepository.countByAssignedNutritionist(nutritionist);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<User> findByAssignedPT(User pt) {
         return userRepository.findByAssignedPT(pt);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<User> findByAssignedNutritionist(User nutritionist) {
         return userRepository.findByAssignedNutritionist(nutritionist);
+    }
+
+    @Override
+    public void clearAssignedPT(Long ptId) {
+        userRepository.clearAssignedPT(ptId);
+    }
+
+    @Override
+    public void clearAssignedNutritionist(Long nutriId) {
+        userRepository.clearAssignedNutritionist(nutriId);
     }
 
     @Override

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,7 +38,7 @@ public class SubscriptionController {
         @ApiResponse(responseCode = "401", description = "Non autenticato")
     })
     @PostMapping("/activate")
-    public ResponseEntity<SubscriptionResponse> activateSubscription(@RequestBody PlanRequest request,
+    public ResponseEntity<SubscriptionResponse> activateSubscription(@Valid @RequestBody PlanRequest request,
                                                                        @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.activateSubscription(request, user.getId()));
     }

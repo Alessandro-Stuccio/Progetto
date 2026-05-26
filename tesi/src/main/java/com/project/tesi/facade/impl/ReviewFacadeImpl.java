@@ -61,6 +61,7 @@ public class ReviewFacadeImpl implements ReviewFacade {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean canClientReview(Long clientId, Long professionalId) {
         if (reviewService.existsByClientAndProfessional(clientId, professionalId)) return false;
         if (reviewService.hasBookingRelationship(clientId, professionalId)) return true;
@@ -70,6 +71,7 @@ public class ReviewFacadeImpl implements ReviewFacade {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean hasClientReviewed(Long clientId, Long professionalId) {
         return reviewService.existsByClientAndProfessional(clientId, professionalId);
     }

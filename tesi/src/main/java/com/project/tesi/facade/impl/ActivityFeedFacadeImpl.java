@@ -12,6 +12,7 @@ import com.project.tesi.service.DocumentService;
 import com.project.tesi.service.SlotService;
 import com.project.tesi.service.UserService;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ActivityFeedItemResponse> getActivityFeed(Long userId, int days, int limit) {
         User user = userService.getUserById(userId);
         LocalDateTime since = LocalDateTime.now().minusDays(days);
@@ -57,6 +59,7 @@ public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
     }
 
     @Override
+    @Transactional
     public void logDocumentUploaded(Long clientId, Long uploaderId, String type) {
         activityFeedService.logDocumentUploaded(clientId, uploaderId, type);
     }

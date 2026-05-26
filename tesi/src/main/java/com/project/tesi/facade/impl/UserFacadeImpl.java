@@ -9,7 +9,6 @@ import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.booking.ProfessionalSoldOutException;
-import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.facade.UserFacade;
 import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SubscriptionMapper;
@@ -18,8 +17,6 @@ import com.project.tesi.model.*;
 import com.project.tesi.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,38 +40,38 @@ public class UserFacadeImpl implements UserFacade {
     private final SlotService slotService;
     private final ReviewService reviewService;
     private final SubscriptionService subscriptionService;
-    private final SubscriptionFacade subscriptionFacade;
     private final ChatService chatService;
     private final ProfessionalStatsService professionalStatsService;
     private final UserMapper userMapper;
     private final SubscriptionMapper subscriptionMapper;
     private final BookingMapper bookingMapper;
     private final EmailService emailService;
+    private final SecurityContextHelper securityContextHelper;
 
     public UserFacadeImpl(UserService userService,
                           PlanService planService,
                           SlotService slotService,
                           ReviewService reviewService,
                           SubscriptionService subscriptionService,
-                          SubscriptionFacade subscriptionFacade,
                           ChatService chatService,
                           ProfessionalStatsService professionalStatsService,
                           UserMapper userMapper,
                           SubscriptionMapper subscriptionMapper,
                           BookingMapper bookingMapper,
-                          EmailService emailService) {
+                          EmailService emailService,
+                          SecurityContextHelper securityContextHelper) {
         this.userService = userService;
         this.planService = planService;
         this.slotService = slotService;
         this.reviewService = reviewService;
         this.subscriptionService = subscriptionService;
-        this.subscriptionFacade = subscriptionFacade;
         this.chatService = chatService;
         this.professionalStatsService = professionalStatsService;
         this.userMapper = userMapper;
         this.subscriptionMapper = subscriptionMapper;
         this.bookingMapper = bookingMapper;
         this.emailService = emailService;
+        this.securityContextHelper = securityContextHelper;
     }
 
     @Override
@@ -93,7 +90,7 @@ public class UserFacadeImpl implements UserFacade {
         User savedUser = userService.save(newUser);
 
         if (request.selectedPlanId() != null && request.paymentFrequency() != null) {
-            subscriptionFacade.activateSubscription(
+            subscriptionService.activateSubscription(
                     new PlanRequest(request.selectedPlanId(), request.paymentFrequency()),
                     savedUser.getId());
         }
@@ -231,7 +228,7 @@ public class UserFacadeImpl implements UserFacade {
             throw new ResourceNotFoundException("Nessun moderatore trovato nel sistema.");
         }
 
-        Optional<User> currentUser = findAuthenticatedUser();
+        Optional<User> currentUser = securityContextHelper.getAuthenticatedUser();
         if (currentUser.isPresent()) {
             User actor = currentUser.get();
 
@@ -255,7 +252,7 @@ public class UserFacadeImpl implements UserFacade {
     @Override
     @Transactional
     public SubscriptionResponse activateSubscription(PlanRequest request, Long userId) {
-        return subscriptionMapper.toResponse(subscriptionFacade.activateSubscription(request, userId));
+        return subscriptionMapper.toResponse(subscriptionService.activateSubscription(request, userId));
     }
 
     @Override
@@ -345,19 +342,6 @@ public class UserFacadeImpl implements UserFacade {
             user.setAssignedPT(professional);
         } else {
             user.setAssignedNutritionist(professional);
-        }
-    }
-
-    private Optional<User> findAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getName() == null
-                || "anonymousUser".equals(authentication.getName())) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(userService.getUserByEmail(authentication.getName()));
-        } catch (Exception e) {
-            return Optional.empty();
         }
     }
 

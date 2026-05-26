@@ -14,7 +14,6 @@ import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.service.*;
 import com.project.tesi.service.strategy.BookingStrategy;
-import com.project.tesi.facade.SubscriptionFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +28,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +37,6 @@ class BookingFacadeTest {
     @Mock private UserService userService;
     @Mock private SlotService slotService;
     @Mock private SubscriptionService subscriptionService;
-    @Mock private SubscriptionFacade subscriptionFacade;
     @Mock private ActivityFeedService activityFeedService;
     @Mock private VideoConferenceService videoConferenceService;
     @Mock private EmailService emailService;
@@ -49,8 +48,8 @@ class BookingFacadeTest {
 
     @BeforeEach
     void setUp() {
-        bookingFacade = new BookingFacadeImpl(userService, slotService, subscriptionService,
-                subscriptionFacade, activityFeedService, videoConferenceService, emailService,
+        bookingFacade = new BookingFacadeImpl(userService, slotService,
+                subscriptionService, activityFeedService, videoConferenceService, emailService,
                 List.of(ptStrategy), bookingMapper, slotMapper);
     }
 
@@ -84,7 +83,7 @@ class BookingFacadeTest {
         BookingResponse result = bookingFacade.createBooking(new BookingRequest(10L), 1L);
 
         assertThat(result).isEqualTo(expected);
-        verify(subscriptionFacade).deductCredits(saved);
+        verify(subscriptionService).deductCredits(saved);
         verify(activityFeedService).logBookingCreated(saved);
     }
 
@@ -103,7 +102,7 @@ class BookingFacadeTest {
         bookingFacade.cancelBooking(10L, 1L);
 
         verify(slotService).cancelBooking(10L, 1L);
-        verify(subscriptionFacade).refundCreditsIfActive(client, Role.PERSONAL_TRAINER);
+        verify(subscriptionService).refundCreditsIfActive(client, Role.PERSONAL_TRAINER);
     }
 
     @Test
@@ -115,7 +114,8 @@ class BookingFacadeTest {
                 .endTime(LocalDateTime.now().plusDays(1).plusMinutes(30)).build();
         SlotDTO dto = SlotDTO.builder().id(1L).professionalId(2L).isAvailable(true).build();
 
-        when(slotService.getAvailableSlots(2L)).thenReturn(List.of(slot));
+        when(userService.getUserById(2L)).thenReturn(pt);
+        when(slotService.getAvailableSlots(pt)).thenReturn(List.of(slot));
         when(slotMapper.toDtoList(anyList())).thenReturn(List.of(dto));
 
         List<SlotDTO> result = bookingFacade.getAvailableSlots(2L);
@@ -154,9 +154,32 @@ class BookingFacadeTest {
     }
 
     @Test
-    @DisplayName("deleteSlot — delega al SlotService con requesterId")
-    void deleteSlot() {
+    @DisplayName("deleteSlot — professionista autorizzato: chiama deleteSlot singolo argomento")
+    void deleteSlot_authorized() {
+        User pt = buildUser(2L, Role.PERSONAL_TRAINER);
+        Slot slot = Slot.builder().id(10L).professional(pt)
+                .startTime(LocalDateTime.now().plusDays(1))
+                .endTime(LocalDateTime.now().plusDays(1).plusMinutes(30)).build();
+
+        when(slotService.getSlot(10L)).thenReturn(slot);
+
         bookingFacade.deleteSlot(10L, 2L);
-        verify(slotService).deleteSlot(10L, 2L);
+
+        verify(slotService).deleteSlot(10L);
+    }
+
+    @Test
+    @DisplayName("deleteSlot — requesterId diverso dal professionista: lancia UnauthorizedAccessException")
+    void deleteSlot_unauthorized() {
+        User pt = buildUser(2L, Role.PERSONAL_TRAINER);
+        Slot slot = Slot.builder().id(10L).professional(pt)
+                .startTime(LocalDateTime.now().plusDays(1))
+                .endTime(LocalDateTime.now().plusDays(1).plusMinutes(30)).build();
+
+        when(slotService.getSlot(10L)).thenReturn(slot);
+
+        assertThatThrownBy(() -> bookingFacade.deleteSlot(10L, 99L))
+                .isInstanceOf(UnauthorizedAccessException.class);
+        verify(slotService, never()).deleteSlot(anyLong());
     }
 }
