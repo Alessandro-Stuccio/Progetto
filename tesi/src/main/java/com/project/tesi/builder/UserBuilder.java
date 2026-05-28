@@ -13,7 +13,6 @@ public interface UserBuilder {
     UserBuilder firstName(String firstName);
     UserBuilder lastName(String lastName);
     UserBuilder role(Role role);
-    UserBuilder professionalBio(String professionalBio);
     UserBuilder assignedPT(User assignedPT);
     UserBuilder assignedNutritionist(User assignedNutritionist);
     UserBuilder createdAt(LocalDateTime createdAt);

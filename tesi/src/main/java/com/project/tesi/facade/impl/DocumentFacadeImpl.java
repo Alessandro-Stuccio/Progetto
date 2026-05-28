@@ -7,13 +7,10 @@ import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.exception.document.InvalidFileException;
 import com.project.tesi.facade.DocumentFacade;
-import com.project.tesi.service.ActivityFeedService;
+import com.project.tesi.service.*;
 import com.project.tesi.mapper.DocumentMapper;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
-import com.project.tesi.service.DocumentService;
-import com.project.tesi.service.FileStorageService;
-import com.project.tesi.service.UserService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,20 +22,19 @@ public class DocumentFacadeImpl implements DocumentFacade {
 
     private final DocumentService documentService;
     private final FileStorageService fileStorageService;
-    private final ActivityFeedService activityFeedService;
     private final UserService userService;
     private final DocumentMapper documentMapper;
+    private final SlotService slotService;
 
     public DocumentFacadeImpl(DocumentService documentService,
                               FileStorageService fileStorageService,
-                              ActivityFeedService activityFeedService,
                               UserService userService,
-                              DocumentMapper documentMapper) {
+                              DocumentMapper documentMapper, SlotService slotService) {
         this.documentService = documentService;
         this.fileStorageService = fileStorageService;
-        this.activityFeedService = activityFeedService;
         this.userService = userService;
         this.documentMapper = documentMapper;
+        this.slotService = slotService;
     }
 
     @Override
@@ -52,20 +48,28 @@ public class DocumentFacadeImpl implements DocumentFacade {
         if (uploader.getRole() == Role.NUTRITIONIST && !"DIET_PLAN".equals(type)) {
             throw new InvalidFileException("Il Nutrizionista può caricare solo piani alimentari.");
         }
+        if (uploader.getRole() == Role.INSURANCE_MANAGER && !"INSURANCE_POLICE".equals(type)) {
+            throw new InvalidFileException("L'Insurance Manager può caricare solo polizze assicurative.");
+        }
 
+        User client = userService.getUserById(clientId);
         String filePath = fileStorageService.store(file);
 
         Document doc;
         try {
             doc = documentService.uploadDocument(filePath, file.getOriginalFilename(),
-                    file.getContentType(), type, clientId, uploaderId);
+                    file.getContentType(), type, client, uploader);
         } catch (Exception e) {
             fileStorageService.delete(filePath);
             throw e;
         }
 
-        activityFeedService.logDocumentUploaded(clientId, uploaderId, type);
-        return new DocumentUploadResponse(doc.getId(), doc.getFileName(), doc.getType().name(), doc.getUploadDate().toString());
+        return DocumentUploadResponse.builder()
+                .id(doc.getId())
+                .fileName(doc.getFileName())
+                .type(doc.getType().name())
+                .uploadDate(doc.getUploadDate().toString())
+                .build();
     }
 
     @Override
@@ -75,33 +79,13 @@ public class DocumentFacadeImpl implements DocumentFacade {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public byte[] downloadDocument(Long id) {
-        Document doc = documentService.getDocumentById(id);
-        return fileStorageService.load(doc.getFilePath());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<DocumentResponse> getUserDocumentsDto(Long userId) {
-        return documentMapper.toResponseList(documentService.getUserDocuments(userId));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<DocumentResponse> getUserDocumentsByTypeDto(Long userId, String type) {
-        return documentMapper.toResponseList(documentService.getUserDocumentsByType(userId, type));
-    }
-
-    @Override
     @Transactional
     public void deleteDocument(Long id, Long callerId) {
         Document doc = documentService.getDocumentById(id);
         User caller = userService.getUserById(callerId);
-        boolean isOwner = doc.getOwner() != null && doc.getOwner().getId().equals(callerId);
         boolean isUploader = doc.getUploadedBy() != null && doc.getUploadedBy().getId().equals(callerId);
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
-        if (!isOwner && !isUploader && !isPrivileged) {
+        if (!isUploader && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a eliminare questo documento");
         }
         String filePath = doc.getFilePath();
@@ -116,9 +100,17 @@ public class DocumentFacadeImpl implements DocumentFacade {
         User caller = userService.getUserById(callerId);
         boolean isOwner = doc.getOwner() != null && doc.getOwner().getId().equals(callerId);
         boolean isUploader = doc.getUploadedBy() != null && doc.getUploadedBy().getId().equals(callerId);
-        boolean isProfessional = caller.getRole() == Role.PERSONAL_TRAINER || caller.getRole() == Role.NUTRITIONIST;
+        boolean isAssignedPT = doc.getOwner() != null
+                && caller.getRole() == Role.PERSONAL_TRAINER
+                && doc.getOwner().getAssignedPT() != null
+                && doc.getOwner().getAssignedPT().getId().equals(callerId);
+        boolean isAssignedNutri = doc.getOwner() != null
+                && caller.getRole() == Role.NUTRITIONIST
+                && doc.getOwner().getAssignedNutritionist() != null
+                && doc.getOwner().getAssignedNutritionist().getId().equals(callerId);
+        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
-        if (!isOwner && !isUploader && !isProfessional && !isPrivileged) {
+        if (!isOwner && !isUploader && !isAssignedProfessional && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a scaricare questo documento");
         }
         return fileStorageService.load(doc.getFilePath());
@@ -129,12 +121,19 @@ public class DocumentFacadeImpl implements DocumentFacade {
     public List<DocumentResponse> getUserDocumentsDtoSecure(Long targetUserId, Long callerId) {
         User caller = userService.getUserById(callerId);
         boolean isSelf = callerId.equals(targetUserId);
-        boolean isProfessional = caller.getRole() == Role.PERSONAL_TRAINER || caller.getRole() == Role.NUTRITIONIST;
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
-        if (!isSelf && !isProfessional && !isPrivileged) {
+        User target = userService.getUserById(targetUserId);
+        boolean isAssignedPT = caller.getRole() == Role.PERSONAL_TRAINER
+                && target.getAssignedPT() != null
+                && target.getAssignedPT().getId().equals(callerId);
+        boolean isAssignedNutri = caller.getRole() == Role.NUTRITIONIST
+                && target.getAssignedNutritionist() != null
+                && target.getAssignedNutritionist().getId().equals(callerId);
+        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
+        if (!isSelf && !isAssignedProfessional && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a visualizzare questi documenti");
         }
-        return documentMapper.toResponseList(documentService.getUserDocuments(targetUserId));
+        return documentMapper.toResponseList(documentService.getUserDocuments(target));
     }
 
     @Override
@@ -142,12 +141,19 @@ public class DocumentFacadeImpl implements DocumentFacade {
     public List<DocumentResponse> getUserDocumentsByTypeDtoSecure(Long targetUserId, String type, Long callerId) {
         User caller = userService.getUserById(callerId);
         boolean isSelf = callerId.equals(targetUserId);
-        boolean isProfessional = caller.getRole() == Role.PERSONAL_TRAINER || caller.getRole() == Role.NUTRITIONIST;
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
-        if (!isSelf && !isProfessional && !isPrivileged) {
+        User target = userService.getUserById(targetUserId);
+        boolean isAssignedPT = caller.getRole() == Role.PERSONAL_TRAINER
+                && target.getAssignedPT() != null
+                && target.getAssignedPT().getId().equals(callerId);
+        boolean isAssignedNutri = caller.getRole() == Role.NUTRITIONIST
+                && target.getAssignedNutritionist() != null
+                && target.getAssignedNutritionist().getId().equals(callerId);
+        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
+        if (!isSelf && !isAssignedProfessional && !isPrivileged) {
             throw new UnauthorizedAccessException("Non sei autorizzato a visualizzare questi documenti");
         }
-        return documentMapper.toResponseList(documentService.getUserDocumentsByType(targetUserId, type));
+        return documentMapper.toResponseList(documentService.getUserDocumentsByType(target, type));
     }
 
     @Override

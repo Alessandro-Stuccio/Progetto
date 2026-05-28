@@ -21,7 +21,7 @@ public class ActivityFeedMapper {
         for (Document document : documents) {
             result.add(toActivityFeedItemResponse(document, user));
         }
-        result.sort((a, b) -> b.timestamp().compareTo(a.timestamp()));
+        result.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
         return result;
     }
 
@@ -34,12 +34,12 @@ public class ActivityFeedMapper {
         User professional = slot.getProfessional();
         String proName = professional.getFirstName();
         String proRole = professional.getRole() == Role.PERSONAL_TRAINER ? "PT" : "Nutrizionista";
-        return new ActivityFeedItemResponse("Booking", "Appuntamento prenotato con " + proRole + " " + proName, slot.getStartTime());
+        return ActivityFeedItemResponse.builder().type("Booking").text("Appuntamento prenotato con " + proRole + " " + proName).timestamp(slot.getStartTime()).build();
     }
 
     private ActivityFeedItemResponse toActivityFeedItemResponseSlotProfessional(Slot slot) {
         String clientName = slot.getBookedBy() != null ? slot.getBookedBy().getFullName() : "";
-        return new ActivityFeedItemResponse("Booking", clientName + " ha prenotato un appuntamento", slot.getStartTime());
+        return ActivityFeedItemResponse.builder().type("Booking").text(clientName + " ha prenotato un appuntamento").timestamp(slot.getStartTime()).build();
     }
 
     private ActivityFeedItemResponse toActivityFeedItemResponse(Document document, User user) {
@@ -49,11 +49,11 @@ public class ActivityFeedMapper {
 
     private ActivityFeedItemResponse toActivityFeedItemResponseDocumentProfessional(Document document) {
         String clientName = document.getOwner() != null ? document.getOwner().getFullName() : "";
-        return new ActivityFeedItemResponse("Document", document.getType().getDesc() + " caricata per " + clientName, document.getUploadDate());
+        return ActivityFeedItemResponse.builder().type("Document").text(document.getType().getDesc() + " caricata per " + clientName).timestamp(document.getUploadDate()).build();
     }
 
     private ActivityFeedItemResponse toActivityFeedItemResponseDocumentUser(Document document) {
         String uploaderName = document.getUploadedBy() != null ? document.getUploadedBy().getFirstName() : "Sistema";
-        return new ActivityFeedItemResponse("Document", document.getType().getDesc() + " caricata da " + uploaderName, document.getUploadDate());
+        return ActivityFeedItemResponse.builder().type("Document").text(document.getType().getDesc() + " caricata da " + uploaderName).timestamp(document.getUploadDate()).build();
     }
 }

@@ -1,12 +1,8 @@
 package com.project.tesi.service;
 
-import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.model.Chat;
-import com.project.tesi.model.Message;
 import com.project.tesi.model.User;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
 
@@ -17,33 +13,13 @@ public interface ChatService {
 
     Long getOrCreateChat(@NotNull User sender, @NotNull User receiver);
 
-    Message sendMessage(@NotNull @Valid SendMessageRequest request, @NotNull @Min(1) Long senderId);
-
-    void sendMessageDirect(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long senderId,
-                           @NotBlank String content);
-
-    List<Message> getConversation(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId,
-                                  @Min(0) int page, @Min(1) int size);
-
     List<Chat> getUserConversations(@NotNull @Min(1) Long userId);
-
-    void markAsRead(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
-
-    int getTotalUnreadCount(@NotNull @Min(1) Long userId);
 
     Chat getChatEntity(@NotNull @Min(1) Long chatId);
 
     Chat save(@NotNull Chat chat);
 
-    void deleteChatByUser(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
-
-    Message getLastMessage(@NotNull @Min(1) Long chatId);
-
-    int getUnreadCount(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
-
     long countOpenChatsByModerator(@NotNull @Min(1) Long moderatorId);
 
-    void deleteChatsForUser(@NotNull @Min(1) Long userId);
-
-    void closeChat(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long moderatorId);
+    void closeChat(@NotNull @Min(1) Long chatId, @NotNull User moderator);
 }

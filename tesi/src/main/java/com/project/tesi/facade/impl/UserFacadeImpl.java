@@ -2,14 +2,15 @@ package com.project.tesi.facade.impl;
 
 import com.project.tesi.dto.request.PlanRequest;
 import com.project.tesi.dto.request.ProfileUpdateRequest;
-import com.project.tesi.dto.request.RegisterRequest;
 import com.project.tesi.dto.response.*;
 import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
-import com.project.tesi.exception.booking.ProfessionalSoldOutException;
+import com.project.tesi.exception.common.UnauthorizedAccessException;
+import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.facade.UserFacade;
+import com.project.tesi.util.BusinessConstants;
 import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SubscriptionMapper;
 import com.project.tesi.mapper.UserMapper;
@@ -33,75 +34,41 @@ import java.util.stream.Collectors;
 public class UserFacadeImpl implements UserFacade {
 
     private static final Logger log = LoggerFactory.getLogger(UserFacadeImpl.class);
-    private static final int MAX_CLIENTS_PER_PROFESSIONAL = 50;
 
     private final UserService userService;
     private final PlanService planService;
     private final SlotService slotService;
     private final ReviewService reviewService;
     private final SubscriptionService subscriptionService;
-    private final ChatService chatService;
-    private final ProfessionalStatsService professionalStatsService;
+    private final DocumentService documentService;
     private final UserMapper userMapper;
     private final SubscriptionMapper subscriptionMapper;
     private final BookingMapper bookingMapper;
     private final EmailService emailService;
-    private final SecurityContextHelper securityContextHelper;
+    private final SubscriptionFacade subscriptionFacade;
 
     public UserFacadeImpl(UserService userService,
                           PlanService planService,
                           SlotService slotService,
                           ReviewService reviewService,
                           SubscriptionService subscriptionService,
-                          ChatService chatService,
-                          ProfessionalStatsService professionalStatsService,
+                          DocumentService documentService,
                           UserMapper userMapper,
                           SubscriptionMapper subscriptionMapper,
                           BookingMapper bookingMapper,
                           EmailService emailService,
-                          SecurityContextHelper securityContextHelper) {
+                          SubscriptionFacade subscriptionFacade) {
         this.userService = userService;
         this.planService = planService;
         this.slotService = slotService;
         this.reviewService = reviewService;
         this.subscriptionService = subscriptionService;
-        this.chatService = chatService;
-        this.professionalStatsService = professionalStatsService;
+        this.documentService = documentService;
         this.userMapper = userMapper;
         this.subscriptionMapper = subscriptionMapper;
         this.bookingMapper = bookingMapper;
         this.emailService = emailService;
-        this.securityContextHelper = securityContextHelper;
-    }
-
-    @Override
-    @Transactional
-    public UserResponse registerUser(RegisterRequest request) {
-        if (userService.existsByEmail(request.email())) {
-            throw new ResourceAlreadyExistsException("Utente", "email", request.email());
-        }
-
-        User newUser = userMapper.toUser(request);
-        newUser.setPassword(userService.encodePassword(request.password()));
-
-        assignProfessional(newUser, request.selectedPtId(), Role.PERSONAL_TRAINER);
-        assignProfessional(newUser, request.selectedNutritionistId(), Role.NUTRITIONIST);
-
-        User savedUser = userService.save(newUser);
-
-        if (request.selectedPlanId() != null && request.paymentFrequency() != null) {
-            subscriptionService.activateSubscription(
-                    new PlanRequest(request.selectedPlanId(), request.paymentFrequency()),
-                    savedUser.getId());
-        }
-
-        try {
-            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName());
-        } catch (Exception e) {
-            log.warn("Impossibile inviare email di benvenuto a {}: {}", savedUser.getEmail(), e.getMessage());
-        }
-
-        return userMapper.toUserResponse(savedUser);
+        this.subscriptionFacade = subscriptionFacade;
     }
 
     @Override
@@ -131,19 +98,8 @@ public class UserFacadeImpl implements UserFacade {
     @Transactional(readOnly = true)
     public ClientDashboardResponse getClientDashboard(Long userId) {
         User user = userService.getUserById(userId);
-
-        if (user.getRole() == Role.PERSONAL_TRAINER || user.getRole() == Role.NUTRITIONIST) {
-            List<BookingResponse> proBookingResponses = slotService.findBookingsByProfessional(user)
-                    .stream()
-                    .map(bookingMapper::toResponse)
-                    .collect(Collectors.toList());
-
-            return ClientDashboardResponse.builder()
-                    .profile(userMapper.toUserResponse(user))
-                    .followingProfessionals(new ArrayList<>())
-                    .subscription(null)
-                    .upcomingBookings(proBookingResponses)
-                    .build();
+        if (user.getRole() != Role.CLIENT) {
+            throw new UnauthorizedAccessException("La dashboard cliente è accessibile solo ai clienti.");
         }
 
         List<ProfessionalSummaryDTO> followingProfessionals = new ArrayList<>();
@@ -154,7 +110,7 @@ public class UserFacadeImpl implements UserFacade {
 
         SubscriptionResponse subResponse = null;
         try {
-            subResponse = subscriptionMapper.toResponse(subscriptionService.getSubscriptionStatus(userId));
+            subResponse = subscriptionMapper.toResponse(subscriptionService.getSubscriptionStatus(user));
         } catch (Exception ignored) {}
 
         List<BookingResponse> upcomingBookings = slotService.findFutureByUser(user, LocalDateTime.now())
@@ -185,7 +141,7 @@ public class UserFacadeImpl implements UserFacade {
                             .role(pro.getRole())
                             .averageRating(avg)
                             .currentActiveClients((int) activeClients)
-                            .isSoldOut(activeClients >= MAX_CLIENTS_PER_PROFESSIONAL)
+                            .isSoldOut(activeClients >= BusinessConstants.MAX_CLIENTS_PER_PROFESSIONAL)
                             .build();
                 })
                 .sorted((p1, p2) -> Double.compare(p2.getAverageRating(), p1.getAverageRating()))
@@ -220,45 +176,24 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public ClientBasicInfoResponse getModerator() {
-        List<User> moderators = userService.findByRole(Role.MODERATOR);
-
-        if (moderators.isEmpty()) {
-            throw new ResourceNotFoundException("Nessun moderatore trovato nel sistema.");
-        }
-
-        Optional<User> currentUser = securityContextHelper.getAuthenticatedUser();
-        if (currentUser.isPresent()) {
-            User actor = currentUser.get();
-
-            if (actor.getRole() == Role.MODERATOR || actor.getRole() == Role.ADMIN) {
-                return userMapper.toBasicInfoResponse(actor);
-            }
-
-            Optional<User> existing = findExistingOperatorConversation(actor.getId(), moderators);
-            User selected = existing.orElseGet(() ->
-                    moderators.stream()
-                            .min(Comparator.comparingLong(m ->
-                                    chatService.countOpenChatsByModerator(m.getId())))
-                            .orElse(moderators.get(0))
-            );
-            return userMapper.toBasicInfoResponse(selected);
-        }
-
-        return userMapper.toBasicInfoResponse(moderators.get(0));
-    }
-
-    @Override
     @Transactional
     public SubscriptionResponse activateSubscription(PlanRequest request, Long userId) {
-        return subscriptionMapper.toResponse(subscriptionService.activateSubscription(request, userId));
+        User user = userService.getUserById(userId);
+        if (user.getRole() != Role.CLIENT) {
+            throw new UnauthorizedAccessException("Solo i clienti possono attivare un abbonamento.");
+        }
+        if (subscriptionService.findActiveByUser(user).isPresent()) {
+            throw new ResourceAlreadyExistsException("L'utente ha già un abbonamento attivo. Contattare l'amministrazione per cambiare piano.");
+        }
+        Plan plan = planService.getPlanById(request.planId());
+        return subscriptionMapper.toResponse(subscriptionFacade.activateSubscription(user, plan, request.paymentFrequency()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public SubscriptionResponse getSubscriptionStatus(Long userId) {
-        return subscriptionMapper.toResponse(subscriptionService.getSubscriptionStatus(userId));
+        User user = userService.getUserById(userId);
+        return subscriptionMapper.toResponse(subscriptionService.getSubscriptionStatus(user));
     }
 
     @Override
@@ -272,89 +207,55 @@ public class UserFacadeImpl implements UserFacade {
         LocalDate today = LocalDate.now();
         LocalDateTime dayStart = today.atStartOfDay();
         LocalDateTime dayEnd = today.plusDays(1).atStartOfDay();
-        List<Slot> todaySlots = professionalStatsService.getTodaySlots(professional, dayStart, dayEnd);
+        List<Slot> todaySlots = slotService.findTodayByProfessional(professional, dayStart, dayEnd);
 
         List<ProfessionalStatsResponse.TodayBookingItem> todayList = todaySlots.stream().map(s ->
-                new ProfessionalStatsResponse.TodayBookingItem(
-                        s.getId(),
-                        s.getBookedBy() != null ? s.getBookedBy().getFullName() : "",
-                        s.getBookedBy() != null ? s.getBookedBy().getId() : null,
-                        s.getStartTime().toLocalTime().toString().substring(0, 5),
-                        s.getEndTime().toLocalTime().toString().substring(0, 5),
-                        s.getStatus() != null ? s.getStatus().name() : "",
-                        s.getMeetingLink()
-                )).collect(Collectors.toList());
+                ProfessionalStatsResponse.TodayBookingItem.builder()
+                        .id(s.getId())
+                        .clientName(s.getBookedBy() != null ? s.getBookedBy().getFullName() : "")
+                        .clientId(s.getBookedBy() != null ? s.getBookedBy().getId() : null)
+                        .startTime(s.getStartTime().toLocalTime().toString().substring(0, 5))
+                        .endTime(s.getEndTime().toLocalTime().toString().substring(0, 5))
+                        .status(s.getStatus() != null ? s.getStatus().name() : "")
+                        .meetingLink(s.getMeetingLink())
+                        .build()
+        ).collect(Collectors.toList());
 
         DocumentType relevantDocType = professional.getRole() == Role.PERSONAL_TRAINER
                 ? DocumentType.WORKOUT_PLAN : DocumentType.DIET_PLAN;
-        List<User> clients = professionalStatsService.getAssignedClients(professional);
+        List<User> clients = professional.getRole() == Role.PERSONAL_TRAINER
+                ? userService.findByAssignedPT(professional)
+                : userService.findByAssignedNutritionist(professional);
 
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
         List<ProfessionalStatsResponse.ClientAttentionItem> clientsNeedingAttention = new ArrayList<>();
         for (User client : clients) {
-            Document latestDoc = professionalStatsService.getLatestDocumentByOwnerAndType(client, relevantDocType);
+            Document latestDoc = documentService.findLatestByOwnerAndType(client, relevantDocType);
             boolean needsAttention = (latestDoc == null || latestDoc.getUploadDate().isBefore(sevenDaysAgo));
             if (needsAttention) {
-                clientsNeedingAttention.add(new ProfessionalStatsResponse.ClientAttentionItem(
-                        client.getId(),
-                        client.getFirstName(),
-                        client.getLastName(),
-                        latestDoc != null ? latestDoc.getUploadDate().toString() : null,
-                        latestDoc != null
+                clientsNeedingAttention.add(ProfessionalStatsResponse.ClientAttentionItem.builder()
+                        .id(client.getId())
+                        .firstName(client.getFirstName())
+                        .lastName(client.getLastName())
+                        .lastDocDate(latestDoc != null ? latestDoc.getUploadDate().toString() : null)
+                        .daysSinceLastDoc(latestDoc != null
                                 ? Duration.between(latestDoc.getUploadDate(), LocalDateTime.now()).toDays()
-                                : -1));
+                                : -1)
+                        .build());
             }
         }
 
         LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        int docsUploadedThisWeek = professionalStatsService.countDocumentsUploadedSince(
-                professional, startOfWeek.atStartOfDay());
+        int docsUploadedThisWeek = documentService.countUploadedSince(professional, startOfWeek.atStartOfDay());
 
-        return new ProfessionalStatsResponse(
-                todayList,
-                todayList.size(),
-                clientsNeedingAttention,
-                clientsNeedingAttention.size(),
-                docsUploadedThisWeek,
-                clients.size());
+        return ProfessionalStatsResponse.builder()
+                .todayBookings(todayList)
+                .todayBookingsCount(todayList.size())
+                .clientsNeedingAttention(clientsNeedingAttention)
+                .clientsNeedingAttentionCount(clientsNeedingAttention.size())
+                .docsUploadedThisWeek(docsUploadedThisWeek)
+                .totalClients(clients.size())
+                .build();
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
-
-    private void assignProfessional(User user, Long proId, Role expectedRole) {
-        if (proId == null) {
-            throw new IllegalArgumentException("Devi selezionare un " + expectedRole);
-        }
-        User professional = userService.getUserById(proId);
-
-        if (professional.getRole() != expectedRole) {
-            throw new IllegalArgumentException("L'ID fornito non corrisponde a un " + expectedRole + ".");
-        }
-
-        long activeClients = expectedRole == Role.PERSONAL_TRAINER
-                ? userService.countByAssignedPT(professional)
-                : userService.countByAssignedNutritionist(professional);
-        if (activeClients >= MAX_CLIENTS_PER_PROFESSIONAL) {
-            throw new ProfessionalSoldOutException(professional.getFirstName());
-        }
-
-        if (expectedRole == Role.PERSONAL_TRAINER) {
-            user.setAssignedPT(professional);
-        } else {
-            user.setAssignedNutritionist(professional);
-        }
-    }
-
-    private Optional<User> findExistingOperatorConversation(Long userId, List<User> operators) {
-        List<Chat> chats = chatService.getUserConversations(userId);
-        if (chats == null || chats.isEmpty()) {
-            return Optional.empty();
-        }
-        List<User> partners = chats.stream()
-                .map(c -> c.getUser1().getId().equals(userId) ? c.getUser2() : c.getUser1())
-                .collect(Collectors.toList());
-        return partners.stream()
-                .filter(p -> operators.stream().anyMatch(o -> o.getId().equals(p.getId())))
-                .findFirst();
-    }
 }

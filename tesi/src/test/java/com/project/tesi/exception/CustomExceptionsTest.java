@@ -1,7 +1,6 @@
 package com.project.tesi.exception;
 
 import com.project.tesi.exception.booking.*;
-import com.project.tesi.exception.auth.InvalidCredentialsException;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
 import com.project.tesi.exception.common.*;
 import com.project.tesi.exception.document.*;
@@ -68,32 +67,11 @@ class CustomExceptionsTest {
 
 
     @Test
-    @DisplayName("InvalidCredentialsException — costruttori")
-    void invalidCredentialsException() {
-        InvalidCredentialsException ex1 = new InvalidCredentialsException();
-        assertThat(ex1.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
-
-        InvalidCredentialsException ex2 = new InvalidCredentialsException("Personalizzato");
-        assertThat(ex2.getMessage()).isEqualTo("Personalizzato");
-    }
-
-
-    @Test
     @DisplayName("InsufficientCreditsException — 422")
     void insufficientCreditsException() {
         InsufficientCreditsException ex = new InsufficientCreditsException("PT");
         assertThat(ex.getMessage()).contains("PT");
         assertThat(ex.getStatus()).isEqualTo(HttpStatus.valueOf(422));
-    }
-
-    @Test
-    @DisplayName("NoActiveSubscriptionException — costruttori")
-    void noActiveSubscriptionException() {
-        NoActiveSubscriptionException ex1 = new NoActiveSubscriptionException();
-        assertThat(ex1.getStatus()).isEqualTo(HttpStatus.valueOf(422));
-
-        NoActiveSubscriptionException ex2 = new NoActiveSubscriptionException("Custom");
-        assertThat(ex2.getMessage()).isEqualTo("Custom");
     }
 
     @Test

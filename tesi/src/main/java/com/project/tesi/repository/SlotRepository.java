@@ -34,10 +34,6 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
 
     List<Slot> findByProfessional(User professional);
 
-    @Modifying
-    @Query("DELETE FROM Slot s WHERE s.professional.id = :profId")
-    void deleteByProfessionalId(@Param("profId") Long profId);
-
     // ---- Query ex-BookingRepository ----
 
     List<Slot> findByBookedBy(User bookedBy);
@@ -73,16 +69,8 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     List<Slot> findUpcomingNeedingReminder(@Param("from") LocalDateTime from,
                                             @Param("to") LocalDateTime to);
 
-    @Query("SELECT COUNT(s) FROM Slot s WHERE s.bookedBy IS NOT NULL")
-    long countAllBooked();
-
     @Query("SELECT s FROM Slot s WHERE s.bookedBy IS NOT NULL AND s.bookedAt IS NOT NULL")
     List<Slot> findAllBooked();
-
-    @Modifying
-    @Query("UPDATE Slot s SET s.bookedBy = null, s.status = null, s.meetingLink = null, s.bookedAt = null " +
-           "WHERE s.bookedBy.id = :userId")
-    void clearBookingByUserId(@Param("userId") Long userId);
 
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Slot s " +
            "WHERE s.id = :slotId AND s.status = :status")

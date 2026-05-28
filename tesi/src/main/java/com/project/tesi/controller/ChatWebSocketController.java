@@ -8,11 +8,13 @@ import com.project.tesi.dto.request.ws.WsSendMessageRequest;
 import com.project.tesi.dto.response.WsMessageResponse;
 import com.project.tesi.dto.response.WsNotificationResponse;
 import com.project.tesi.dto.response.WsUnreadUpdateResponse;
+import com.project.tesi.enums.MessageStatus;
 import com.project.tesi.messaging.ChatMessagePublisher;
 import com.project.tesi.model.Chat;
 import com.project.tesi.model.User;
 import com.project.tesi.service.ChatAsyncService;
 import com.project.tesi.service.ChatService;
+import com.project.tesi.service.MessageService;
 import com.project.tesi.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,7 @@ public class ChatWebSocketController {
     private final SimpMessageSendingOperations messagingTemplate;
     private final WebSocketEventListener eventListener;
     private final ChatService chatService;
+    private final MessageService messageService;
     private final ChatAsyncService chatAsyncService;
     private final ChatMessagePublisher chatMessagePublisher;
     private final UserService userService;
@@ -40,12 +43,14 @@ public class ChatWebSocketController {
     public ChatWebSocketController(SimpMessageSendingOperations messagingTemplate,
                                    WebSocketEventListener eventListener,
                                    ChatService chatService,
+                                   MessageService messageService,
                                    ChatAsyncService chatAsyncService,
                                    ChatMessagePublisher chatMessagePublisher,
                                    UserService userService) {
         this.messagingTemplate = messagingTemplate;
         this.eventListener = eventListener;
         this.chatService = chatService;
+        this.messageService = messageService;
         this.chatAsyncService = chatAsyncService;
         this.chatMessagePublisher = chatMessagePublisher;
         this.userService = userService;
@@ -128,14 +133,42 @@ public class ChatWebSocketController {
         chatMessagePublisher.publish(chatId, senderId, content);
 
         if (receiverEmail != null) {
-            try {
-                messagingTemplate.convertAndSendToUser(
-                        receiverEmail, "/queue/notifications",
-                        new WsNotificationResponse("NEW_MESSAGE", msg));
-            } catch (Exception e) {
-                log.warn("[WS] notifica NEW_MESSAGE non recapitata a {}: {}", receiverEmail, e.getMessage());
+            if (!eventListener.isUserInRoom(receiverId, roomId)) {
+                try {
+                    messagingTemplate.convertAndSendToUser(
+                            receiverEmail, "/queue/notifications",
+                            WsNotificationResponse.builder().type("NEW_MESSAGE").message(msg).build());
+                } catch (Exception e) {
+                    log.warn("[WS] notifica NEW_MESSAGE non recapitata a {}: {}", receiverEmail, e.getMessage());
+                }
             }
             sendUnreadUpdate(receiverId, receiverEmail);
+        }
+    }
+
+    @MessageMapping("/chat.delivered")
+    public void markAsDelivered(@Payload WsMarkReadRequest request, Principal principal) {
+        User user = extractUser(principal);
+        if (user == null) {
+            log.warn("[WS] /chat.delivered rifiutato: Principal mancante o non valido.");
+            return;
+        }
+        chatAsyncService.markAsDeliveredAsync(request.chatId(), user.getId());
+        try {
+            Chat chat = chatService.getChatEntity(request.chatId());
+            User sender = chat.getUser1().getId().equals(user.getId())
+                    ? chat.getUser2() : chat.getUser1();
+            messagingTemplate.convertAndSendToUser(
+                    sender.getEmail(), "/queue/notifications",
+                    WsNotificationResponse.builder()
+                            .type("DELIVERED_UPDATE")
+                            .message(WsMessageResponse.builder()
+                                    .chatId(request.chatId())
+                                    .status(MessageStatus.DELIVERED.name())
+                                    .build())
+                            .build());
+        } catch (Exception e) {
+            log.warn("[WS] DELIVERED_UPDATE non recapitata chatId={}: {}", request.chatId(), e.getMessage());
         }
     }
 
@@ -152,10 +185,10 @@ public class ChatWebSocketController {
 
     private void sendUnreadUpdate(Long userId, String userEmail) {
         try {
-            int count = chatService.getTotalUnreadCount(userId);
+            int count = messageService.getTotalUnreadCount(userId);
             messagingTemplate.convertAndSendToUser(
                     userEmail, "/queue/notifications",
-                    new WsUnreadUpdateResponse("UNREAD_UPDATE", userId, count));
+                    WsUnreadUpdateResponse.builder().type("UNREAD_UPDATE").userId(userId).unreadCount(count).build());
         } catch (Exception e) {
             log.warn("[WS] UNREAD_UPDATE non recapitata a {}: {}", userEmail, e.getMessage());
         }

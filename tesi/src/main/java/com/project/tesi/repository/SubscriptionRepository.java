@@ -48,14 +48,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
      */
     List<Subscription> findByActiveTrue();
 
-    /**
-     * Cerca l'abbonamento (attivo o non) di un utente tramite il suo ID.
-     * Usato nella cancellazione dell'utente per eliminare anche la sottoscrizione.
-     *
-     * @param userId ID dell'utente
-     * @return un Optional contenente l'abbonamento, vuoto se non presente
-     */
-    Optional<Subscription> findByUserId(Long userId);
-
     boolean existsByPlanId(Long planId);
 }

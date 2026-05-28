@@ -18,8 +18,4 @@ public interface ReviewService {
     List<Review> findByProfessional(@NotNull User professional);
 
     double getAverageRating(@NotNull Long professionalId);
-
-    boolean hasBookingRelationship(@NotNull Long clientId, @NotNull Long professionalId);
-
-    void deleteByUser(@NotNull @Min(1) Long userId);
 }

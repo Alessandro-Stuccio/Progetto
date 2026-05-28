@@ -21,64 +21,31 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    /**
-     * Cerca un utente tramite il suo indirizzo email (usato nel login).
-     *
-     * @param email l'indirizzo email da cercare
-     * @return un Optional contenente l'utente, vuoto se non trovato
-     */
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmailAndDeletedFalse(String email);
 
-    /**
-     * Restituisce tutti gli utenti con un determinato ruolo (es. tutti i PT).
-     *
-     * @param role il ruolo da filtrare
-     * @return lista degli utenti con quel ruolo
-     */
+    Optional<User> findByEmailAndIdIsNotAndDeletedFalse(String email, Long id);
+
+    List<User> findAllByDeletedFalse();
+
     List<User> findByRole(Role role);
 
-    /**
-     * Conta quanti clienti sono attualmente assegnati a un Personal Trainer.
-     * Usato per verificare il limite massimo di 50 clienti per professionista.
-     *
-     * @param pt il Personal Trainer di cui contare i clienti
-     * @return numero di clienti assegnati
-     */
+    List<User> findByRoleAndDeletedFalse(Role role);
+
     long countByAssignedPT(User pt);
 
-    /**
-     * Conta quanti clienti sono attualmente assegnati a un Nutrizionista.
-     * Usato per verificare il limite massimo di 50 clienti per professionista.
-     *
-     * @param nutritionist il Nutrizionista di cui contare i clienti
-     * @return numero di clienti assegnati
-     */
+    long countByAssignedPTAndDeletedFalse(User pt);
+
     long countByAssignedNutritionist(User nutritionist);
 
-    /**
-     * Restituisce tutti i clienti assegnati a un Personal Trainer.
-     *
-     * @param pt il Personal Trainer
-     * @return lista dei clienti assegnati
-     */
+    long countByAssignedNutritionistAndDeletedFalse(User nutritionist);
+
     List<User> findByAssignedPT(User pt);
 
-    /**
-     * Restituisce tutti i clienti assegnati a un Nutrizionista.
-     *
-     * @param nutritionist il Nutrizionista
-     * @return lista dei clienti assegnati
-     */
+    List<User> findByAssignedPTAndDeletedFalse(User pt);
+
     List<User> findByAssignedNutritionist(User nutritionist);
 
-    /**
-     * Restituisce tutti gli utenti che hanno uno dei ruoli specificati.
-     * Usato dallo scheduler per recuperare tutti i professionisti (PT + Nutrizionisti).
-     *
-     * @param roles lista di ruoli da includere
-     * @return lista degli utenti corrispondenti
-     */
-    List<User> findByRoleIn(List<Role> roles);
+    List<User> findByAssignedNutritionistAndDeletedFalse(User nutritionist);
 
     @Modifying
     @Query("UPDATE User u SET u.assignedPT = null WHERE u.assignedPT.id = :ptId")

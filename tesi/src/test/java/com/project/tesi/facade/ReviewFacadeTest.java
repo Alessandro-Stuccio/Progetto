@@ -10,6 +10,7 @@ import com.project.tesi.mapper.ReviewMapper;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
 import com.project.tesi.service.ReviewService;
+import com.project.tesi.service.SlotService;
 import com.project.tesi.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,13 +31,14 @@ class ReviewFacadeTest {
 
     @Mock private UserService userService;
     @Mock private ReviewService reviewService;
+    @Mock private SlotService slotService;
     @Mock private ReviewMapper reviewMapper;
 
     private ReviewFacadeImpl reviewFacade;
 
     @BeforeEach
     void setUp() {
-        reviewFacade = new ReviewFacadeImpl(userService, reviewService, reviewMapper);
+        reviewFacade = new ReviewFacadeImpl(userService, reviewService, slotService, reviewMapper);
     }
 
     private User buildUser(Long id, Role role) {
@@ -56,7 +58,7 @@ class ReviewFacadeTest {
         when(userService.getUserById(1L)).thenReturn(client);
         when(userService.getUserById(2L)).thenReturn(professional);
         when(reviewService.existsByClientAndProfessional(1L, 2L)).thenReturn(false);
-        when(reviewService.hasBookingRelationship(1L, 2L)).thenReturn(true);
+        when(slotService.hasBookingBetween(1L, 2L)).thenReturn(true);
         when(reviewService.save(any(Review.class))).thenReturn(savedReview);
         when(reviewMapper.toResponse(savedReview)).thenReturn(expected);
 
@@ -90,7 +92,7 @@ class ReviewFacadeTest {
         when(userService.getUserById(1L)).thenReturn(client);
         when(userService.getUserById(2L)).thenReturn(professional);
         when(reviewService.existsByClientAndProfessional(1L, 2L)).thenReturn(false);
-        when(reviewService.hasBookingRelationship(1L, 2L)).thenReturn(false);
+        when(slotService.hasBookingBetween(1L, 2L)).thenReturn(false);
 
         assertThatThrownBy(() -> reviewFacade.addReview(new ReviewRequest(2L, 3, null), 1L))
                 .isInstanceOf(ReviewNotAllowedException.class);
@@ -118,7 +120,7 @@ class ReviewFacadeTest {
     @DisplayName("canClientReview — true tramite relazione di prenotazione")
     void canClientReview() {
         when(reviewService.existsByClientAndProfessional(1L, 2L)).thenReturn(false);
-        when(reviewService.hasBookingRelationship(1L, 2L)).thenReturn(true);
+        when(slotService.hasBookingBetween(1L, 2L)).thenReturn(true);
         assertThat(reviewFacade.canClientReview(1L, 2L)).isTrue();
     }
 

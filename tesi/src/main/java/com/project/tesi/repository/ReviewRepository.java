@@ -45,7 +45,4 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      */
     List<Review> findByProfessional(User professional);
 
-    @Modifying
-    @Query("DELETE FROM Review r WHERE r.client.id = :userId OR r.professional.id = :userId")
-    void deleteByUserId(@Param("userId") Long userId);
 }

@@ -17,7 +17,6 @@ public class PlanBuilderImpl implements PlanBuilder {
     private Double monthlyInstallmentPrice;
     private int monthlyCreditsPT;
     private int monthlyCreditsNutri;
-    private String insuranceCoverageDetails;
 
     @Override
     public PlanBuilder id(Long id) {
@@ -55,12 +54,6 @@ public class PlanBuilderImpl implements PlanBuilder {
         return this;
     }
     @Override
-    public PlanBuilder insuranceCoverageDetails(String insuranceCoverageDetails) {
-        this.insuranceCoverageDetails = insuranceCoverageDetails;
-        return this;
-    }
-
-    @Override
     public Plan build() {
         Objects.requireNonNull(this.name, "name è obbligatorio");
         Objects.requireNonNull(this.duration, "duration è obbligatorio");
@@ -86,7 +79,6 @@ public class PlanBuilderImpl implements PlanBuilder {
         obj.setMonthlyInstallmentPrice(this.monthlyInstallmentPrice);
         obj.setMonthlyCreditsPT(this.monthlyCreditsPT);
         obj.setMonthlyCreditsNutri(this.monthlyCreditsNutri);
-        obj.setInsuranceCoverageDetails(this.insuranceCoverageDetails);
         return obj;
     }
 }

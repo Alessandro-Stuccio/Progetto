@@ -2,7 +2,10 @@ package com.project.tesi.model;
 
 import com.project.tesi.builder.MessageBuilder;
 import com.project.tesi.builder.impl.MessageBuilderImpl;
+import com.project.tesi.enums.MessageStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,7 +27,10 @@ public class Message {
 
     private String content;
     private LocalDateTime timeStamp;
-    private boolean isRead;
+
+    @Enumerated(EnumType.STRING)
+    private MessageStatus status = MessageStatus.SENT;
+
     private boolean sentByUser1;
 
     @ManyToOne
@@ -42,8 +48,8 @@ public class Message {
     public LocalDateTime getTimeStamp() { return timeStamp; }
     public void setTimeStamp(LocalDateTime timeStamp) { this.timeStamp = timeStamp; }
 
-    public boolean isRead() { return isRead; }
-    public void setRead(boolean read) { isRead = read; }
+    public MessageStatus getStatus() { return status; }
+    public void setStatus(MessageStatus status) { this.status = status; }
 
     public boolean isSentByUser1() { return sentByUser1; }
     public void setSentByUser1(boolean sentByUser1) { this.sentByUser1 = sentByUser1; }

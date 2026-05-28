@@ -14,15 +14,15 @@ public class PlanMapper {
 
     public PlanResponseDTO toResponse(Plan p) {
         if (p == null) return null;
-        return new PlanResponseDTO(
-                p.getId(),
-                p.getName(),
-                p.getDuration() != null ? p.getDuration().name() : null,
-                p.getFullPrice(),
-                p.getMonthlyInstallmentPrice(),
-                p.getMonthlyCreditsPT(),
-                p.getMonthlyCreditsNutri()
-        );
+        return PlanResponseDTO.builder()
+                .id(p.getId())
+                .name(p.getName())
+                .duration(p.getDuration() != null ? p.getDuration().name() : null)
+                .fullPrice(p.getFullPrice())
+                .monthlyInstallmentPrice(p.getMonthlyInstallmentPrice())
+                .monthlyCreditsPT(p.getMonthlyCreditsPT())
+                .monthlyCreditsNutri(p.getMonthlyCreditsNutri())
+                .build();
     }
 
     public List<PlanResponseDTO> toResponseList(List<Plan> plans) {

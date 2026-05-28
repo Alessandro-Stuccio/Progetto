@@ -8,9 +8,9 @@ import com.project.tesi.facade.impl.DocumentFacadeImpl;
 import com.project.tesi.mapper.DocumentMapper;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
-import com.project.tesi.service.ActivityFeedService;
 import com.project.tesi.service.DocumentService;
 import com.project.tesi.service.FileStorageService;
+import com.project.tesi.service.SlotService;
 import com.project.tesi.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,16 +33,16 @@ class DocumentFacadeTest {
 
     @Mock private DocumentService documentService;
     @Mock private FileStorageService fileStorageService;
-    @Mock private ActivityFeedService activityFeedService;
     @Mock private UserService userService;
     @Mock private DocumentMapper documentMapper;
+    @Mock private SlotService slotService;
 
     private DocumentFacadeImpl documentFacade;
 
     @BeforeEach
     void setUp() {
         documentFacade = new DocumentFacadeImpl(
-                documentService, fileStorageService, activityFeedService, userService, documentMapper);
+                documentService, fileStorageService, userService, documentMapper, slotService);
     }
 
     private User buildUser(Long id, Role role) {
@@ -75,18 +75,20 @@ class DocumentFacadeTest {
     @DisplayName("PT carica WORKOUT_PLAN — successo")
     void ptCanUploadWorkoutPlan() throws IOException {
         User pt = buildUser(2L, Role.PERSONAL_TRAINER);
+        User client = buildUser(1L, Role.CLIENT);
         Document doc = buildDoc("scheda.pdf", DocumentType.WORKOUT_PLAN);
         MultipartFile file = mockFile("scheda.pdf");
 
         when(userService.getUserById(2L)).thenReturn(pt);
+        when(userService.getUserById(1L)).thenReturn(client);
         when(fileStorageService.store(file)).thenReturn("/uploads/scheda.pdf");
         when(documentService.uploadDocument(anyString(), eq("scheda.pdf"), eq("application/pdf"),
-                eq("WORKOUT_PLAN"), eq(1L), eq(2L))).thenReturn(doc);
+                eq("WORKOUT_PLAN"), eq(client), eq(pt))).thenReturn(doc);
 
         DocumentUploadResponse result = documentFacade.uploadDocumentWithValidation(file, 1L, 2L, "WORKOUT_PLAN");
 
-        assertThat(result.fileName()).isEqualTo("scheda.pdf");
-        assertThat(result.type()).isEqualTo("WORKOUT_PLAN");
+        assertThat(result.getFileName()).isEqualTo("scheda.pdf");
+        assertThat(result.getType()).isEqualTo("WORKOUT_PLAN");
     }
 
     @Test
@@ -106,18 +108,20 @@ class DocumentFacadeTest {
     @DisplayName("Nutrizionista carica DIET_PLAN — successo")
     void nutritionistCanUploadDietPlan() throws IOException {
         User nutri = buildUser(3L, Role.NUTRITIONIST);
+        User client = buildUser(1L, Role.CLIENT);
         Document doc = buildDoc("dieta.pdf", DocumentType.DIET_PLAN);
         MultipartFile file = mockFile("dieta.pdf");
 
         when(userService.getUserById(3L)).thenReturn(nutri);
+        when(userService.getUserById(1L)).thenReturn(client);
         when(fileStorageService.store(file)).thenReturn("/uploads/dieta.pdf");
         when(documentService.uploadDocument(anyString(), eq("dieta.pdf"), eq("application/pdf"),
-                eq("DIET_PLAN"), eq(1L), eq(3L))).thenReturn(doc);
+                eq("DIET_PLAN"), eq(client), eq(nutri))).thenReturn(doc);
 
         DocumentUploadResponse result = documentFacade.uploadDocumentWithValidation(file, 1L, 3L, "DIET_PLAN");
 
-        assertThat(result.fileName()).isEqualTo("dieta.pdf");
-        assertThat(result.type()).isEqualTo("DIET_PLAN");
+        assertThat(result.getFileName()).isEqualTo("dieta.pdf");
+        assertThat(result.getType()).isEqualTo("DIET_PLAN");
     }
 
     @Test
@@ -143,27 +147,11 @@ class DocumentFacadeTest {
         when(userService.getUserById(1L)).thenReturn(client);
         when(fileStorageService.store(file)).thenReturn("/uploads/polizza.pdf");
         when(documentService.uploadDocument(anyString(), eq("polizza.pdf"), eq("application/pdf"),
-                eq("INSURANCE_POLICE"), eq(1L), eq(1L))).thenReturn(doc);
+                eq("INSURANCE_POLICE"), eq(client), eq(client))).thenReturn(doc);
 
         DocumentUploadResponse result = documentFacade.uploadDocumentWithValidation(file, 1L, 1L, "INSURANCE_POLICE");
 
-        assertThat(result.type()).isEqualTo("INSURANCE_POLICE");
+        assertThat(result.getType()).isEqualTo("INSURANCE_POLICE");
     }
 
-    @Test
-    @DisplayName("upload riuscito — activityFeedService viene notificato")
-    void activityFeedIsLoggedOnSuccess() throws IOException {
-        User pt = buildUser(2L, Role.PERSONAL_TRAINER);
-        Document doc = buildDoc("scheda.pdf", DocumentType.WORKOUT_PLAN);
-        MultipartFile file = mockFile("scheda.pdf");
-
-        when(userService.getUserById(2L)).thenReturn(pt);
-        when(fileStorageService.store(file)).thenReturn("/uploads/scheda.pdf");
-        when(documentService.uploadDocument(anyString(), eq("scheda.pdf"), eq("application/pdf"),
-                eq("WORKOUT_PLAN"), eq(1L), eq(2L))).thenReturn(doc);
-
-        documentFacade.uploadDocumentWithValidation(file, 1L, 2L, "WORKOUT_PLAN");
-
-        verify(activityFeedService).logDocumentUploaded(1L, 2L, "WORKOUT_PLAN");
-    }
 }

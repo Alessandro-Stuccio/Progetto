@@ -1,5 +1,6 @@
 package com.project.tesi.security;
 
+import com.project.tesi.enums.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,12 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collections;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -28,7 +25,7 @@ import static org.mockito.Mockito.*;
 class JwtAuthenticationFilterTest {
 
     @Mock private JwtUtil jwtUtil;
-    @Mock private CustomUserDetailsService userDetailsService;
+    @Mock private UserDetailsService userDetailsService;
     @Mock private HttpServletRequest request;
     @Mock private HttpServletResponse response;
     @Mock private FilterChain filterChain;
@@ -69,8 +66,8 @@ class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer valid-jwt-token");
         when(jwtUtil.extractUsername("valid-jwt-token")).thenReturn("mario@test.com");
 
-        UserDetails userDetails = new User("mario@test.com", "pass",
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_CLIENT")));
+        com.project.tesi.model.User userDetails = com.project.tesi.model.User.builder()
+                .id(1L).email("mario@test.com").password("password123").role(Role.CLIENT).build();
         when(userDetailsService.loadUserByUsername("mario@test.com")).thenReturn(userDetails);
         when(jwtUtil.isTokenValid("valid-jwt-token", userDetails)).thenReturn(true);
 
@@ -87,8 +84,8 @@ class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer invalid-token");
         when(jwtUtil.extractUsername("invalid-token")).thenReturn("mario@test.com");
 
-        UserDetails userDetails = new User("mario@test.com", "pass",
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_CLIENT")));
+        com.project.tesi.model.User userDetails = com.project.tesi.model.User.builder()
+                .id(1L).email("mario@test.com").password("password123").role(Role.CLIENT).build();
         when(userDetailsService.loadUserByUsername("mario@test.com")).thenReturn(userDetails);
         when(jwtUtil.isTokenValid("invalid-token", userDetails)).thenReturn(false);
 

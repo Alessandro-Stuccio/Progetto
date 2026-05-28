@@ -7,9 +7,8 @@ import com.project.tesi.dto.request.ResetPasswordRequest;
 import com.project.tesi.dto.response.AuthResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.facade.AuthFacade;
-import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
-import com.project.tesi.service.AuthResult;
+import com.project.tesi.dto.response.AuthResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,11 +32,9 @@ public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthFacade authFacade;
-    private final UserFacade userFacade;
 
-    public AuthController(AuthFacade authFacade, UserFacade userFacade) {
+    public AuthController(AuthFacade authFacade) {
         this.authFacade = authFacade;
-        this.userFacade = userFacade;
     }
 
     @Operation(summary = "Registra un nuovo utente", description = "Crea un account CLIENT e restituisce il profilo appena creato.")
@@ -49,7 +46,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.info("Registrazione nuovo utente: {}", request.email());
-        UserResponse response = userFacade.registerUser(request);
+        UserResponse response = authFacade.registerUser(request);
         log.info("Utente registrato con successo: id={}", response.getId());
         return ResponseEntity.ok(response);
     }
@@ -63,9 +60,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("Tentativo di login: {}", request.email());
         AuthResult result = authFacade.login(request);
-        User u = result.user();
+        User u = result.getUser();
         return ResponseEntity.ok(AuthResponse.builder()
-                .token(result.token())
+                .token(result.getToken())
                 .id(u.getId())
                 .firstName(u.getFirstName())
                 .lastName(u.getLastName())

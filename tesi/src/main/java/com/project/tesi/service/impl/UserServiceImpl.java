@@ -7,10 +7,8 @@ import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -30,19 +28,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
-    }
-
-    @Override
     public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Utente con email " + email + " non trovato."));
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return userRepository.findByEmail(email).isPresent();
+        return userRepository.findByEmailAndDeletedFalse(email).isPresent();
     }
 
     @Override
@@ -51,44 +44,52 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<User> findByRole(Role role) {
-        return userRepository.findByRole(role);
+        return userRepository.findByRoleAndDeletedFalse(role);
     }
 
     @Override
     public List<User> findAll() {
-        return userRepository.findAll();
+        return userRepository.findAllByDeletedFalse();
     }
 
     @Override
     public long countByAssignedPT(User pt) {
-        return userRepository.countByAssignedPT(pt);
+        return userRepository.countByAssignedPTAndDeletedFalse(pt);
     }
 
     @Override
     public long countByAssignedNutritionist(User nutritionist) {
-        return userRepository.countByAssignedNutritionist(nutritionist);
+        return userRepository.countByAssignedNutritionistAndDeletedFalse(nutritionist);
     }
 
     @Override
     public List<User> findByAssignedPT(User pt) {
-        return userRepository.findByAssignedPT(pt);
+        return userRepository.findByAssignedPTAndDeletedFalse(pt);
     }
 
     @Override
     public List<User> findByAssignedNutritionist(User nutritionist) {
-        return userRepository.findByAssignedNutritionist(nutritionist);
+        return userRepository.findByAssignedNutritionistAndDeletedFalse(nutritionist);
     }
 
     @Override
-    public void clearAssignedPT(Long ptId) {
-        userRepository.clearAssignedPT(ptId);
+    public boolean existsUserByEmailExcluding(String email, Long excludeId) {
+        return userRepository.findByEmailAndIdIsNotAndDeletedFalse(email, excludeId).isPresent();
     }
 
     @Override
-    public void clearAssignedNutritionist(Long nutriId) {
-        userRepository.clearAssignedNutritionist(nutriId);
+    public void deleteUser(Long id) {
+        User target = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utente", id));
+        target.setDeleted(true);
+        userRepository.save(target);
+
+        if (target.getRole() == Role.PERSONAL_TRAINER) {
+            userRepository.clearAssignedPT(id);
+        } else if (target.getRole() == Role.NUTRITIONIST) {
+            userRepository.clearAssignedNutritionist(id);
+        }
     }
 
     @Override

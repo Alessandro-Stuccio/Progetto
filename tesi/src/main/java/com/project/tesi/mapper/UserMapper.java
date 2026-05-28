@@ -10,6 +10,9 @@ import com.project.tesi.repository.ReviewRepository;
 import com.project.tesi.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Mapper per la conversione bidirezionale tra l'entità {@link User} e i suoi DTO.
  *
@@ -51,9 +54,9 @@ public class UserMapper {
             avgRating = reviewRepository.getAverageRating(user.getId());
             if (avgRating == null) avgRating = 0.0;
             if (user.getRole() == Role.PERSONAL_TRAINER) {
-                clientsCount = (int) userRepository.countByAssignedPT(user);
+                clientsCount = (int) userRepository.countByAssignedPTAndDeletedFalse(user);
             } else {
-                clientsCount = (int) userRepository.countByAssignedNutritionist(user);
+                clientsCount = (int) userRepository.countByAssignedNutritionistAndDeletedFalse(user);
             }
         }
 
@@ -63,6 +66,7 @@ public class UserMapper {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .profilePictureUrl(user.getProfilePicture())
                 .assignedPtName(user.getAssignedPT() != null ?
                         user.getAssignedPT().getFullName() : null)
                 .assignedNutritionistName(user.getAssignedNutritionist() != null ?
@@ -83,11 +87,16 @@ public class UserMapper {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .profilePictureUrl(user.getProfilePicture())
                 .assignedPtName(user.getAssignedPT() != null ?
                         user.getAssignedPT().getFullName() : null)
                 .assignedNutritionistName(user.getAssignedNutritionist() != null ?
                         user.getAssignedNutritionist().getFullName() : null)
                 .build();
+    }
+
+    public List<UserResponse> toAdminResponse(List<User> user) {
+        return user==null?new ArrayList<>():user.stream().map(this::toAdminResponse).toList();
     }
 
     public User toUser(RegisterRequest request) {

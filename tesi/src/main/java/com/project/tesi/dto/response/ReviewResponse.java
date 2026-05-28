@@ -10,7 +10,6 @@ public class ReviewResponse {
     private String comment;
     private LocalDateTime date;
 
-    private ReviewResponse() {}
 
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }

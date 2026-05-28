@@ -2,7 +2,9 @@ package com.project.tesi.facade;
 
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.dto.response.ChatMessageResponse;
+import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
+import com.project.tesi.model.User;
 
 import java.util.List;
 
@@ -14,5 +16,5 @@ public interface ChatFacade {
     void markAsRead(Long chatId, Long userId);
     Integer getTotalUnreadCount(Long userId);
     void closeChat(Long chatId, Long moderatorId);
-    void deleteChatByUser(Long chatId, Long userId);
+    ClientBasicInfoResponse getModerator(User user);
 }

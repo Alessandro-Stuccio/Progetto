@@ -15,7 +15,6 @@ public class SubscriptionResponse {
     private int currentCreditsNutri;
     private Double monthlyPrice;
 
-    private SubscriptionResponse() {}
 
     public static Builder builder() { return new Builder(); }
 

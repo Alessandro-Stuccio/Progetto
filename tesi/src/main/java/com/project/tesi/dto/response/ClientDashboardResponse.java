@@ -10,7 +10,6 @@ public class ClientDashboardResponse {
     private SubscriptionResponse subscription;
     private List<BookingResponse> upcomingBookings;
 
-    private ClientDashboardResponse() {}
 
     public UserResponse getProfile() { return profile; }
     public void setProfile(UserResponse profile) { this.profile = profile; }

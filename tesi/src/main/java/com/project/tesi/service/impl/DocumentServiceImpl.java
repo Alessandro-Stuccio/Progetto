@@ -1,12 +1,10 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.DocumentType;
-import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.document.DocumentNotFoundException;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.DocumentRepository;
-import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.DocumentService;
 import org.springframework.stereotype.Service;
 
@@ -17,21 +15,14 @@ import java.util.List;
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
-    private final UserRepository userRepository;
 
-    public DocumentServiceImpl(DocumentRepository documentRepository, UserRepository userRepository) {
+    public DocumentServiceImpl(DocumentRepository documentRepository) {
         this.documentRepository = documentRepository;
-        this.userRepository = userRepository;
     }
 
     @Override
     public Document uploadDocument(String filePath, String originalName, String contentType,
-                                   String docTypeStr, Long clientId, Long uploaderId) {
-        User client = userRepository.findById(clientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente", clientId));
-        User uploader = userRepository.findById(uploaderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Uploader", uploaderId));
-
+                                   String docTypeStr, User client, User uploader) {
         Document doc = Document.builder()
                 .fileName(originalName)
                 .filePath(filePath)
@@ -41,7 +32,6 @@ public class DocumentServiceImpl implements DocumentService {
                 .uploadedBy(uploader)
                 .uploadDate(LocalDateTime.now())
                 .build();
-
         return documentRepository.save(doc);
     }
 
@@ -62,18 +52,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public List<Document> getUserDocuments(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente", userId));
-        return documentRepository.findByOwnerOrderByUploadDateDesc(user);
+    public List<Document> getUserDocuments(User owner) {
+        return documentRepository.findByOwnerOrderByUploadDateDesc(owner);
     }
 
     @Override
-    public List<Document> getUserDocumentsByType(Long userId, String docType) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente", userId));
-        DocumentType type = DocumentType.valueOf(docType);
-        return documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(user, type);
+    public List<Document> getUserDocumentsByType(User owner, String docType) {
+        return documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(owner, DocumentType.valueOf(docType));
     }
 
     @Override
@@ -91,14 +76,17 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public void deleteByUser(Long userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente", userId));
-        documentRepository.deleteByUserId(userId);
+    public Document saveDocument(Document document) {
+        return documentRepository.save(document);
     }
 
     @Override
-    public Document saveDocument(Document document) {
-        return documentRepository.save(document);
+    public Document findLatestByOwnerAndType(User owner, DocumentType type) {
+        return documentRepository.findLatestByOwnerAndType(owner, type);
+    }
+
+    @Override
+    public int countUploadedSince(User professional, LocalDateTime since) {
+        return documentRepository.countByUploaderSince(professional, since);
     }
 }

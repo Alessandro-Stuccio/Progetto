@@ -10,6 +10,7 @@ import com.project.tesi.mapper.ReviewMapper;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
 import com.project.tesi.service.ReviewService;
+import com.project.tesi.service.SlotService;
 import com.project.tesi.service.UserService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +22,14 @@ public class ReviewFacadeImpl implements ReviewFacade {
 
     private final UserService userService;
     private final ReviewService reviewService;
+    private final SlotService slotService;
     private final ReviewMapper reviewMapper;
 
-    public ReviewFacadeImpl(UserService userService, ReviewService reviewService, ReviewMapper reviewMapper) {
+    public ReviewFacadeImpl(UserService userService, ReviewService reviewService,
+                            SlotService slotService, ReviewMapper reviewMapper) {
         this.userService = userService;
         this.reviewService = reviewService;
+        this.slotService = slotService;
         this.reviewMapper = reviewMapper;
     }
 
@@ -64,7 +68,7 @@ public class ReviewFacadeImpl implements ReviewFacade {
     @Transactional(readOnly = true)
     public boolean canClientReview(Long clientId, Long professionalId) {
         if (reviewService.existsByClientAndProfessional(clientId, professionalId)) return false;
-        if (reviewService.hasBookingRelationship(clientId, professionalId)) return true;
+        if (slotService.hasBookingBetween(clientId, professionalId)) return true;
         User client = userService.getUserById(clientId);
         User professional = userService.getUserById(professionalId);
         return isCurrentlyAssigned(client, professional);

@@ -18,6 +18,8 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
+
+
     private static final String PURPOSE_CLAIM = "purpose";
     private static final String PURPOSE_PASSWORD_RESET = "PASSWORD_RESET";
     private static final long PASSWORD_RESET_EXPIRATION_MS = 30 * 60 * 1000L;

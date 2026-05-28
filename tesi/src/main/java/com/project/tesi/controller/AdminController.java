@@ -7,19 +7,15 @@ import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
 import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
+import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.facade.AdminFacade;
+import com.project.tesi.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -35,27 +31,39 @@ public class AdminController {
         this.adminFacade = adminFacade;
     }
 
-    @Operation(summary = "Recupera tutti gli utenti registrati")
+    @Operation(summary = "Recupera tutti gli utenti gestibili")
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(adminFacade.getAllUsers());
+    public ResponseEntity<List<UserResponse>> getManageableUsers(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(adminFacade.getManageableUsers(user));
     }
 
     @Operation(summary = "Crea un nuovo utente")
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO request) {
-        return ResponseEntity.ok(adminFacade.createUser(request));
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(adminFacade.createUser(body, user));
     }
 
+    @Operation(summary = "Aggiorna un utente esistente")
     @PutMapping("/users/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody ModeratorUserUpdateRequest request) {
-        return ResponseEntity.ok(adminFacade.updateUser(id, request));
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
+            @Valid @RequestBody ModeratorUserUpdateRequest body,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(adminFacade.updateUser(id, body, user));
     }
 
+    @Operation(summary = "Disabilita un utente (soft delete)")
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
-        adminFacade.deleteUser(id);
-        return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        adminFacade.deleteUser(id, user);
+        return ResponseEntity.ok(Map.of("message", "Utente disabilitato"));
+    }
+
+    @Operation(summary = "Recupera i contatti per la chat")
+    @GetMapping("/chat-contacts")
+    public ResponseEntity<List<UserResponse>> getChatContacts() {
+        return ResponseEntity.ok(adminFacade.getChatContacts());
     }
 
     @GetMapping("/subscriptions")
@@ -64,7 +72,8 @@ public class AdminController {
     }
 
     @PutMapping("/subscriptions/{id}/credits")
-    public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id, @Valid @RequestBody SubscriptionCreditsUpdateDTO request) {
+    public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id,
+            @Valid @RequestBody SubscriptionCreditsUpdateDTO request) {
         return ResponseEntity.ok(adminFacade.updateSubscriptionCredits(
                 id,
                 request.creditsPT() != null ? request.creditsPT() : 0,
@@ -78,7 +87,8 @@ public class AdminController {
     }
 
     @PutMapping("/plans/{id}")
-    public ResponseEntity<PlanResponseDTO> updatePlan(@PathVariable Long id, @Valid @RequestBody PlanCreateRequestDTO request) {
+    public ResponseEntity<PlanResponseDTO> updatePlan(@PathVariable Long id,
+            @Valid @RequestBody PlanCreateRequestDTO request) {
         return ResponseEntity.ok(adminFacade.updatePlan(id, request));
     }
 
@@ -86,5 +96,11 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> deletePlan(@PathVariable Long id) {
         adminFacade.deletePlan(id);
         return ResponseEntity.ok(Map.of("message", "Plan deleted successfully"));
+    }
+
+    @Operation(summary = "Statistiche aggregate per la dashboard admin")
+    @GetMapping("/stats")
+    public ResponseEntity<AdminStatsResponse> getStats() {
+        return ResponseEntity.ok(adminFacade.getAdminStats());
     }
 }

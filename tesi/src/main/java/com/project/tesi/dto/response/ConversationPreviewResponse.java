@@ -14,7 +14,6 @@ public class ConversationPreviewResponse {
     private int unreadCount;
     private boolean terminated;
 
-    private ConversationPreviewResponse() {}
 
     public Long getChatId() { return chatId; }
     public void setChatId(Long chatId) { this.chatId = chatId; }

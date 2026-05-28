@@ -2,6 +2,7 @@ package com.project.tesi.builder.impl;
 
 import com.project.tesi.builder.UserBuilder;
 import com.project.tesi.enums.Role;
+import com.project.tesi.util.BusinessConstants;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import com.project.tesi.model.*;
@@ -14,7 +15,6 @@ import com.project.tesi.model.*;
 public class UserBuilderImpl implements UserBuilder {
 
     private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-    private static final int MIN_PASSWORD_LENGTH = 8;
 
     private Long id;
     private String email;
@@ -23,7 +23,6 @@ public class UserBuilderImpl implements UserBuilder {
     private String firstName;
     private String lastName;
     private Role role;
-    private String professionalBio;
     private User assignedPT;
     private User assignedNutritionist;
     private LocalDateTime createdAt;
@@ -65,11 +64,6 @@ public class UserBuilderImpl implements UserBuilder {
         return this;
     }
     @Override
-    public UserBuilder professionalBio(String professionalBio) {
-        this.professionalBio = professionalBio;
-        return this;
-    }
-    @Override
     public UserBuilder assignedPT(User assignedPT) {
         this.assignedPT = assignedPT;
         return this;
@@ -102,8 +96,8 @@ public class UserBuilderImpl implements UserBuilder {
             throw new IllegalArgumentException("email non è un indirizzo valido: " + this.email);
         if (this.password.isBlank())
             throw new IllegalArgumentException("password non può essere vuota");
-        if (this.password.length() < MIN_PASSWORD_LENGTH)
-            throw new IllegalArgumentException("password deve contenere almeno " + MIN_PASSWORD_LENGTH + " caratteri");
+        if (this.password.length() < BusinessConstants.MIN_PASSWORD_LENGTH)
+            throw new IllegalArgumentException("password deve contenere almeno " + BusinessConstants.MIN_PASSWORD_LENGTH + " caratteri");
 
         User obj = new User();
         obj.setId(this.id);
@@ -113,7 +107,6 @@ public class UserBuilderImpl implements UserBuilder {
         obj.setFirstName(this.firstName);
         obj.setLastName(this.lastName);
         obj.setRole(this.role);
-        obj.setProfessionalBio(this.professionalBio);
         obj.setAssignedPT(this.assignedPT);
         obj.setAssignedNutritionist(this.assignedNutritionist);
         obj.setCreatedAt(this.createdAt);

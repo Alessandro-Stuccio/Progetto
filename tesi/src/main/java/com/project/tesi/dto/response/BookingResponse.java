@@ -17,7 +17,6 @@ public class BookingResponse {
     private BookingStatus status;
     private boolean canJoin;
 
-    private BookingResponse() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

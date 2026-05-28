@@ -4,7 +4,6 @@ import com.project.tesi.enums.Role;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ReviewRepository;
-import com.project.tesi.repository.SlotRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.*;
 class ReviewServiceImplTest {
 
     @Mock private ReviewRepository reviewRepository;
-    @Mock private SlotRepository slotRepository;
 
     @InjectMocks
     private ReviewServiceImpl reviewService;
@@ -88,20 +86,6 @@ class ReviewServiceImplTest {
     void getAverageRating_nullReturnsZero() {
         when(reviewRepository.getAverageRating(2L)).thenReturn(null);
         assertThat(reviewService.getAverageRating(2L)).isEqualTo(0.0);
-    }
-
-    @Test
-    @DisplayName("hasBookingRelationship — true quando esiste uno slot prenotato")
-    void hasBookingRelationship_true() {
-        when(slotRepository.existsByBookedByIdAndProfessionalId(1L, 2L)).thenReturn(true);
-        assertThat(reviewService.hasBookingRelationship(1L, 2L)).isTrue();
-    }
-
-    @Test
-    @DisplayName("hasBookingRelationship — false quando nessuno slot prenotato")
-    void hasBookingRelationship_false() {
-        when(slotRepository.existsByBookedByIdAndProfessionalId(1L, 2L)).thenReturn(false);
-        assertThat(reviewService.hasBookingRelationship(1L, 2L)).isFalse();
     }
 
 }

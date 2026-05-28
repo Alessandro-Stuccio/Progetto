@@ -13,18 +13,14 @@ public class DocumentMapper {
 
     public DocumentResponse toResponse(Document doc) {
         if (doc == null) return null;
-        return new DocumentResponse(
-                doc.getId(),
-                doc.getFileName(),
-                doc.getContentType(),
-                doc.getType().name(),
-                doc.getUploadDate().toString(),
-                doc.getOwner().getId(),
-                doc.getOwner().getFullName(),
-                doc.getUploadedBy().getId(),
-                doc.getUploadedBy().getFullName(),
-                doc.getNotes()
-        );
+        return DocumentResponse.builder()
+                .id(doc.getId())
+                .fileName(doc.getFileName())
+                .contentType(doc.getContentType())
+                .type(doc.getType().name())
+                .uploadDate(doc.getUploadDate().toString())
+                .notes(doc.getNotes())
+                .build();
     }
 
     public List<DocumentResponse> toResponseList(List<Document> documents) {
@@ -32,6 +28,6 @@ public class DocumentMapper {
     }
 
     public UpdatedNotesResponse toUpdatedNotesResponse(Document doc) {
-        return new UpdatedNotesResponse(doc.getId(), doc.getNotes());
+        return UpdatedNotesResponse.builder().id(doc.getId()).notes(doc.getNotes()).build();
     }
 }

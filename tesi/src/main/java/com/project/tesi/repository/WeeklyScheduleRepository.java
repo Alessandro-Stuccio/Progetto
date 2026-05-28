@@ -26,7 +26,4 @@ public interface WeeklyScheduleRepository extends JpaRepository<WeeklySchedule, 
      */
     List<WeeklySchedule> findByProfessional(User professional);
 
-    @Modifying
-    @Query("DELETE FROM WeeklySchedule w WHERE w.professional.id = :profId")
-    void deleteByProfessionalId(@Param("profId") Long profId);
 }

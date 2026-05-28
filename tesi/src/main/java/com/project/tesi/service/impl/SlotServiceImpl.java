@@ -5,16 +5,14 @@ import com.project.tesi.exception.booking.SlotAlreadyBookedException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import com.project.tesi.model.WeeklySchedule;
 import com.project.tesi.repository.SlotRepository;
-import com.project.tesi.repository.WeeklyScheduleRepository;
 import com.project.tesi.service.SlotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,12 +21,9 @@ public class SlotServiceImpl implements SlotService {
 
     private static final Logger log = LoggerFactory.getLogger(SlotServiceImpl.class);
     private final SlotRepository slotRepository;
-    private final WeeklyScheduleRepository weeklyScheduleRepository;
 
-    public SlotServiceImpl(SlotRepository slotRepository,
-                           WeeklyScheduleRepository weeklyScheduleRepository) {
+    public SlotServiceImpl(SlotRepository slotRepository) {
         this.slotRepository = slotRepository;
-        this.weeklyScheduleRepository = weeklyScheduleRepository;
     }
 
     @Override
@@ -110,22 +105,28 @@ public class SlotServiceImpl implements SlotService {
     }
 
     @Override
-    public List<WeeklySchedule> getSchedulesByProfessional(User professional) {
-        return weeklyScheduleRepository.findByProfessional(professional);
+    public List<Slot> getAllBookedSlots() {
+        return slotRepository.findAllBooked();
     }
 
     @Override
-    public void clearBookingsByUser(Long userId) {
-        slotRepository.clearBookingByUserId(userId);
+    public void logBookingCreated(Slot slot) {
+        if (slot.getBookedAt() == null) {
+            slot.setBookedAt(LocalDateTime.now());
+            slotRepository.save(slot);
+            log.info("ActivityFeed [Observer]: timestamp bookedAt registrato per slot ID={}", slot.getId());
+        } else {
+            log.info("ActivityFeed [Observer]: slot ID={} già registrato (bookedAt={}).", slot.getId(), slot.getBookedAt());
+        }
     }
 
     @Override
-    public void deleteSlotsByProfessional(Long professionalId) {
-        slotRepository.deleteByProfessionalId(professionalId);
+    public List<Slot> findTodayByProfessional(User professional, LocalDateTime dayStart, LocalDateTime dayEnd) {
+        return slotRepository.findTodayByProfessional(professional, dayStart, dayEnd);
     }
 
     @Override
-    public void deleteSchedulesByProfessional(Long professionalId) {
-        weeklyScheduleRepository.deleteByProfessionalId(professionalId);
+    public boolean hasBookingBetween(Long clientId, Long professionalId) {
+        return slotRepository.existsByBookedByIdAndProfessionalId(clientId, professionalId);
     }
 }

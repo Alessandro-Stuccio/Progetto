@@ -12,6 +12,5 @@ public interface PlanBuilder {
     PlanBuilder monthlyInstallmentPrice(Double monthlyInstallmentPrice);
     PlanBuilder monthlyCreditsPT(int monthlyCreditsPT);
     PlanBuilder monthlyCreditsNutri(int monthlyCreditsNutri);
-    PlanBuilder insuranceCoverageDetails(String insuranceCoverageDetails);
     Plan build();
 }

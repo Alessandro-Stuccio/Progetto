@@ -1,15 +1,14 @@
 package com.project.tesi.service.strategy;
 
-import org.springframework.stereotype.Component;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.booking.InsufficientCreditsException;
 import com.project.tesi.exception.booking.ProfessionalNotAssignedException;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
+import org.springframework.stereotype.Component;
 
 /**
  * Strategia di prenotazione specifica per il Personal Trainer.
- *
  * Verifica che il cliente abbia un PT assegnato corrispondente
  * e che abbia crediti PT residui nell'abbonamento.
  */

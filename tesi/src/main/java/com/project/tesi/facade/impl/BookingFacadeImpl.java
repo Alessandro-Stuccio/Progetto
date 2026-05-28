@@ -2,34 +2,29 @@ package com.project.tesi.facade.impl;
 
 import com.project.tesi.dto.request.BookingRequest;
 import com.project.tesi.dto.response.BookingResponse;
-import com.project.tesi.dto.response.SlotDTO;
 import com.project.tesi.enums.BookingStatus;
-import com.project.tesi.enums.Role;
 import com.project.tesi.exception.booking.BookingCancellationException;
 import com.project.tesi.exception.booking.SlotAlreadyBookedException;
 import com.project.tesi.exception.booking.SubscriptionExpiredException;
 import com.project.tesi.exception.common.BusinessLogicException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.facade.BookingFacade;
 import com.project.tesi.mapper.BookingMapper;
-import com.project.tesi.mapper.SlotMapper;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
-import com.project.tesi.model.WeeklySchedule;
 import com.project.tesi.service.*;
 import com.project.tesi.service.strategy.BookingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -52,31 +47,25 @@ public class BookingFacadeImpl implements BookingFacade {
     private final UserService userService;
     private final SlotService slotService;
     private final SubscriptionService subscriptionService;
-    private final ActivityFeedService activityFeedService;
     private final VideoConferenceService videoConferenceService;
     private final EmailService emailService;
     private final List<BookingStrategy> strategies;
     private final BookingMapper bookingMapper;
-    private final SlotMapper slotMapper;
 
     public BookingFacadeImpl(UserService userService,
                              SlotService slotService,
                              SubscriptionService subscriptionService,
-                             ActivityFeedService activityFeedService,
                              VideoConferenceService videoConferenceService,
                              EmailService emailService,
                              List<BookingStrategy> strategies,
-                             BookingMapper bookingMapper,
-                             SlotMapper slotMapper) {
+                             BookingMapper bookingMapper) {
         this.userService = userService;
         this.slotService = slotService;
         this.subscriptionService = subscriptionService;
-        this.activityFeedService = activityFeedService;
         this.videoConferenceService = videoConferenceService;
         this.emailService = emailService;
         this.strategies = strategies;
         this.bookingMapper = bookingMapper;
-        this.slotMapper = slotMapper;
     }
 
     @Override
@@ -109,7 +98,7 @@ public class BookingFacadeImpl implements BookingFacade {
 
             strategy.verifyAssignment(user, professional);
 
-            Subscription sub = subscriptionService.getSubscriptionStatus(userId);
+            Subscription sub = subscriptionService.getSubscriptionStatus(user);
             LocalDate today = LocalDate.now();
             if (today.isAfter(sub.getEndDate())) {
                 throw new SubscriptionExpiredException(
@@ -124,8 +113,15 @@ public class BookingFacadeImpl implements BookingFacade {
             String meetLink = videoConferenceService.generateMeetingLink(user, professional, slot);
             Slot saved = slotService.saveBooking(slotId, user, meetLink);
 
-            subscriptionService.deductCredits(saved);
-            activityFeedService.logBookingCreated(saved);
+            try {
+                Subscription activeSub = subscriptionService.findActiveByUserWithLock(user)
+                        .orElseThrow(() -> new IllegalStateException("Abbonamento non trovato per l'utente " + user.getId()));
+                strategy.consumeCredits(activeSub);
+                subscriptionService.save(activeSub);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                throw new IllegalStateException("Aggiornamento crediti fallito per conflitto concorrente. Riprovare.", e);
+            }
+            slotService.logBookingCreated(saved);
 
             try {
                 emailService.sendBookingConfirmationEmail(user.getEmail(), user.getFirstName(), professional.getFirstName(), saved.getStartTime(), meetLink);
@@ -166,86 +162,23 @@ public class BookingFacadeImpl implements BookingFacade {
 
         slotService.cancelBooking(bookingId, userId);
 
-        subscriptionService.refundCreditsIfActive(client, professional.getRole());
+        BookingStrategy refundStrategy = strategies.stream()
+                .filter(s -> s.getSupportedRole() == professional.getRole())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Nessuna strategy trovata per il ruolo: " + professional.getRole()));
+        Optional<Subscription> subOpt = subscriptionService.findActiveByUserWithLock(client);
+        if (subOpt.isEmpty()) {
+            log.warn("Nessun abbonamento attivo per utente ID {}: rimborso non effettuato.", client.getId());
+        } else {
+            refundStrategy.refundCredits(subOpt.get());
+            subscriptionService.save(subOpt.get());
+        }
 
         try {
             emailService.sendBookingCancellationEmail(client.getEmail(), client.getFirstName(), professional.getFirstName(), start);
             emailService.sendBookingCancellationEmail(professional.getEmail(), professional.getFirstName(), client.getFirstName(), start);
         } catch (Exception e) {
             log.warn("Impossibile inviare email di cancellazione prenotazione: {}", e.getMessage());
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<SlotDTO> getAvailableSlots(Long professionalId) {
-        User professional = userService.getUserById(professionalId);
-        return slotMapper.toDtoList(slotService.getAvailableSlots(professional));
-    }
-
-    @Override
-    @Transactional
-    public List<SlotDTO> createSlots(Long professionalId, List<SlotDTO> slots) {
-        User professional = userService.getUserById(professionalId);
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new UnauthorizedAccessException("Solo i professionisti possono creare slot");
-        }
-        List<Slot> entities = slotMapper.toEntityList(slots, professional);
-        return slotMapper.toDtoList(slotService.createSlots(entities));
-    }
-
-    @Override
-    @Transactional
-    public void deleteSlot(Long slotId, Long requesterId) {
-        Slot slot = slotService.getSlot(slotId);
-        if (!slot.getProfessional().getId().equals(requesterId)) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a eliminare questo slot");
-        }
-        slotService.deleteSlot(slotId);
-    }
-
-    @Override
-    @Transactional
-    public void generateSlotsFromSchedule(User professional, LocalDate startDate, LocalDate endDate) {
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new UnauthorizedAccessException("Solo i professionisti possono generare slot");
-        }
-
-        List<WeeklySchedule> schedules = slotService.getSchedulesByProfessional(professional);
-        List<Slot> newSlots = new ArrayList<>();
-
-        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            final LocalDate currentDay = date;
-
-            List<WeeklySchedule> dailyRules = schedules.stream()
-                    .filter(s -> s.getDayOfWeek().equals(currentDay.getDayOfWeek()))
-                    .toList();
-
-            for (WeeklySchedule rule : dailyRules) {
-                LocalTime currentTime = rule.getStartTime();
-
-                while (currentTime.plusMinutes(30).isBefore(rule.getEndTime()) ||
-                        currentTime.plusMinutes(30).equals(rule.getEndTime())) {
-
-                    LocalDateTime startSlot = LocalDateTime.of(currentDay, currentTime);
-                    LocalDateTime endSlot = startSlot.plusMinutes(30);
-
-                    if (!slotService.slotExists(professional, startSlot)) {
-                        newSlots.add(Slot.builder()
-                                .professional(professional)
-                                .startTime(startSlot)
-                                .endTime(endSlot)
-                                .bookedBy(null)
-                                .build());
-                    }
-
-                    currentTime = currentTime.plusMinutes(30);
-                }
-            }
-        }
-
-        if (!newSlots.isEmpty()) {
-            slotService.createSlots(newSlots);
         }
     }
 }

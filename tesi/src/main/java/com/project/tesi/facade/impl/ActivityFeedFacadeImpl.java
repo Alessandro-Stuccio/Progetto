@@ -7,7 +7,6 @@ import com.project.tesi.mapper.ActivityFeedMapper;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import com.project.tesi.service.ActivityFeedService;
 import com.project.tesi.service.DocumentService;
 import com.project.tesi.service.SlotService;
 import com.project.tesi.service.UserService;
@@ -21,18 +20,15 @@ import java.util.List;
 @Component
 public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
 
-    private final ActivityFeedService activityFeedService;
     private final UserService userService;
     private final SlotService slotService;
     private final DocumentService documentService;
     private final ActivityFeedMapper activityFeedMapper;
 
-    public ActivityFeedFacadeImpl(ActivityFeedService activityFeedService,
-                                   UserService userService,
+    public ActivityFeedFacadeImpl(UserService userService,
                                    SlotService slotService,
                                    DocumentService documentService,
                                    ActivityFeedMapper mapper) {
-        this.activityFeedService = activityFeedService;
         this.userService = userService;
         this.slotService = slotService;
         this.documentService = documentService;
@@ -58,9 +54,4 @@ public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
         return activityFeedMapper.toActivityFeedItemResponse(slots, documents, user);
     }
 
-    @Override
-    @Transactional
-    public void logDocumentUploaded(Long clientId, Long uploaderId, String type) {
-        activityFeedService.logDocumentUploaded(clientId, uploaderId, type);
-    }
 }

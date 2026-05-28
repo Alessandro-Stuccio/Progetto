@@ -59,14 +59,14 @@ class UserServiceImplTest {
     @Test
     @DisplayName("getUserByEmail — trovato restituisce l'entità")
     void getUserByEmail_found() {
-        when(userRepository.findByEmail("mario@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailAndDeletedFalse("mario@test.com")).thenReturn(Optional.of(user));
         assertThat(userService.getUserByEmail("mario@test.com")).isEqualTo(user);
     }
 
     @Test
     @DisplayName("getUserByEmail — non trovato lancia ResourceNotFoundException")
     void getUserByEmail_notFound() {
-        when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndDeletedFalse("unknown@test.com")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> userService.getUserByEmail("unknown@test.com"))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
@@ -74,14 +74,14 @@ class UserServiceImplTest {
     @Test
     @DisplayName("existsByEmail — email presente restituisce true")
     void existsByEmail_true() {
-        when(userRepository.findByEmail("mario@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailAndDeletedFalse("mario@test.com")).thenReturn(Optional.of(user));
         assertThat(userService.existsByEmail("mario@test.com")).isTrue();
     }
 
     @Test
     @DisplayName("existsByEmail — email assente restituisce false")
     void existsByEmail_false() {
-        when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndDeletedFalse("unknown@test.com")).thenReturn(Optional.empty());
         assertThat(userService.existsByEmail("unknown@test.com")).isFalse();
     }
 
@@ -94,32 +94,53 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("findByRole — delega a userRepository.findByRole")
+    @DisplayName("findByRole — delega a userRepository.findByRoleAndDeletedFalse")
     void findByRole_delegates() {
-        when(userRepository.findByRole(Role.CLIENT)).thenReturn(List.of(user));
+        when(userRepository.findByRoleAndDeletedFalse(Role.CLIENT)).thenReturn(List.of(user));
         List<User> result = userService.findByRole(Role.CLIENT);
         assertThat(result).containsExactly(user);
     }
 
     @Test
-    @DisplayName("findAll — delega a userRepository.findAll")
+    @DisplayName("findAll — delega a userRepository.findAllByDeletedFalse")
     void findAll_delegates() {
-        when(userRepository.findAll()).thenReturn(List.of(user, pt, nutri));
+        when(userRepository.findAllByDeletedFalse()).thenReturn(List.of(user, pt, nutri));
         assertThat(userService.findAll()).hasSize(3);
     }
 
     @Test
     @DisplayName("countByAssignedPT — delega a userRepository")
     void countByAssignedPT_delegates() {
-        when(userRepository.countByAssignedPT(pt)).thenReturn(7L);
+        when(userRepository.countByAssignedPTAndDeletedFalse(pt)).thenReturn(7L);
         assertThat(userService.countByAssignedPT(pt)).isEqualTo(7L);
     }
 
     @Test
     @DisplayName("countByAssignedNutritionist — delega a userRepository")
     void countByAssignedNutritionist_delegates() {
-        when(userRepository.countByAssignedNutritionist(nutri)).thenReturn(3L);
+        when(userRepository.countByAssignedNutritionistAndDeletedFalse(nutri)).thenReturn(3L);
         assertThat(userService.countByAssignedNutritionist(nutri)).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("deleteUser PT — soft delete + clearAssignedPT")
+    void deleteUser_pt_clearAssignedPT() {
+        when(userRepository.findById(2L)).thenReturn(Optional.of(pt));
+        userService.deleteUser(2L);
+        assertThat(pt.isDeleted()).isTrue();
+        verify(userRepository).save(pt);
+        verify(userRepository).clearAssignedPT(2L);
+    }
+
+    @Test
+    @DisplayName("deleteUser CLIENT — soft delete senza clearAssigned")
+    void deleteUser_client_noClearing() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        userService.deleteUser(1L);
+        assertThat(user.isDeleted()).isTrue();
+        verify(userRepository).save(user);
+        verify(userRepository, never()).clearAssignedPT(any());
+        verify(userRepository, never()).clearAssignedNutritionist(any());
     }
 
     @Test

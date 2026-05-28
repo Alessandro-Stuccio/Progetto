@@ -1,14 +1,23 @@
 package com.project.tesi.controller;
 
+import com.project.tesi.dto.request.UpdateNotesRequest;
+import com.project.tesi.dto.response.DocumentResponse;
+import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.SubscriptionResponse;
+import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.dto.response.UserResponse;
-import com.project.tesi.facade.AdminFacade;
+import com.project.tesi.facade.InsuranceFacade;
+import com.project.tesi.model.Document;
+import com.project.tesi.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,21 +26,63 @@ import java.util.List;
 @Tag(name = "Insurance", description = "API riservate all'Insurance Manager")
 public class InsuranceController {
 
-    private final AdminFacade adminFacade;
+    private final InsuranceFacade insuranceFacade;
 
-    public InsuranceController(AdminFacade adminFacade) {
-        this.adminFacade = adminFacade;
+    public InsuranceController(InsuranceFacade insuranceFacade) {
+        this.insuranceFacade = insuranceFacade;
     }
 
     @Operation(summary = "Lista abbonamenti", description = "Restituisce tutti gli abbonamenti attivi e scaduti.")
     @GetMapping("/subscriptions")
     public ResponseEntity<List<SubscriptionResponse>> getSubscriptions() {
-        return ResponseEntity.ok(adminFacade.getAllSubscriptions());
+        return ResponseEntity.ok(insuranceFacade.getAllSubscriptions());
     }
 
-    @Operation(summary = "Lista utenti", description = "Restituisce tutti gli utenti registrati.")
-    @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(adminFacade.getAllUsers());
+    @Operation(summary = "Lista clienti", description = "Restituisce tutti i clienti registrati.")
+    @GetMapping("/clients")
+    public ResponseEntity<List<UserResponse>> getClients() {
+        return ResponseEntity.ok(insuranceFacade.getAllClients());
+    }
+
+    @Operation(summary = "Carica polizza assicurativa per un cliente")
+    @PostMapping("/clients/{clientId}/policy")
+    public ResponseEntity<DocumentUploadResponse> uploadPolicy(
+            @PathVariable Long clientId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal User caller) {
+        return ResponseEntity.ok(insuranceFacade.uploadPolicy(file, clientId, caller.getId()));
+    }
+
+    @Operation(summary = "Lista polizze di un cliente")
+    @GetMapping("/clients/{clientId}/policies")
+    public ResponseEntity<List<DocumentResponse>> getClientPolicies(@PathVariable Long clientId) {
+        return ResponseEntity.ok(insuranceFacade.getClientPolicies(clientId));
+    }
+
+    @Operation(summary = "Scarica una polizza assicurativa")
+    @GetMapping("/policies/{id}/download")
+    public ResponseEntity<byte[]> downloadPolicy(@PathVariable Long id) {
+        Document doc = insuranceFacade.getDocumentById(id);
+        byte[] data = insuranceFacade.downloadPolicy(id);
+        String contentType = doc.getContentType() != null ? doc.getContentType() : "application/octet-stream";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getFileName() + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(data);
+    }
+
+    @Operation(summary = "Elimina una polizza assicurativa")
+    @DeleteMapping("/policies/{id}")
+    public ResponseEntity<Void> deletePolicy(@PathVariable Long id) {
+        insuranceFacade.deletePolicy(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Aggiorna le note di una polizza assicurativa")
+    @PutMapping("/policies/{id}/notes")
+    public ResponseEntity<UpdatedNotesResponse> updatePolicyNotes(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateNotesRequest body) {
+        return ResponseEntity.ok(insuranceFacade.updatePolicyNotes(id, body.notes()));
     }
 }

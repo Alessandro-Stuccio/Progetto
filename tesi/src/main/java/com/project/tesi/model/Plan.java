@@ -40,7 +40,6 @@ public class Plan {
 
     private int monthlyCreditsPT;
     private int monthlyCreditsNutri;
-    private String insuranceCoverageDetails;
 
     public Plan() {}
 
@@ -64,9 +63,6 @@ public class Plan {
 
     public int getMonthlyCreditsNutri() { return monthlyCreditsNutri; }
     public void setMonthlyCreditsNutri(int monthlyCreditsNutri) { this.monthlyCreditsNutri = monthlyCreditsNutri; }
-
-    public String getInsuranceCoverageDetails() { return insuranceCoverageDetails; }
-    public void setInsuranceCoverageDetails(String insuranceCoverageDetails) { this.insuranceCoverageDetails = insuranceCoverageDetails; }
 
     public static PlanBuilder builder() {
         return new PlanBuilderImpl();

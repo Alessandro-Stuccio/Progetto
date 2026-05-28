@@ -19,6 +19,4 @@ public interface PlanService {
     void deletePlan(@NotNull @Min(1) Long id);
 
     boolean existsByName(@NotNull String name);
-
-    boolean hasSubscribers(@NotNull @Min(1) Long planId);
 }

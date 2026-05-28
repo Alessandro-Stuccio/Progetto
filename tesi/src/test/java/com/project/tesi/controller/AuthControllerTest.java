@@ -4,8 +4,6 @@ import com.project.tesi.dto.request.RegisterRequest;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.facade.AuthFacade;
-import com.project.tesi.facade.UserFacade;
-import com.project.tesi.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,9 +20,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
-    @Mock private AuthService authService;
     @Mock private AuthFacade authFacade;
-    @Mock private UserFacade userFacade;
 
     @InjectMocks
     private AuthController authController;
@@ -34,7 +30,7 @@ class AuthControllerTest {
     void register() {
         RegisterRequest req = new RegisterRequest(null, null, "mario@test.com", null, null, null, null, null, null);
         UserResponse userResp = UserResponse.builder().id(1L).email("mario@test.com").role(Role.CLIENT).build();
-        when(userFacade.registerUser(req)).thenReturn(userResp);
+        when(authFacade.registerUser(req)).thenReturn(userResp);
 
         ResponseEntity<UserResponse> response = authController.register(req);
 

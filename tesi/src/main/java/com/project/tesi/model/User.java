@@ -57,9 +57,6 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
-    @Column(columnDefinition = "TEXT")
-    private String professionalBio;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_pt_id", foreignKey = @ForeignKey(name = "fk_user_assigned_pt_id"))
     private User assignedPT;
@@ -67,6 +64,9 @@ public class User implements UserDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_nutritionist_id", foreignKey = @ForeignKey(name = "fk_user_assigned_nutritionist_id"))
     private User assignedNutritionist;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleted = false;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -101,9 +101,6 @@ public class User implements UserDetails {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
-    public String getProfessionalBio() { return professionalBio; }
-    public void setProfessionalBio(String professionalBio) { this.professionalBio = professionalBio; }
-
     public User getAssignedPT() { return assignedPT; }
     public void setAssignedPT(User assignedPT) { this.assignedPT = assignedPT; }
 
@@ -112,6 +109,9 @@ public class User implements UserDetails {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
@@ -132,6 +132,11 @@ public class User implements UserDetails {
     @Override
     public String getUsername() {
         return email;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return !deleted;
     }
 
     @Override

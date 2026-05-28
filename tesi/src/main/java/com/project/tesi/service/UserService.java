@@ -16,8 +16,6 @@ public interface UserService {
             @NotNull(message = "l'id deve essere valorizzato")
             @Min(value = 1, message = "non esistono id negativi") Long id);
 
-    Optional<User> findById(@NotNull @Min(1) Long id);
-
     User getUserByEmail(@NotNull String email);
 
     boolean existsByEmail(@NotNull String email);
@@ -36,9 +34,9 @@ public interface UserService {
 
     List<User> findByAssignedNutritionist(@NotNull User nutritionist);
 
-    void clearAssignedPT(@NotNull @Min(1) Long ptId);
+    boolean existsUserByEmailExcluding(String email, Long excludeId);
 
-    void clearAssignedNutritionist(@NotNull @Min(1) Long nutriId);
+    void deleteUser(Long id);
 
     String encodePassword(@NotNull String rawPassword);
 }

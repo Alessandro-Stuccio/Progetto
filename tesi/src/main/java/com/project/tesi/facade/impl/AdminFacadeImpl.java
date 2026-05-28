@@ -1,17 +1,14 @@
 package com.project.tesi.facade.impl;
 
-import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
-import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
 import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
-import com.project.tesi.exception.user.AdminSelfDeletionNotAllowedException;
 import com.project.tesi.facade.AdminFacade;
+import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.mapper.PlanMapper;
 import com.project.tesi.mapper.SubscriptionMapper;
 import com.project.tesi.mapper.UserMapper;
@@ -19,12 +16,8 @@ import com.project.tesi.model.Plan;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
-import com.project.tesi.service.AdminService;
-import com.project.tesi.service.AdminStatsService;
 import com.project.tesi.service.ChatService;
-import com.project.tesi.service.DocumentService;
 import com.project.tesi.service.PlanService;
-import com.project.tesi.service.ReviewService;
 import com.project.tesi.service.SlotService;
 import com.project.tesi.service.SubscriptionService;
 import com.project.tesi.service.UserService;
@@ -35,147 +28,31 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class AdminFacadeImpl extends AbstractUserManagementFacade implements AdminFacade {
+public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade {
 
-    private static final Set<Role> ADMIN_MANAGEABLE_ROLES =
-            EnumSet.of(Role.MODERATOR, Role.INSURANCE_MANAGER);
-
-    private final AdminStatsService adminStatsService;
     private final PlanService planService;
     private final SlotService slotService;
-    private final ChatService chatService;
-    private final ReviewService reviewService;
-    private final DocumentService documentService;
-    private final SubscriptionMapper subscriptionMapper;
     private final PlanMapper planMapper;
 
-    public AdminFacadeImpl(AdminService adminService,
-                           AdminStatsService adminStatsService,
+    public AdminFacadeImpl(ChatService chatService,
                            UserService userService,
                            SubscriptionService subscriptionService,
-                           PlanService planService,
-                           SlotService slotService,
-                           ChatService chatService,
-                           ReviewService reviewService,
-                           DocumentService documentService,
                            UserMapper userMapper,
                            SubscriptionMapper subscriptionMapper,
-                           PlanMapper planMapper) {
-        super(adminService, userService, subscriptionService, userMapper);
-        this.adminStatsService = adminStatsService;
+                           PlanService planService,
+                           SlotService slotService,
+                           PlanMapper planMapper,
+                           SubscriptionFacade subscriptionFacade) {
+        super(chatService, userService, subscriptionService, userMapper, subscriptionMapper, planService, subscriptionFacade);
         this.planService = planService;
         this.slotService = slotService;
-        this.chatService = chatService;
-        this.reviewService = reviewService;
-        this.documentService = documentService;
-        this.subscriptionMapper = subscriptionMapper;
         this.planMapper = planMapper;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        return adminService.getAllUsers().stream()
-                .map(userMapper::toAdminResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional
-    public UserResponse createUser(UserCreateRequestDTO request) {
-        Role targetRole = parseRole(request.role());
-        if (targetRole == Role.ADMIN) {
-            throw new UnauthorizedAccessException("Non è possibile creare un utente con ruolo ADMIN.");
-        }
-        return buildAndSaveUser(request, targetRole);
-    }
-
-    @Override
-    @Transactional
-    public UserResponse updateUser(Long id, ModeratorUserUpdateRequest request) {
-        User target = userService.getUserById(id);
-
-        if (target.getRole() == Role.ADMIN) {
-            throw new UnauthorizedAccessException("Non è possibile modificare un utente ADMIN.");
-        }
-        if (!ADMIN_MANAGEABLE_ROLES.contains(target.getRole())) {
-            throw new UnauthorizedAccessException(
-                    "L'admin non può modificare utenti con ruolo " + target.getRole() + " da questo endpoint.");
-        }
-
-        if (request.role() != null && !request.role().isBlank()) {
-            Role newRole = parseRole(request.role());
-            if (newRole == Role.ADMIN) {
-                throw new UnauthorizedAccessException("Non è possibile assegnare il ruolo ADMIN.");
-            }
-            if (!ADMIN_MANAGEABLE_ROLES.contains(newRole)) {
-                throw new UnauthorizedAccessException(
-                        "L'admin può assegnare solo i ruoli: " + ADMIN_MANAGEABLE_ROLES);
-            }
-        }
-
-        String email = request.email();
-        if (email != null && !email.isBlank() && !email.equalsIgnoreCase(target.getEmail())) {
-            if (adminService.existsUserByEmailExcluding(email, id)) {
-                throw new ResourceAlreadyExistsException("Utente", "email", email);
-            }
-            target.setEmail(email);
-        }
-
-        applyUserUpdates(target, request);
-
-        return userMapper.toAdminResponse(adminService.saveUser(target));
-    }
-
-    @Override
-    @Transactional
-    public void deleteUser(Long id) {
-        Optional<User> actorOpt = getAuthenticatedUserOptional();
-        User target = userService.getUserById(id);
-
-        if (target.getRole() == Role.ADMIN) {
-            if (actorOpt.isPresent() && actorOpt.get().getId().equals(target.getId())) {
-                throw new AdminSelfDeletionNotAllowedException();
-            }
-            throw new UnauthorizedAccessException("Non è possibile eliminare un utente ADMIN.");
-        }
-
-        userService.clearAssignedPT(id);
-        userService.clearAssignedNutritionist(id);
-        slotService.clearBookingsByUser(id);
-        slotService.deleteSlotsByProfessional(id);
-        slotService.deleteSchedulesByProfessional(id);
-        chatService.deleteChatsForUser(id);
-        reviewService.deleteByUser(id);
-        documentService.deleteByUser(id);
-        subscriptionService.deleteByUser(id);
-        adminService.deleteUser(id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<SubscriptionResponse> getAllSubscriptions() {
-        return adminService.getAllSubscriptions().stream()
-                .map(subscriptionMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional
-    public SubscriptionResponse updateSubscriptionCredits(Long id, int pt, int nutri) {
-        if (pt < 0 || nutri < 0) {
-            throw new IllegalArgumentException("I crediti non possono essere negativi.");
-        }
-        return subscriptionMapper.toResponse(adminService.updateSubscriptionCredits(id, pt, nutri));
     }
 
     @Override
@@ -228,7 +105,7 @@ public class AdminFacadeImpl extends AbstractUserManagementFacade implements Adm
     @Override
     @Transactional
     public void deletePlan(Long id) {
-        if (planService.hasSubscribers(id)) {
+        if (subscriptionService.hasSubscribersByPlan(id)) {
             throw new IllegalStateException("Impossibile eliminare il piano: esistono sottoscrizioni collegate.");
         }
         planService.deletePlan(id);
@@ -237,11 +114,11 @@ public class AdminFacadeImpl extends AbstractUserManagementFacade implements Adm
     @Override
     @Transactional(readOnly = true)
     public AdminStatsResponse getAdminStats() {
-        List<User> allUsers = adminService.getAllUsers();
-        List<Subscription> allSubs = adminService.getAllSubscriptions();
-        List<Subscription> activeSubs = allSubs.stream().filter(Subscription::isActive).collect(Collectors.toList());
-        List<Plan> allPlans = adminStatsService.getAllPlans();
-        List<Slot> allBooked = adminStatsService.getAllBookedSlots();
+        List<User> allUsers = userService.findAll();
+        List<Subscription> allSubs = subscriptionService.getAllSubscriptions();
+        List<Subscription> activeSubs = allSubs.stream().filter(Subscription::isActive).toList();
+        List<Plan> allPlans = planService.getAllPlans();
+        List<Slot> allBooked = slotService.getAllBookedSlots();
 
         Map<String, Long> usersByRole = allUsers.stream()
                 .collect(Collectors.groupingBy(u -> u.getRole().name(), Collectors.counting()));
@@ -259,10 +136,11 @@ public class AdminFacadeImpl extends AbstractUserManagementFacade implements Adm
                         return !created.isBefore(start) && !created.isAfter(end);
                     })
                     .count();
-            usersPerMonth.add(new AdminStatsResponse.MonthlyUserCount(
-                    ym.getMonth().getDisplayName(TextStyle.SHORT, Locale.ITALIAN),
-                    ym.getYear(),
-                    count));
+            usersPerMonth.add(AdminStatsResponse.MonthlyUserCount.builder()
+                    .month(ym.getMonth().getDisplayName(TextStyle.SHORT, Locale.ITALIAN))
+                    .year(ym.getYear())
+                    .count(count)
+                    .build());
         }
 
         Map<String, Long> subsByPlan = activeSubs.stream()
@@ -271,12 +149,15 @@ public class AdminFacadeImpl extends AbstractUserManagementFacade implements Adm
         List<AdminStatsResponse.PlanPopularityItem> planPopularity = allPlans.stream()
                 .map(p -> {
                     long cnt = subsByPlan.getOrDefault(p.getName(), 0L);
-                    return new AdminStatsResponse.PlanPopularityItem(
-                            p.getName(), cnt,
-                            totalActiveSubs > 0 ? Math.round((cnt * 100.0) / totalActiveSubs) : 0,
-                            p.getMonthlyInstallmentPrice(), p.getFullPrice());
+                    return AdminStatsResponse.PlanPopularityItem.builder()
+                            .name(p.getName())
+                            .activeCount(cnt)
+                            .percentage(totalActiveSubs > 0 ? Math.round((cnt * 100.0) / totalActiveSubs) : 0)
+                            .monthlyPrice(p.getMonthlyInstallmentPrice())
+                            .fullPrice(p.getFullPrice())
+                            .build();
                 })
-                .sorted((a, b) -> Long.compare(b.activeCount(), a.activeCount()))
+                .sorted((a, b) -> Long.compare(b.getActiveCount(), a.getActiveCount()))
                 .collect(Collectors.toList());
 
         int ptAvail = 0, nutriAvail = 0, ptMax = 0, nutriMax = 0;
@@ -286,11 +167,16 @@ public class AdminFacadeImpl extends AbstractUserManagementFacade implements Adm
             ptMax      += s.getPlan().getMonthlyCreditsPT();
             nutriMax   += s.getPlan().getMonthlyCreditsNutri();
         }
-        AdminStatsResponse.CreditsStats credits = new AdminStatsResponse.CreditsStats(
-                ptAvail, ptMax, ptMax - ptAvail,
-                ptMax > 0 ? Math.round(((ptMax - ptAvail) * 100.0) / ptMax) : 0,
-                nutriAvail, nutriMax, nutriMax - nutriAvail,
-                nutriMax > 0 ? Math.round(((nutriMax - nutriAvail) * 100.0) / nutriMax) : 0);
+        AdminStatsResponse.CreditsStats credits = AdminStatsResponse.CreditsStats.builder()
+                .ptAvailable(ptAvail)
+                .ptTotal(ptMax)
+                .ptConsumed(ptMax - ptAvail)
+                .ptPercentUsed(ptMax > 0 ? Math.round(((ptMax - ptAvail) * 100.0) / ptMax) : 0)
+                .nutriAvailable(nutriAvail)
+                .nutriTotal(nutriMax)
+                .nutriConsumed(nutriMax - nutriAvail)
+                .nutriPercentUsed(nutriMax > 0 ? Math.round(((nutriMax - nutriAvail) * 100.0) / nutriMax) : 0)
+                .build();
 
         double monthlyRevenue = activeSubs.stream()
                 .mapToDouble(s -> s.getPlan().getMonthlyInstallmentPrice()).sum();
@@ -309,35 +195,28 @@ public class AdminFacadeImpl extends AbstractUserManagementFacade implements Adm
                     long clientCount = pro.getRole() == Role.PERSONAL_TRAINER
                             ? allUsers.stream().filter(u -> u.getAssignedPT() != null && u.getAssignedPT().getId().equals(pro.getId())).count()
                             : allUsers.stream().filter(u -> u.getAssignedNutritionist() != null && u.getAssignedNutritionist().getId().equals(pro.getId())).count();
-                    return new AdminStatsResponse.ProfessionalWorkloadItem(
-                            pro.getFullName(),
-                            pro.getRole().name(),
-                            clientCount);
+                    return AdminStatsResponse.ProfessionalWorkloadItem.builder()
+                            .name(pro.getFullName())
+                            .role(pro.getRole().name())
+                            .clientCount(clientCount)
+                            .build();
                 })
-                .sorted((a, b) -> Long.compare(b.clientCount(), a.clientCount()))
+                .sorted((a, b) -> Long.compare(b.getClientCount(), a.getClientCount()))
                 .collect(Collectors.toList());
 
-        return new AdminStatsResponse(
-                usersByRole,
-                allUsers.size(),
-                usersPerMonth,
-                planPopularity,
-                totalActiveSubs,
-                allSubs.size(),
-                credits,
-                monthlyRev,
-                yearlyRev,
-                bookingsThisMonth,
-                allBooked.size(),
-                proWorkload);
+        return AdminStatsResponse.builder()
+                .usersByRole(usersByRole)
+                .totalUsers(allUsers.size())
+                .usersPerMonth(usersPerMonth)
+                .planPopularity(planPopularity)
+                .totalActiveSubscriptions(totalActiveSubs)
+                .totalSubscriptions(allSubs.size())
+                .credits(credits)
+                .monthlyRevenue(monthlyRev)
+                .yearlyRevenue(yearlyRev)
+                .bookingsThisMonth(bookingsThisMonth)
+                .bookingsTotal(allBooked.size())
+                .professionalWorkload(proWorkload)
+                .build();
     }
-
-    private Optional<User> getAuthenticatedUserOptional() {
-        try {
-            return Optional.of(getAuthenticatedUser());
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
 }

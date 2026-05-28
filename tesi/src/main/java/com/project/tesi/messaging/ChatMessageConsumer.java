@@ -1,7 +1,7 @@
 package com.project.tesi.messaging;
 
 import com.project.tesi.config.RabbitMQConfig;
-import com.project.tesi.service.ChatService;
+import com.project.tesi.service.ChatAsyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 public class ChatMessageConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(ChatMessageConsumer.class);
-    private final ChatService chatService;
+    private final ChatAsyncService chatAsyncService;
 
-    public ChatMessageConsumer(ChatService chatService) {
-        this.chatService = chatService;
+    public ChatMessageConsumer(ChatAsyncService chatAsyncService) {
+        this.chatAsyncService = chatAsyncService;
     }
 
     @RabbitListener(queues = RabbitMQConfig.CHAT_DLQ)
@@ -29,7 +29,7 @@ public class ChatMessageConsumer {
     public void consume(ChatMessagePayload payload) {
         log.info("[RabbitMQ] Consume chat message chatId={} senderId={}", payload.chatId(), payload.senderId());
         try {
-            chatService.sendMessageDirect(payload.chatId(), payload.senderId(), payload.content());
+            chatAsyncService.saveChatMessage(payload.chatId(), payload.senderId(), payload.content());
         } catch (DataIntegrityViolationException e) {
             log.error("[RabbitMQ] Errore permanente (DataIntegrity) chatId={} senderId={}: {} — invio a DLQ senza retry",
                     payload.chatId(), payload.senderId(), e.getMessage());

@@ -54,7 +54,7 @@ class UserMapperTest {
                 .email("luca@test.com").role(Role.PERSONAL_TRAINER).build();
 
         when(reviewRepository.getAverageRating(2L)).thenReturn(4.5);
-        when(userRepository.countByAssignedPT(pt)).thenReturn(7L);
+        when(userRepository.countByAssignedPTAndDeletedFalse(pt)).thenReturn(7L);
 
         UserResponse resp = userMapper.toUserResponse(pt);
 
@@ -70,7 +70,7 @@ class UserMapperTest {
                 .email("sara@test.com").role(Role.NUTRITIONIST).build();
 
         when(reviewRepository.getAverageRating(3L)).thenReturn(null);
-        when(userRepository.countByAssignedNutritionist(nutri)).thenReturn(3L);
+        when(userRepository.countByAssignedNutritionistAndDeletedFalse(nutri)).thenReturn(3L);
 
         UserResponse resp = userMapper.toUserResponse(nutri);
 

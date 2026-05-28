@@ -11,7 +11,6 @@ public class ClientBasicInfoResponse {
     private String profilePictureUrl;
     private String role;
 
-    private ClientBasicInfoResponse() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

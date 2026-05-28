@@ -29,13 +29,14 @@ class PlanControllerTest {
     @Test
     @DisplayName("getAllPlans — restituisce 200 con lista piani")
     void getAllPlans() {
-        PlanResponseDTO p = new PlanResponseDTO(1L, "Premium", "ANNUALE", 100.0, 10.0, 5, 5);
+        PlanResponseDTO p = PlanResponseDTO.builder().id(1L).name("Premium").duration("ANNUALE")
+                .fullPrice(100.0).monthlyInstallmentPrice(10.0).monthlyCreditsPT(5).monthlyCreditsNutri(5).build();
         when(planFacade.getAllPlans()).thenReturn(List.of(p));
 
         ResponseEntity<List<PlanResponseDTO>> response = planController.getAllPlans();
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).hasSize(1);
-        assertThat(response.getBody().get(0).name()).isEqualTo("Premium");
+        assertThat(response.getBody().get(0).getName()).isEqualTo("Premium");
     }
 }

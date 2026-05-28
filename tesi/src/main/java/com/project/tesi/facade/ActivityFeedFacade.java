@@ -6,5 +6,4 @@ import java.util.List;
 
 public interface ActivityFeedFacade {
     List<ActivityFeedItemResponse> getActivityFeed(Long userId, int days, int limit);
-    void logDocumentUploaded(Long clientId, Long uploaderId, String type);
 }

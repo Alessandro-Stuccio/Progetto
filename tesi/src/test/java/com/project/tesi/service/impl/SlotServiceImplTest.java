@@ -8,7 +8,6 @@ import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SlotRepository;
-import com.project.tesi.repository.WeeklyScheduleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,6 @@ import static org.mockito.Mockito.*;
 class SlotServiceImplTest {
 
     @Mock private SlotRepository slotRepository;
-    @Mock private WeeklyScheduleRepository weeklyScheduleRepository;
 
     private SlotServiceImpl slotService;
 
@@ -47,7 +45,7 @@ class SlotServiceImplTest {
                 .endTime(LocalDateTime.now().plusDays(2).plusMinutes(30))
                 .build();
 
-        slotService = new SlotServiceImpl(slotRepository, weeklyScheduleRepository);
+        slotService = new SlotServiceImpl(slotRepository);
     }
 
     // ─── createSlots ──────────────────────────────────────────────────────────

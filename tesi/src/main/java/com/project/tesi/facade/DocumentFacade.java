@@ -11,9 +11,6 @@ import java.util.List;
 public interface DocumentFacade {
     DocumentUploadResponse uploadDocumentWithValidation(MultipartFile file, Long clientId, Long uploaderId, String type);
     Document getDocumentById(Long id);
-    byte[] downloadDocument(Long id);
-    List<DocumentResponse> getUserDocumentsDto(Long userId);
-    List<DocumentResponse> getUserDocumentsByTypeDto(Long userId, String type);
     void deleteDocument(Long id, Long callerId);
     byte[] downloadDocumentSecure(Long id, Long callerId);
     List<DocumentResponse> getUserDocumentsDtoSecure(Long targetUserId, Long callerId);

@@ -97,7 +97,4 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     @Query("SELECT d FROM Document d WHERE d.uploadedBy = :uploader AND d.uploadDate >= :since ORDER BY d.uploadDate DESC")
     List<Document> findRecentByUploader(@Param("uploader") User uploader, @Param("since") LocalDateTime since);
 
-    @Modifying
-    @Query("DELETE FROM Document d WHERE d.owner.id = :userId OR d.uploadedBy.id = :userId")
-    void deleteByUserId(@Param("userId") Long userId);
 }

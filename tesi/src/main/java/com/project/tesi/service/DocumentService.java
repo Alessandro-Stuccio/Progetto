@@ -1,5 +1,6 @@
 package com.project.tesi.service;
 
+import com.project.tesi.enums.DocumentType;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import jakarta.validation.constraints.Min;
@@ -22,20 +23,22 @@ public interface DocumentService {
 
     Document saveDocument(@NotNull Document document);
 
-    List<Document> getUserDocuments(@NotNull @Min(1) Long userId);
+    List<Document> getUserDocuments(@NotNull User owner);
 
-    List<Document> getUserDocumentsByType(@NotNull @Min(1) Long userId, @NotBlank String docType);
+    List<Document> getUserDocumentsByType(@NotNull User owner, @NotBlank String docType);
 
     Document uploadDocument(@NotBlank String filePath,
                             @NotBlank String originalName,
                             String contentType,
                             @NotBlank String docType,
-                            @NotNull @Min(1) Long clientId,
-                            @NotNull @Min(1) Long uploaderId);
-
-    void deleteByUser(@NotNull @Min(1) Long userId);
+                            @NotNull User client,
+                            @NotNull User uploader);
 
     List<Document> findRecentByOwner(@NotNull User owner, @NotNull @PastOrPresent LocalDateTime since);
 
     List<Document> findRecentByProfessional(@NotNull User professional, @NotNull LocalDateTime since);
+
+    Document findLatestByOwnerAndType(@NotNull User owner, @NotNull DocumentType type);
+
+    int countUploadedSince(@NotNull User professional, @NotNull LocalDateTime since);
 }

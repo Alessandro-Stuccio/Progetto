@@ -1,8 +1,8 @@
 package com.project.tesi.controller;
 
+import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.request.UpdateCreditsRequest;
 import com.project.tesi.dto.request.UserCreateRequestDTO;
-import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.facade.ModeratorFacade;
@@ -12,14 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -37,8 +30,8 @@ public class ModeratorController {
 
     @Operation(summary = "Recupera gli utenti gestibili")
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getManageableUsers() {
-        return ResponseEntity.ok(moderatorFacade.getManageableUsers());
+    public ResponseEntity<List<UserResponse>> getManageableUsers(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(moderatorFacade.getManageableUsers(user));
     }
 
     @Operation(summary = "Recupera tutti gli abbonamenti")
@@ -55,22 +48,22 @@ public class ModeratorController {
 
     @Operation(summary = "Crea un nuovo utente")
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body) {
-        return ResponseEntity.ok(moderatorFacade.createUser(body));
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(moderatorFacade.createUser(body, user));
     }
 
     @Operation(summary = "Aggiorna un utente esistente")
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
-            @Valid @RequestBody ModeratorUserUpdateRequest body) {
-        return ResponseEntity.ok(moderatorFacade.updateUser(id, body));
+            @Valid @RequestBody ModeratorUserUpdateRequest body,@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(moderatorFacade.updateUser(id, body,user));
     }
 
-    @Operation(summary = "Elimina un utente")
+    @Operation(summary = "Disabilita un utente (soft delete)", description = "Disabilita l'account impostando deleted=true. L'utente non può più accedere.")
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
-        moderatorFacade.deleteUser(id);
-        return ResponseEntity.ok(Map.of("message", "Utente eliminato"));
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        moderatorFacade.deleteUser(id, user);
+        return ResponseEntity.ok(Map.of("message", "Utente disabilitato"));
     }
 
     @Operation(summary = "Aggiorna i crediti di un abbonamento")
@@ -81,12 +74,4 @@ public class ModeratorController {
                 id, body.creditsPT(), body.creditsNutri()));
     }
 
-    @Operation(summary = "Chiude formalmente una sessione di chat")
-    @PostMapping("/chat/{chatId}/close")
-    public ResponseEntity<Void> closeChat(
-            @PathVariable Long chatId,
-            @AuthenticationPrincipal User moderator) {
-        moderatorFacade.closeChat(chatId, moderator.getId());
-        return ResponseEntity.noContent().build();
-    }
 }

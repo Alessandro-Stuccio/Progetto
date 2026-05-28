@@ -12,7 +12,6 @@ public class ProfessionalSummaryDTO {
     private boolean isSoldOut;
     private Role role;
 
-    private ProfessionalSummaryDTO() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

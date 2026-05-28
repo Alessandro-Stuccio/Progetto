@@ -47,6 +47,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/ws/**").permitAll()
                             .requestMatchers("/api/plans/**").permitAll()
+                            .requestMatchers("/api/professionals/*/slots").hasRole(Role.CLIENT.name())
                             .requestMatchers("/api/professionals/**").permitAll()
                             .requestMatchers("/api/reviews/professional/**").permitAll()
                             .requestMatchers("/api/job-applications/**").permitAll()
@@ -58,14 +59,14 @@ public class SecurityConfig {
                                     "/swagger-resources/**",
                                     "/webjars/**")
                             .permitAll()
-                            .requestMatchers("/api/admin/users", "/api/admin/users/**").hasRole(Role.ADMIN.name())
-                            .requestMatchers("/api/moderator/users", "/api/moderator/users/**").hasRole(Role.MODERATOR.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/chat/*/close").hasAnyRole(Role.MODERATOR.name(), Role.ADMIN.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews").hasRole(Role.CLIENT.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/subscriptions/activate").hasRole(Role.CLIENT.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/dashboard").hasRole(Role.CLIENT.name())
+                            .requestMatchers("/api/bookings/**").hasRole(Role.CLIENT.name())
+                            .requestMatchers( "/api/admin/**").hasRole(Role.ADMIN.name())
+                            .requestMatchers("/api/moderator/**").hasAnyRole(Role.MODERATOR.name(),Role.ADMIN.name())
                             .requestMatchers("/api/insurance/**").hasRole(Role.INSURANCE_MANAGER.name())
-                            .requestMatchers(
-                                    "/api/admin/plans", "/api/admin/plans/**",
-                                    "/api/admin/subscriptions", "/api/admin/subscriptions/**",
-                                    "/api/admin/stats", "/api/admin/stats/**")
-                            .hasRole(Role.ADMIN.name())
                             .anyRequest().authenticated())
                     .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

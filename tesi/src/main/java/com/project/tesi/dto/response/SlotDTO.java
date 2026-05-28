@@ -11,7 +11,6 @@ public class SlotDTO {
     private boolean isAvailable;
     private Long professionalId;
 
-    private SlotDTO() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

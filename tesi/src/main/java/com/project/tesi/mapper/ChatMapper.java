@@ -14,25 +14,29 @@ import java.util.stream.Collectors;
 @Component
 public class ChatMapper {
 
-    public ChatMessageResponse toMessageResponse(Message message, Long receiverId) {
+    public ChatMessageResponse toMessageResponse(Message message) {
         User sender = message.isSentByUser1()
                 ? message.getChat().getUser1()
                 : message.getChat().getUser2();
+        User receiver = message.isSentByUser1()
+                ? message.getChat().getUser2()
+                : message.getChat().getUser1();
         return ChatMessageResponse.builder()
                 .id(message.getId())
                 .chatId(message.getChat().getId())
                 .senderId(sender.getId())
                 .senderName(sender.getFullName())
-                .receiverId(receiverId)
+                .receiverId(receiver.getId())
+                .receiverName(receiver.getFullName())
                 .content(message.getContent())
                 .createdAt(message.getTimeStamp())
-                .status(message.isRead() ? MessageStatus.READ : MessageStatus.SENT)
+                .status(message.getStatus())
                 .build();
     }
 
-    public List<ChatMessageResponse> toMessageResponseList(List<Message> messages, Long receiverId) {
+    public List<ChatMessageResponse> toMessageResponseList(List<Message> messages) {
         return messages.stream()
-                .map(m -> toMessageResponse(m, receiverId))
+                .map(this::toMessageResponse)
                 .collect(Collectors.toList());
     }
 

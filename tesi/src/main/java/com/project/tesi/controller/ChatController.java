@@ -2,6 +2,7 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.SendMessageRequest;
 import com.project.tesi.dto.response.ChatMessageResponse;
+import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
 import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.model.User;
@@ -86,12 +87,19 @@ public class ChatController {
         return ResponseEntity.ok(chatFacade.getTotalUnreadCount(user.getId()));
     }
 
-    /** Termina una chat con il moderatore. Disponibile a qualunque partecipante della chat. */
-    @Operation(summary = "Termina una chat", description = "Chiude definitivamente la chat. Chiamabile da qualunque partecipante.")
+    /** Restituisce il moderatore di supporto assegnato all'utente (riusa la conversazione esistente o assegna il meno carico). */
+    @Operation(summary = "Moderatore di supporto", description = "Restituisce il moderatore con cui avviare la chat di supporto. Non disponibile per moderatori e admin.")
+    @GetMapping("/moderator")
+    public ResponseEntity<ClientBasicInfoResponse> getModerator(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(chatFacade.getModerator(user));
+    }
+
+    /** Chiude una chat (solo moderatore o admin). L'utente può riaprirla inviando un nuovo messaggio. */
+    @Operation(summary = "Chiude una chat", description = "Segna la chat come risolta. Solo moderatori o admin. L'utente può riaprirla inviando un nuovo messaggio.")
     @PostMapping("/{chatId}/close")
     public ResponseEntity<Void> closeChat(@PathVariable Long chatId,
                                            @AuthenticationPrincipal User user) {
-        chatFacade.deleteChatByUser(chatId, user.getId());
+        chatFacade.closeChat(chatId, user.getId());
         return ResponseEntity.noContent().build();
     }
 }

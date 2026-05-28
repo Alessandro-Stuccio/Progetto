@@ -77,10 +77,4 @@ public class UserController {
         return ResponseEntity.ok(userFacade.getAdmin());
     }
 
-    @Operation(summary = "Info moderatore", description = "Restituisce i dati del moderatore di supporto.")
-    @ApiResponse(responseCode = "200", description = "Dati moderatore restituiti")
-    @GetMapping("/moderator")
-    public ResponseEntity<ClientBasicInfoResponse> getModerator() {
-        return ResponseEntity.ok(userFacade.getModerator());
-    }
 }

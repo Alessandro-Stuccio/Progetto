@@ -3,7 +3,7 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.response.ProfessionalSummaryDTO;
 import com.project.tesi.dto.response.SlotDTO;
 import com.project.tesi.enums.Role;
-import com.project.tesi.facade.BookingFacade;
+import com.project.tesi.facade.ProfessionalFacade;
 import com.project.tesi.facade.UserFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,11 +29,11 @@ import java.util.List;
 public class ProfessionalController {
 
     private final UserFacade userFacade;
-    private final BookingFacade bookingFacade;
+    private final ProfessionalFacade professionalFacade;
 
-    public ProfessionalController(UserFacade userFacade, BookingFacade bookingFacade) {
+    public ProfessionalController(UserFacade userFacade, ProfessionalFacade professionalFacade) {
         this.userFacade = userFacade;
-        this.bookingFacade = bookingFacade;
+        this.professionalFacade = professionalFacade;
     }
 
     @Operation(summary = "Lista professionisti", description = "Restituisce i professionisti disponibili filtrati per ruolo (PERSONAL_TRAINER o NUTRITIONIST).")
@@ -53,7 +53,7 @@ public class ProfessionalController {
     })
     @GetMapping("/{id}/slots")
     public ResponseEntity<List<SlotDTO>> getProfessionalSlots(@PathVariable Long id) {
-        return ResponseEntity.ok(bookingFacade.getAvailableSlots(id));
+        return ResponseEntity.ok(professionalFacade.getAvailableSlots(id));
     }
 
     @Operation(summary = "Crea slot", description = "Aggiunge nuovi slot disponibili al calendario del professionista autenticato.")
@@ -65,7 +65,7 @@ public class ProfessionalController {
     @PostMapping("/slots")
     public ResponseEntity<List<SlotDTO>> createSlots(@AuthenticationPrincipal User user,
                                                       @RequestBody List<SlotDTO> slots) {
-        return ResponseEntity.ok(bookingFacade.createSlots(user.getId(), slots));
+        return ResponseEntity.ok(professionalFacade.createSlots(user.getId(), slots));
     }
 
     @Operation(summary = "Elimina slot", description = "Rimuove uno slot dal calendario del professionista autenticato.")
@@ -78,7 +78,7 @@ public class ProfessionalController {
     @DeleteMapping("/slots/{slotId}")
     public ResponseEntity<Void> deleteSlot(@PathVariable Long slotId,
                                             @AuthenticationPrincipal User user) {
-        bookingFacade.deleteSlot(slotId, user.getId());
+        professionalFacade.deleteSlot(slotId, user.getId());
         return ResponseEntity.noContent().build();
     }
 }

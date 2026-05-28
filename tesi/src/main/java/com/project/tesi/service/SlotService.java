@@ -2,11 +2,11 @@ package com.project.tesi.service;
 
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
-import com.project.tesi.model.WeeklySchedule;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
@@ -29,8 +29,6 @@ public interface SlotService {
 
     boolean slotExists(@NotNull User professional, @NotNull LocalDateTime startTime);
 
-    List<WeeklySchedule> getSchedulesByProfessional(@NotNull User professional);
-
     List<Slot> findRecentByUser(@NotNull User user, @NotNull LocalDateTime since);
 
     List<Slot> findRecentByProfessional(@NotNull User professional, @NotNull LocalDateTime since);
@@ -39,9 +37,13 @@ public interface SlotService {
 
     List<Slot> findFutureByUser(@NotNull User user, @NotNull LocalDateTime from);
 
-    void clearBookingsByUser(@NotNull @Min(1) Long userId);
+    List<Slot> getAllBookedSlots();
 
-    void deleteSlotsByProfessional(@NotNull @Min(1) Long professionalId);
+    void logBookingCreated(@NotNull Slot slot);
 
-    void deleteSchedulesByProfessional(@NotNull @Min(1) Long professionalId);
+    List<Slot> findTodayByProfessional(@NotNull User professional,
+                                       @NotNull LocalDateTime dayStart,
+                                       @NotNull LocalDateTime dayEnd);
+
+    boolean hasBookingBetween(@NotNull @Min(1) Long clientId, @NotNull @Min(1) Long professionalId);
 }

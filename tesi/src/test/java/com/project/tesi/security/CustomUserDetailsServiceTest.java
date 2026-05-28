@@ -17,9 +17,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
-/**
- * Test unitari per {@link CustomUserDetailsService}.
- */
 @ExtendWith(MockitoExtension.class)
 class CustomUserDetailsServiceTest {
 
@@ -31,11 +28,10 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername — utente trovato restituisce UserDetails corretto")
     void loadUserByUsername_success() {
-        User user = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(1L).email("mario@test.com")
-                .password("testpass").role(Role.CLIENT).build();
-        when(userRepository.findByEmail("mario@test.com")).thenReturn(Optional.of(user));
+        User user = User.builder().id(1L).email("mario@test.com").password("testpass").role(Role.CLIENT).build();
+        when(userRepository.findByEmailAndDeletedFalse("mario@test.com")).thenReturn(Optional.of(user));
 
-        UserDetails details = userDetailsService.loadUserByUsername("mario@test.com");
+        UserDetails details = userDetailsService.getUserDetails().loadUserByUsername("mario@test.com");
 
         assertThat(details.getUsername()).isEqualTo("mario@test.com");
         assertThat(details.getPassword()).isEqualTo("testpass");
@@ -46,11 +42,10 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername — utente PT restituisce ROLE_PERSONAL_TRAINER")
     void loadUserByUsername_pt() {
-        User user = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(2L).email("pt@test.com")
-                .password("testpass").role(Role.PERSONAL_TRAINER).build();
-        when(userRepository.findByEmail("pt@test.com")).thenReturn(Optional.of(user));
+        User user = User.builder().id(2L).email("pt@test.com").password("testpass").role(Role.PERSONAL_TRAINER).build();
+        when(userRepository.findByEmailAndDeletedFalse("pt@test.com")).thenReturn(Optional.of(user));
 
-        UserDetails details = userDetailsService.loadUserByUsername("pt@test.com");
+        UserDetails details = userDetailsService.getUserDetails().loadUserByUsername("pt@test.com");
 
         assertThat(details.getAuthorities().iterator().next().getAuthority()).isEqualTo("ROLE_PERSONAL_TRAINER");
     }
@@ -58,11 +53,10 @@ class CustomUserDetailsServiceTest {
     @Test
     @DisplayName("loadUserByUsername — utente non trovato lancia UsernameNotFoundException")
     void loadUserByUsername_notFound() {
-        when(userRepository.findByEmail("nobody@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailAndDeletedFalse("nobody@test.com")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userDetailsService.loadUserByUsername("nobody@test.com"))
+        assertThatThrownBy(() -> userDetailsService.getUserDetails().loadUserByUsername("nobody@test.com"))
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessageContaining("nobody@test.com");
     }
 }
-
