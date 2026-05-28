@@ -10,6 +10,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementazione di {@link UserService}.
+ * Gestisce gli utenti tramite {@link com.project.tesi.repository.UserRepository}.
+ * La password viene codificata con BCrypt prima del salvataggio tramite
+ * {@link org.springframework.security.crypto.password.PasswordEncoder}.
+ */
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -73,11 +79,28 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByAssignedNutritionistAndDeletedFalse(nutritionist);
     }
 
+    /**
+     * Verifica l'unicità dell'email escludendo l'utente corrente.
+     * Usato durante l'aggiornamento del profilo per impedire la duplicazione
+     * dell'email con un altro account già esistente.
+     *
+     * @param email     email da verificare
+     * @param excludeId id dell'utente da escludere dal controllo
+     * @return {@code true} se l'email è già usata da un altro utente attivo
+     */
     @Override
     public boolean existsUserByEmailExcluding(String email, Long excludeId) {
         return userRepository.findByEmailAndIdIsNotAndDeletedFalse(email, excludeId).isPresent();
     }
 
+    /**
+     * Soft delete dell'utente: imposta {@code deleted=true} senza rimuovere fisicamente
+     * il record dal database. Se l'utente è un Personal Trainer o un Nutrizionista,
+     * azzera il riferimento nei client ad esso assegnati.
+     *
+     * @param id id dell'utente da eliminare
+     * @throws com.project.tesi.exception.common.ResourceNotFoundException se l'utente non esiste
+     */
     @Override
     public void deleteUser(Long id) {
         User target = userRepository.findById(id)
@@ -92,6 +115,12 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * Codifica la password raw con {@code BCryptPasswordEncoder}.
+     *
+     * @param rawPassword password in chiaro
+     * @return hash BCrypt della password
+     */
     @Override
     public String encodePassword(String rawPassword) {
         return passwordEncoder.encode(rawPassword);

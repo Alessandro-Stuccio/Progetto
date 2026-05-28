@@ -28,6 +28,14 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
      */
     Optional<Subscription> findByUserAndActiveTrue(User user);
 
+    /**
+     * Recupera l'abbonamento attivo di un utente applicando un lock
+     * {@code PESSIMISTIC_WRITE} sulla riga. Usato durante la deduzione dei crediti
+     * per prevenire race condition in scenari concorrenti.
+     *
+     * @param user l'utente titolare dell'abbonamento
+     * @return un Optional contenente l'abbonamento attivo bloccato
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Subscription s WHERE s.user = :user AND s.active = true")
     Optional<Subscription> findByUserAndActiveTrueWithLock(@Param("user") User user);
@@ -48,5 +56,12 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
      */
     List<Subscription> findByActiveTrue();
 
+    /**
+     * Verifica se esistono abbonamenti (attivi o storici) associati a un piano.
+     * Usato prima dell'eliminazione di un piano per garantire l'integrità dei dati.
+     *
+     * @param planId ID del piano
+     * @return {@code true} se almeno un abbonamento fa riferimento al piano
+     */
     boolean existsByPlanId(Long planId);
 }

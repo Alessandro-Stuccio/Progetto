@@ -1,5 +1,8 @@
 package com.project.tesi.dto.response;
 
+/**
+ * DTO di risposta per i metadati di un documento caricato (senza dati binari).
+ */
 public class DocumentResponse {
 
     private Long id;

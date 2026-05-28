@@ -17,6 +17,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementazione di {@link ActivityFeedFacade}.
+ * Aggrega eventi recenti (prenotazioni, documenti, messaggi) degli ultimi N giorni
+ * per costruire il feed attività dell'utente corrente.
+ */
 @Component
 public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
 
@@ -35,6 +40,16 @@ public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
         this.activityFeedMapper = mapper;
     }
 
+    /**
+     * Recupera eventi da {@code SlotService} e {@code DocumentService} degli ultimi {@code days} giorni,
+     * li unifica in {@link ActivityFeedItemResponse} tramite {@code ActivityFeedMapper},
+     * ordina per data decrescente e limita al numero {@code limit} richiesto.
+     *
+     * @param userId identificatore dell'utente per cui costruire il feed
+     * @param days   finestra temporale in giorni da considerare
+     * @param limit  numero massimo di elementi da restituire
+     * @return lista di eventi del feed ordinata dal più recente
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ActivityFeedItemResponse> getActivityFeed(Long userId, int days, int limit) {

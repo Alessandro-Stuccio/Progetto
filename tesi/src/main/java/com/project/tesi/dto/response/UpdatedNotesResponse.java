@@ -1,5 +1,8 @@
 package com.project.tesi.dto.response;
 
+/**
+ * DTO di risposta restituito dopo l'aggiornamento delle note di un documento.
+ */
 public class UpdatedNotesResponse {
 
     private Long id;

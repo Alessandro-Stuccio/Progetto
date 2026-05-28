@@ -3,6 +3,9 @@ package com.project.tesi.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO per l'aggiornamento parziale di un utente da parte del moderatore. Tutti i campi sono opzionali.
+ */
 public record ModeratorUserUpdateRequest(
 
         @Email(message = "Il formato dell'email non è valido")

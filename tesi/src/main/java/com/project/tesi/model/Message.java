@@ -17,6 +17,19 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Entità JPA per un singolo messaggio di chat.
+ *
+ * <p>Il ciclo di vita dello stato segue la progressione: {@code SENT} → {@code DELIVERED} → {@code READ}.
+ *
+ * <p>Relazioni chiave:
+ * <ul>
+ *   <li>{@code chat} — la conversazione a cui appartiene il messaggio; non nullable.</li>
+ * </ul>
+ *
+ * <p>Il campo {@code sentByUser1} permette di risalire al mittente senza un'ulteriore FK su {@code User},
+ * sfruttando la simmetria della relazione già espressa in {@code Chat}.
+ */
 @Entity
 @Table(name = "messages")
 public class Message {
@@ -25,14 +38,27 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Testo del messaggio inviato. */
     private String content;
+
+    /** Data e ora di invio del messaggio. */
     private LocalDateTime timeStamp;
 
+    /**
+     * Stato corrente del messaggio nel ciclo di consegna.
+     * Valore di default {@code SENT} alla creazione; aggiornato a {@code DELIVERED} e poi {@code READ}
+     * dal servizio di messaggistica in tempo reale.
+     */
     @Enumerated(EnumType.STRING)
     private MessageStatus status = MessageStatus.SENT;
 
+    /**
+     * {@code true} se il messaggio è stato inviato da {@code user1} della chat associata,
+     * {@code false} se inviato da {@code user2}. Evita una FK aggiuntiva verso {@code User}.
+     */
     private boolean sentByUser1;
 
+    /** Chat a cui appartiene il messaggio; non nullable. */
     @ManyToOne
     @JoinColumn(name = "chat_id", nullable = false, foreignKey = @ForeignKey(name = "fk_message_chat_id"))
     private Chat chat;

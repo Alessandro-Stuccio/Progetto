@@ -12,6 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
+/**
+ * Implementazione di {@link SubscriptionFacade}.
+ * Attiva abbonamenti calcolando date, crediti e rate in base al piano
+ * e alla frequenza di pagamento scelti dall'utente.
+ */
 @Component
 public class SubscriptionFacadeImpl implements SubscriptionFacade {
 
@@ -21,6 +26,17 @@ public class SubscriptionFacadeImpl implements SubscriptionFacade {
         this.subscriptionService = subscriptionService;
     }
 
+    /**
+     * Disattiva l'eventuale abbonamento attivo dell'utente, calcola {@code startDate}/{@code endDate}
+     * in base alla durata del piano (6 mesi o annuale), imposta i crediti iniziali dal piano,
+     * determina il numero di rate e la {@code nextPaymentDate} in base alla frequenza di pagamento
+     * ({@code UNICA_SOLUZIONE} o rateale mensile), quindi salva e restituisce il nuovo abbonamento.
+     *
+     * @param user             utente a cui attivare l'abbonamento
+     * @param plan             piano selezionato con durata, prezzi e crediti mensili
+     * @param paymentFrequency frequenza di pagamento scelta ({@code UNICA_SOLUZIONE} o rateale)
+     * @return la {@link Subscription} appena creata e persistita
+     */
     @Override
     @Transactional
     public Subscription activateSubscription(User user, Plan plan, PaymentFrequency paymentFrequency) {

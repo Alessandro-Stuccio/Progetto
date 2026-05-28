@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO per la registrazione di un nuovo cliente. Include selezione PT, nutrizionista, piano e frequenza pagamento. Già annotato con @Schema Swagger.
+ */
 @Schema(description = "Dati necessari per la registrazione di un nuovo cliente")
 public record RegisterRequest(
         @Schema(description = "Il nome del cliente", example = "Ciccio")

@@ -24,6 +24,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Entità JPA per una conversazione bidirezionale tra due utenti.
+ *
+ * <p>Vincoli JPA rilevanti:
+ * <ul>
+ *   <li>Vincolo unico su {@code (user1_id, user2_id)} — impedisce la creazione di chat duplicate
+ *       tra la stessa coppia di utenti.</li>
+ *   <li>{@code messages} — relazione {@code @OneToMany} con cascade {@code ALL}; i messaggi
+ *       vengono eliminati a cascata se la chat viene rimossa.</li>
+ * </ul>
+ *
+ * <p>Lo stato {@code OPEN}/{@code CLOSED} è gestibile dai moderatori tramite apposita API.
+ * I campi {@code closedAt} e {@code closedBy} vengono valorizzati solo alla chiusura.
+ */
 @Entity
 @Table(name = "chats", uniqueConstraints = {
         @UniqueConstraint(name = "uq_chat_users", columnNames = {"user1_id", "user2_id"})
@@ -34,25 +48,31 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Primo partecipante della conversazione; determina la direzione del campo {@code sentByUser1} nei messaggi. */
     @ManyToOne
     @JoinColumn(name = "user1_id", nullable = false, foreignKey = @ForeignKey(name = "fk_chat_user1_id"))
     private User user1;
 
+    /** Secondo partecipante della conversazione. */
     @ManyToOne
     @JoinColumn(name = "user2_id", nullable = false, foreignKey = @ForeignKey(name = "fk_chat_user2_id"))
     private User user2;
 
+    /** Lista dei messaggi appartenenti a questa chat; eliminati a cascata con la chat. */
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL)
     private List<Message> messages = new ArrayList<>();
 
     private LocalDateTime createdAt;
 
+    /** Stato corrente della chat; valore di default {@code OPEN} alla creazione. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChatStatus status = ChatStatus.OPEN;
 
+    /** Timestamp in cui la chat è stata chiusa; {@code null} se ancora aperta. */
     private LocalDateTime closedAt;
 
+    /** Moderatore che ha chiuso la chat; {@code null} se la chat è ancora aperta. Caricato lazy. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "closed_by_id", foreignKey = @ForeignKey(name = "fk_chat_closed_by_id"))
     private User closedBy;

@@ -26,6 +26,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione di {@link ChatFacade}.
+ * Coordina {@code ChatService} e {@code MessageService} per la gestione
+ * delle conversazioni, inclusa la selezione del moderatore e la costruzione
+ * delle anteprime di conversazione.
+ */
 @Component
 public class ChatFacadeImpl implements ChatFacade {
 
@@ -89,6 +95,14 @@ public class ChatFacadeImpl implements ChatFacade {
         return chatMapper.toMessageResponseList(messages);
     }
 
+    /**
+     * Costruisce la lista delle anteprime di conversazione per l'utente specificato.
+     * Per ogni chat recupera l'ultimo messaggio e il conteggio dei messaggi non letti;
+     * filtra le chat vuote con ADMIN/MODERATOR per utenti CLIENT e professionisti.
+     *
+     * @param userId identificatore dell'utente corrente
+     * @return lista di {@link ConversationPreviewResponse} ordinata per data dell'ultimo messaggio
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ConversationPreviewResponse> getUserConversations(Long userId) {
@@ -137,6 +151,17 @@ public class ChatFacadeImpl implements ChatFacade {
         chatService.closeChat(chatId, moderator);
     }
 
+    /**
+     * Restituisce il moderatore da contattare per l'utente.
+     * Se esiste già una chat aperta con un moderatore la riusa;
+     * altrimenti seleziona il moderatore con il minor numero di chat aperte
+     * tramite {@code ChatService#countOpenChatsByModerator}.
+     *
+     * @param user utente che richiede il supporto (non MODERATOR né ADMIN)
+     * @return {@link ClientBasicInfoResponse} del moderatore assegnato
+     * @throws UnauthorizedAccessException se l'utente è un moderatore o admin
+     * @throws ResourceNotFoundException   se non esiste alcun moderatore nel sistema
+     */
     @Override
     @Transactional(readOnly = true)
     public ClientBasicInfoResponse getModerator(User user) {

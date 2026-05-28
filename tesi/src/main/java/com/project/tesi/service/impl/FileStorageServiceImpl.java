@@ -14,12 +14,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+/**
+ * Implementazione di FileStorageService. Persiste i file nella directory 'uploads/'
+ * del filesystem locale. I file vengono nominati con UUID per evitare collisioni.
+ */
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
 
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    /**
+     * Genera un nome file basato su UUID con l'estensione originale, crea la directory
+     * di upload se non esiste, salva il file su disco e ritorna il percorso assoluto.
+     */
     @Override
     public String store(MultipartFile file) {
         String originalName = file.getOriginalFilename();
@@ -44,6 +52,10 @@ public class FileStorageServiceImpl implements FileStorageService {
         return destinationPath.toString();
     }
 
+    /**
+     * Elimina il file dal filesystem; non lancia eccezione se il file non esiste
+     * (usa {@link Files#deleteIfExists}).
+     */
     @Override
     public void delete(String filePath) {
         try {
@@ -53,6 +65,9 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
+    /**
+     * Legge e ritorna tutti i byte del file dal percorso assoluto indicato.
+     */
     @Override
     public byte[] load(String filePath) {
         try {

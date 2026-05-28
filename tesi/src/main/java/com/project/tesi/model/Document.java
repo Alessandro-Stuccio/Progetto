@@ -18,6 +18,19 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Entità JPA per un documento caricato sulla piattaforma.
+ *
+ * <p>Il file fisico è salvato sul filesystem nella directory {@code uploads/};
+ * questa entità ne traccia esclusivamente i metadati (nome, percorso, MIME type, tipo logico).
+ *
+ * <p>Relazioni chiave:
+ * <ul>
+ *   <li>{@code owner} — il cliente a cui appartiene il documento.</li>
+ *   <li>{@code uploadedBy} — chi ha materialmente caricato il file; può essere il professionista
+ *       (personal trainer o nutrizionista) oppure un insurance manager, non necessariamente il cliente.</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "documents")
 public class Document {
@@ -26,23 +39,36 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Nome originale del file così come fornito al momento del caricamento. */
     private String fileName;
+
+    /** Percorso fisico assoluto (o relativo alla root dell'applicazione) del file sul filesystem. */
     private String filePath;
+
+    /** MIME type del file (es. {@code application/pdf}, {@code image/png}). */
     private String contentType;
 
+    /** Tipo logico del documento secondo l'enum {@code DocumentType} (es. referto, contratto, ecc.). */
     @Enumerated(EnumType.STRING)
     private DocumentType type;
 
+    /** Cliente proprietario del documento; destinatario logico del file. */
     @ManyToOne
     @JoinColumn(name = "owner_id", foreignKey = @ForeignKey(name = "fk_document_owner_id"))
     private User owner;
 
+    /**
+     * Utente che ha effettuato il caricamento fisico del file.
+     * Distinto da {@code owner}: può essere un professionista o un insurance manager.
+     */
     @ManyToOne
     @JoinColumn(name = "uploaded_by_id", foreignKey = @ForeignKey(name = "fk_document_uploaded_by_id"))
     private User uploadedBy;
 
+    /** Data e ora in cui il documento è stato caricato sulla piattaforma. */
     private LocalDateTime uploadDate;
 
+    /** Note testuali libere associate al documento; mappato come {@code TEXT} per supportare contenuti lunghi. */
     @Column(columnDefinition = "TEXT")
     private String notes;
 

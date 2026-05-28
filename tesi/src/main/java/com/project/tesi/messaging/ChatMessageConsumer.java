@@ -9,6 +9,11 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
+/**
+ * Consumer RabbitMQ per i messaggi della chat. Ascolta {@code chat.messages.queue}
+ * e salva i messaggi tramite {@link ChatAsyncService}. In caso di
+ * {@link DataIntegrityViolationException} invia il messaggio alla DLQ senza retry.
+ */
 @Component
 public class ChatMessageConsumer {
 
@@ -19,12 +24,25 @@ public class ChatMessageConsumer {
         this.chatAsyncService = chatAsyncService;
     }
 
+    /**
+     * Logga i messaggi non consegnati ricevuti dalla Dead Letter Queue.
+     *
+     * @param payload il payload non elaborabile
+     */
     @RabbitListener(queues = RabbitMQConfig.CHAT_DLQ)
     public void handleDeadLetter(ChatMessagePayload payload) {
         log.error("[DLQ] Messaggio chat non consegnato: chatId={}, senderId={}, content={}",
                 payload.chatId(), payload.senderId(), payload.content());
     }
 
+    /**
+     * Consuma un payload dalla coda principale e chiama
+     * {@link ChatAsyncService#saveChatMessage}. {@link DataIntegrityViolationException}
+     * provoca il reindirizzamento alla DLQ senza retry; altre eccezioni innescano
+     * il retry automatico di RabbitMQ.
+     *
+     * @param payload il messaggio da persistere
+     */
     @RabbitListener(queues = RabbitMQConfig.CHAT_QUEUE)
     public void consume(ChatMessagePayload payload) {
         log.info("[RabbitMQ] Consume chat message chatId={} senderId={}", payload.chatId(), payload.senderId());

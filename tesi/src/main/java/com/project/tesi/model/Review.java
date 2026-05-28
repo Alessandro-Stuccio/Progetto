@@ -18,6 +18,12 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Entità JPA per una recensione di un professionista da parte di un cliente.
+ * Vincolo unico su (client_id, professional_id): un cliente può recensire un
+ * professionista una sola volta. Solo clienti con almeno una prenotazione
+ * completata possono lasciare recensioni.
+ */
 @Entity
 @Table(name = "reviews", uniqueConstraints = {
         @UniqueConstraint(name = "uq_review_client_professional", columnNames = {"client_id", "professional_id"})
@@ -28,20 +34,25 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Cliente autore della recensione. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false, foreignKey = @ForeignKey(name = "fk_review_client_id"))
     private User client;
 
+    /** Professionista oggetto della recensione. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "professional_id", nullable = false, foreignKey = @ForeignKey(name = "fk_review_professional_id"))
     private User professional;
 
+    /** Punteggio numerico della recensione, compreso tra 1 e 5. */
     @Column(nullable = false)
     private int rating;
 
+    /** Testo facoltativo della recensione; massimo 1000 caratteri. */
     @Column(length = 1000)
     private String comment;
 
+    /** Timestamp di creazione impostato automaticamente da Hibernate. */
     @CreationTimestamp
     private LocalDateTime createdAt;
 

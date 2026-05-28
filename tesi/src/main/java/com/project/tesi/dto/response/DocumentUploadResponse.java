@@ -1,5 +1,8 @@
 package com.project.tesi.dto.response;
 
+/**
+ * DTO di risposta restituito dopo il caricamento di un documento (contiene ID e nome file salvato).
+ */
 public class DocumentUploadResponse {
 
     private Long id;

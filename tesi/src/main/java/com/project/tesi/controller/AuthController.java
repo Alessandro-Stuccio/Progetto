@@ -25,6 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * Controller REST per autenticazione e gestione credenziali.
+ * Espone /api/auth. Endpoint pubblici (no JWT richiesto).
+ */
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Auth", description = "Registrazione, login, recupero e reset password")
@@ -37,6 +41,12 @@ public class AuthController {
         this.authFacade = authFacade;
     }
 
+    /**
+     * Registra un nuovo utente con ruolo CLIENT.
+     *
+     * @param request dati di registrazione (nome, cognome, email, password)
+     * @return {@link UserResponse} con il profilo appena creato
+     */
     @Operation(summary = "Registra un nuovo utente", description = "Crea un account CLIENT e restituisce il profilo appena creato.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Utente registrato con successo"),
@@ -51,6 +61,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Autentica un utente tramite email e password.
+     *
+     * @param request credenziali di accesso (email, password)
+     * @return {@link AuthResponse} contenente il token JWT e i dati del profilo
+     */
     @Operation(summary = "Login", description = "Autentica email e password e restituisce il token JWT.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Login effettuato con successo"),
@@ -72,6 +88,13 @@ public class AuthController {
                 .build());
     }
 
+    /**
+     * Invia un'email con link di reset password all'indirizzo indicato.
+     * Il link è valido per 30 minuti.
+     *
+     * @param request oggetto contenente l'email dell'account
+     * @return messaggio di conferma invio email
+     */
     @Operation(summary = "Richiesta reset password", description = "Invia un link di reset all'email indicata (valido 30 minuti).")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Email inviata se l'account esiste"),
@@ -83,6 +106,12 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Link di reset inviato. Controlla la tua casella di posta."));
     }
 
+    /**
+     * Reimposta la password utilizzando il token ricevuto via email.
+     *
+     * @param request oggetto contenente il token di reset e la nuova password
+     * @return messaggio di conferma reset
+     */
     @Operation(summary = "Reset password", description = "Reimposta la password usando il token ricevuto via email.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Password reimpostata con successo"),
@@ -94,6 +123,11 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reimpostata con successo."));
     }
 
+    /**
+     * Health check: verifica che il backend sia raggiungibile e operativo.
+     *
+     * @return mappa con stato "UP" e messaggio di conferma
+     */
     @Operation(summary = "Health check", description = "Verifica che il backend sia raggiungibile e operativo.")
     @ApiResponse(responseCode = "200", description = "Backend online")
     @GetMapping("/ping")

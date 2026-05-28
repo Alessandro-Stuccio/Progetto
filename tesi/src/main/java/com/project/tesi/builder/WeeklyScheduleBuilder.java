@@ -5,6 +5,9 @@ import java.time.LocalTime;
 import com.project.tesi.model.*;
 
 
+/**
+ * Builder per l'entità WeeklySchedule. Fluent interface per la costruzione di una fascia oraria settimanale di un professionista.
+ */
 public interface WeeklyScheduleBuilder {
     WeeklyScheduleBuilder id(Long id);
     WeeklyScheduleBuilder professional(User professional);

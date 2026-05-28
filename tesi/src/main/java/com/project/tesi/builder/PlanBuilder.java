@@ -4,6 +4,9 @@ import com.project.tesi.enums.PlanDuration;
 import com.project.tesi.model.*;
 
 
+/**
+ * Builder per l'entità Plan. Fluent interface per la costruzione di un piano di abbonamento.
+ */
 public interface PlanBuilder {
     PlanBuilder id(Long id);
     PlanBuilder name(String name);

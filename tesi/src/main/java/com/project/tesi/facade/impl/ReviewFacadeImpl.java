@@ -17,6 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Implementazione di {@link ReviewFacade}.
+ * Verifica i prerequisiti per la recensione (prenotazione effettuata,
+ * recensione non già presente) prima del salvataggio.
+ */
 @Component
 public class ReviewFacadeImpl implements ReviewFacade {
 
@@ -33,6 +38,17 @@ public class ReviewFacadeImpl implements ReviewFacade {
         this.reviewMapper = reviewMapper;
     }
 
+    /**
+     * Verifica che il cliente non abbia già recensito il professionista e che
+     * abbia un rapporto formale con esso (prenotazione effettuata o assegnazione attiva),
+     * quindi costruisce e salva la {@link Review}.
+     *
+     * @param request dati della recensione (professionalId, rating, commento)
+     * @param userId  identificatore del cliente che lascia la recensione
+     * @return {@link ReviewResponse} con i dati della recensione salvata
+     * @throws ResourceAlreadyExistsException se il cliente ha già recensito il professionista
+     * @throws ReviewNotAllowedException      se il cliente non ha un rapporto formale col professionista
+     */
     @Override
     @Transactional
     public ReviewResponse addReview(ReviewRequest request, Long userId) {
@@ -64,6 +80,15 @@ public class ReviewFacadeImpl implements ReviewFacade {
         return reviewMapper.toResponseList(reviewService.findByProfessional(professional));
     }
 
+    /**
+     * Verifica se il cliente può recensire il professionista.
+     * Restituisce {@code false} se ha già recensito; {@code true} se ha almeno
+     * una prenotazione completata o se è attualmente assegnato al professionista.
+     *
+     * @param clientId       identificatore del cliente
+     * @param professionalId identificatore del professionista
+     * @return {@code true} se la recensione è consentita, {@code false} altrimenti
+     */
     @Override
     @Transactional(readOnly = true)
     public boolean canClientReview(Long clientId, Long professionalId) {

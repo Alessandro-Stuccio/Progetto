@@ -6,6 +6,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * DTO per la risposta di errore standardizzata restituita dal
+ * {@code GlobalExceptionHandler}. Contiene timestamp, HTTP status, messaggio e,
+ * per gli errori di validazione, una mappa campo → messaggio.
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
 

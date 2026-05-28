@@ -28,6 +28,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Implementazione di {@link com.project.tesi.facade.BookingFacade}.
+ * Coordina la prenotazione degli slot con locking per-slot basato su
+ * {@code ConcurrentHashMap<Long, ReentrantLock>} per prevenire il double-booking.
+ * Usa pessimistic write lock sull'abbonamento per la deduzione sicura dei crediti.
+ */
 @Component
 public class BookingFacadeImpl implements BookingFacade {
 
@@ -68,6 +74,23 @@ public class BookingFacadeImpl implements BookingFacade {
         this.bookingMapper = bookingMapper;
     }
 
+    /**
+     * Crea una nuova prenotazione per lo slot indicato.
+     * Il metodo acquisisce il lock per-slot tramite {@link #slotLocks} (synchronized +
+     * {@link ReentrantLock}) per prevenire il double-booking concorrente.
+     * Verifica disponibilità slot, abbonamento attivo e crediti sufficienti con
+     * pessimistic write lock sull'abbonamento, genera il link Jitsi e invia email
+     * di conferma a client e professionista.
+     * In caso di {@link org.springframework.orm.ObjectOptimisticLockingFailureException}
+     * durante l'aggiornamento dei crediti, propaga un {@link IllegalStateException}.
+     *
+     * @param request dati della prenotazione (slotId)
+     * @param userId  ID del client che prenota
+     * @return DTO della prenotazione creata
+     * @throws com.project.tesi.exception.booking.SlotAlreadyBookedException se lo slot non è più disponibile
+     * @throws com.project.tesi.exception.booking.SubscriptionExpiredException se l'abbonamento è scaduto
+     * @throws com.project.tesi.exception.common.BusinessLogicException se il client tenta di prenotare con sé stesso
+     */
     @Override
     @Transactional
     public BookingResponse createBooking(BookingRequest request, Long userId) {
@@ -142,6 +165,18 @@ public class BookingFacadeImpl implements BookingFacade {
         }
     }
 
+    /**
+     * Annulla una prenotazione esistente.
+     * Verifica che il chiamante sia il proprietario della prenotazione,
+     * che lo stato sia {@link com.project.tesi.enums.BookingStatus#CONFIRMED} e che
+     * manchino almeno 24 ore all'appuntamento. Delega la cancellazione a
+     * {@link com.project.tesi.service.SlotService}, rimborsa il credito tramite la
+     * strategy appropriata e invia email di cancellazione a entrambe le parti.
+     *
+     * @param bookingId ID dello slot prenotato
+     * @param userId    ID del client che richiede la cancellazione
+     * @throws com.project.tesi.exception.booking.BookingCancellationException se i vincoli di cancellazione non sono soddisfatti
+     */
     @Override
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {

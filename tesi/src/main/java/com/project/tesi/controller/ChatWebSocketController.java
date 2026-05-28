@@ -29,6 +29,11 @@ import org.springframework.stereotype.Controller;
 import java.security.Principal;
 import java.time.LocalDateTime;
 
+/**
+ * Controller WebSocket per la chat in tempo reale.
+ * Gestisce JOIN, LEAVE, invio messaggi, DELIVERED e READ tramite STOMP.
+ * Pubblica su /topic/chat/{roomId} e notifiche private via /queue/notifications.
+ */
 @Controller
 public class ChatWebSocketController {
 
@@ -57,6 +62,12 @@ public class ChatWebSocketController {
         this.userService = userService;
     }
 
+    /**
+     * Registra la sessione WebSocket corrente nella stanza specificata.
+     *
+     * @param request contiene il roomId della stanza da raggiungere
+     * @param ha      header accessor STOMP da cui ricavare il sessionId
+     */
     @MessageMapping("/chat.join")
     public void joinRoom(@Payload JoinRoomRequest request, SimpMessageHeaderAccessor ha) {
         String sid = ha.getSessionId();
@@ -65,6 +76,12 @@ public class ChatWebSocketController {
         }
     }
 
+    /**
+     * Rimuove la sessione WebSocket corrente dalla stanza specificata.
+     *
+     * @param request contiene il roomId della stanza da abbandonare
+     * @param ha      header accessor STOMP da cui ricavare il sessionId
+     */
     @MessageMapping("/chat.leave")
     public void leaveRoom(@Payload LeaveRoomRequest request, SimpMessageHeaderAccessor ha) {
         String sid = ha.getSessionId();
@@ -73,6 +90,14 @@ public class ChatWebSocketController {
         }
     }
 
+    /**
+     * Invia un messaggio al topic della stanza e pubblica una notifica asincrona al ricevitore.
+     * Se il ricevitore non è nella stanza, invia una notifica privata NEW_MESSAGE via /queue/notifications.
+     * Aggiorna inoltre il conteggio dei messaggi non letti del ricevitore.
+     *
+     * @param request   contiene chatId e contenuto del messaggio
+     * @param principal principal STOMP autenticato del mittente
+     */
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload WsSendMessageRequest request, Principal principal) {
         User sender = extractUser(principal);
@@ -152,6 +177,13 @@ public class ChatWebSocketController {
         }
     }
 
+    /**
+     * Marca i messaggi della chat come consegnati (DELIVERED) e notifica il mittente originale
+     * con un evento DELIVERED_UPDATE tramite /queue/notifications.
+     *
+     * @param request   contiene il chatId dei messaggi da marcare
+     * @param principal principal STOMP autenticato del ricevitore
+     */
     @MessageMapping("/chat.delivered")
     public void markAsDelivered(@Payload WsMarkReadRequest request, Principal principal) {
         User user = extractUser(principal);
@@ -178,6 +210,13 @@ public class ChatWebSocketController {
         }
     }
 
+    /**
+     * Marca i messaggi della chat come letti (READ), aggiorna il conteggio non letti dell'utente
+     * corrente e invia un evento READ_UPDATE al mittente originale via /queue/notifications.
+     *
+     * @param request   contiene il chatId dei messaggi da marcare
+     * @param principal principal STOMP autenticato del lettore
+     */
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload WsMarkReadRequest request, Principal principal) {
         User user = extractUser(principal);
@@ -205,6 +244,12 @@ public class ChatWebSocketController {
         }
     }
 
+    /**
+     * Invia al destinatario il conteggio aggiornato dei messaggi non letti via /queue/notifications.
+     *
+     * @param userId    ID dell'utente destinatario
+     * @param userEmail email dell'utente destinatario (chiave di routing STOMP)
+     */
     private void sendUnreadUpdate(Long userId, String userEmail) {
         try {
             int count = messageService.getTotalUnreadCount(userId);
@@ -216,6 +261,13 @@ public class ChatWebSocketController {
         }
     }
 
+    /**
+     * Estrae l'entità {@link User} autenticata dal Principal STOMP.
+     * Restituisce {@code null} se il principal è assente o non è un'istanza valida.
+     *
+     * @param principal principal STOMP della connessione corrente
+     * @return l'utente autenticato, oppure {@code null}
+     */
     private User extractUser(Principal principal) {
         if (principal instanceof UsernamePasswordAuthenticationToken auth
                 && auth.getPrincipal() instanceof User user) {

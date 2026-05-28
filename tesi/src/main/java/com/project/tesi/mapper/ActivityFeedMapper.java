@@ -10,9 +10,23 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Mapper per la conversione di {@link Slot} e {@link Document} in
+ * {@link ActivityFeedItemResponse}. Il testo descrittivo varia in base al ruolo
+ * dell'utente ({@code CLIENT} vs professionista).
+ */
 @Component
 public class ActivityFeedMapper {
 
+    /**
+     * Aggrega slot e documenti in una lista di voci del feed attività, ordinata
+     * per data decrescente (le attività più recenti prima).
+     *
+     * @param slots     lista di slot prenotati da includere nel feed
+     * @param documents lista di documenti da includere nel feed
+     * @param user      utente corrente, usato per determinare il testo descrittivo
+     * @return lista ordinata di {@link ActivityFeedItemResponse}
+     */
     public List<ActivityFeedItemResponse> toActivityFeedItemResponse(List<Slot> slots, List<Document> documents, User user) {
         List<ActivityFeedItemResponse> result = new ArrayList<>();
         for (Slot slot : slots) {

@@ -16,6 +16,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione di {@link SlotService}.
+ * Gestisce il ciclo di vita degli slot con locking pessimistico per-slot tramite
+ * {@code ConcurrentHashMap<Long, ReentrantLock>} per prevenire il double-booking concorrente.
+ * Usa {@link com.project.tesi.repository.SlotRepository} con
+ * {@code @Lock(PESSIMISTIC_WRITE)} per le operazioni critiche.
+ */
 @Service
 public class SlotServiceImpl implements SlotService {
 
@@ -42,6 +49,19 @@ public class SlotServiceImpl implements SlotService {
                 .orElseThrow(() -> new ResourceNotFoundException("Slot", slotId));
     }
 
+    /**
+     * Acquisisce il lock pessimistico per-slot tramite {@code findByIdWithLock}, verifica
+     * la disponibilità dello slot, imposta l'utente prenotante, lo stato {@code CONFIRMED},
+     * il link Jitsi e il timestamp {@code bookedAt}.
+     * Lancia {@link com.project.tesi.exception.booking.SlotAlreadyBookedException} se lo slot
+     * è già occupato, o {@link com.project.tesi.exception.concurrent.ConcurrentUpdateException}
+     * su conflitto di versione ottimistica.
+     *
+     * @param slotId      id dello slot da prenotare
+     * @param user        utente che effettua la prenotazione
+     * @param meetingLink link Jitsi generato per la videoconferenza
+     * @return lo slot aggiornato con i dati della prenotazione
+     */
     @Override
     public Slot saveBooking(Long slotId, User user, String meetingLink) {
         Slot slot = slotRepository.findByIdWithLock(slotId)
@@ -66,6 +86,14 @@ public class SlotServiceImpl implements SlotService {
         slotRepository.deleteById(slotId);
     }
 
+    /**
+     * Annulla la prenotazione dello slot indicato: azzera {@code bookedBy}, {@code meetingLink}
+     * e {@code bookedAt}, imposta lo stato a {@code CANCELED}.
+     * I crediti vengono ripristinati dal livello superiore (facade) prima di invocare questo metodo.
+     *
+     * @param slotId id dello slot da cancellare
+     * @param userId id dell'utente proprietario della prenotazione (usato per validazione esterna)
+     */
     @Override
     public void cancelBooking(Long slotId, Long userId) {
         Slot slot = slotRepository.findById(slotId)
@@ -109,6 +137,13 @@ public class SlotServiceImpl implements SlotService {
         return slotRepository.findAllBooked();
     }
 
+    /**
+     * Logga a livello INFO i dettagli della prenotazione appena creata.
+     * Se {@code bookedAt} non è ancora impostato, lo valorizza con il timestamp corrente
+     * e persiste lo slot prima di emettere il log (pattern Observer per l'activity feed).
+     *
+     * @param slot lo slot appena prenotato
+     */
     @Override
     public void logBookingCreated(Slot slot) {
         if (slot.getBookedAt() == null) {

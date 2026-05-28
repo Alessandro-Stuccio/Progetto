@@ -3,6 +3,9 @@ package com.project.tesi.dto.response;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * DTO di risposta per l'anteprima di una conversazione nella lista chat (partner, ultimo messaggio, non letti).
+ */
 public class ConversationPreviewResponse {
 
     private Long chatId;

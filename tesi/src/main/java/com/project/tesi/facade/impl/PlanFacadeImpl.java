@@ -10,6 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Implementazione di {@link PlanFacade}.
+ * Delega a {@code PlanService} e usa {@code PlanMapper} per la conversione entità↔DTO.
+ */
 @Component
 public class PlanFacadeImpl implements PlanFacade {
 

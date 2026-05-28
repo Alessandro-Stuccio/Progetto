@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import com.project.tesi.model.*;
 
 
+/**
+ * Builder per l'entità Document. Fluent interface per la costruzione dei metadati di un documento caricato.
+ */
 public interface DocumentBuilder {
     DocumentBuilder id(Long id);
     DocumentBuilder fileName(String fileName);

@@ -2,6 +2,9 @@ package com.project.tesi.dto.response;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO di risposta per un singolo evento nel feed attività (prenotazione o documento).
+ */
 public class ActivityFeedItemResponse {
 
     private String type;

@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * DTO per le credenziali di accesso (email + password). Già annotato con @Schema Swagger.
+ */
 @Schema(description = "Credenziali richieste per effettuare l'accesso e ottenere il token JWT")
 public record LoginRequest(
         @Schema(description = "L'indirizzo email dell'utente", example = "pt@test.com")

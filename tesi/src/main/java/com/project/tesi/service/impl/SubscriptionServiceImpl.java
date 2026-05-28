@@ -11,6 +11,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementazione di {@link SubscriptionService}.
+ * Gestisce gli abbonamenti tramite {@link com.project.tesi.repository.SubscriptionRepository}.
+ * {@code findActiveByUserWithLock} usa pessimistic write lock per operazioni
+ * concorrenti sui crediti, garantendo isolamento in scenari di prenotazione simultanea.
+ */
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
 
@@ -46,6 +52,17 @@ public Subscription getSubscriptionStatus(User user) {
         return subscriptionRepository.findAll();
     }
 
+    /**
+     * Aggiorna i crediti dell'abbonamento identificato dall'id.
+     * Carica l'entità dal repository, sovrascrive i crediti PT e Nutrizionista
+     * con i valori forniti e persiste le modifiche.
+     *
+     * @param subscriptionId id dell'abbonamento da aggiornare
+     * @param creditsPT      nuovi crediti per personal trainer
+     * @param creditsNutri   nuovi crediti per nutrizionista
+     * @return l'abbonamento aggiornato
+     * @throws com.project.tesi.exception.common.ResourceNotFoundException se l'abbonamento non esiste
+     */
     @Override
     public Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri) {
         Subscription sub = subscriptionRepository.findById(subscriptionId)

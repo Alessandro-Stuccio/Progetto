@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Controller REST per la gestione degli slot e la ricerca dei professionisti.
+ * Espone /api/professionals.
+ */
 @RestController
 @RequestMapping("/api/professionals")
 @Tag(name = "Professionals", description = "Gestione slot e recupero professionisti disponibili")
@@ -36,6 +40,12 @@ public class ProfessionalController {
         this.professionalFacade = professionalFacade;
     }
 
+    /**
+     * Restituisce la lista dei professionisti disponibili filtrata per ruolo.
+     *
+     * @param role ruolo richiesto (PERSONAL_TRAINER o NUTRITIONIST)
+     * @return lista di {@link ProfessionalSummaryDTO}
+     */
     @Operation(summary = "Lista professionisti", description = "Restituisce i professionisti disponibili filtrati per ruolo (PERSONAL_TRAINER o NUTRITIONIST).")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Lista restituita"),
@@ -46,6 +56,12 @@ public class ProfessionalController {
         return ResponseEntity.ok(userFacade.findAvailableProfessionals(role));
     }
 
+    /**
+     * Restituisce gli slot disponibili di un professionista per il calendario di prenotazione.
+     *
+     * @param id ID del professionista
+     * @return lista di {@link SlotDTO} con gli slot liberi
+     */
     @Operation(summary = "Slot disponibili", description = "Restituisce gli slot liberi di un professionista per il calendario di prenotazione.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Lista slot"),
@@ -56,6 +72,13 @@ public class ProfessionalController {
         return ResponseEntity.ok(professionalFacade.getAvailableSlots(id));
     }
 
+    /**
+     * Aggiunge nuovi slot disponibili al calendario del professionista autenticato.
+     *
+     * @param user  professionista autenticato
+     * @param slots lista degli slot da creare
+     * @return lista di {@link SlotDTO} degli slot creati
+     */
     @Operation(summary = "Crea slot", description = "Aggiunge nuovi slot disponibili al calendario del professionista autenticato.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Slot creati"),
@@ -68,6 +91,13 @@ public class ProfessionalController {
         return ResponseEntity.ok(professionalFacade.createSlots(user.getId(), slots));
     }
 
+    /**
+     * Rimuove uno slot dal calendario del professionista autenticato.
+     *
+     * @param slotId ID dello slot da eliminare
+     * @param user   professionista autenticato proprietario dello slot
+     * @return risposta 204 No Content in caso di successo
+     */
     @Operation(summary = "Elimina slot", description = "Rimuove uno slot dal calendario del professionista autenticato.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Slot eliminato"),

@@ -7,6 +7,10 @@ import com.project.tesi.model.User;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Implementazione di SlotBuilder. Valida che professional, startTime e endTime siano non nulli
+ * e che startTime preceda endTime.
+ */
 public class SlotBuilderImpl implements SlotBuilder {
     private Long id;
     private User professional;
@@ -58,6 +62,13 @@ public class SlotBuilderImpl implements SlotBuilder {
         return this;
     }
 
+    /**
+     * Valida i campi obbligatori e la coerenza temporale, costruisce e ritorna l'entità {@link Slot}.
+     *
+     * @return l'entità Slot costruita
+     * @throws NullPointerException     se professional, startTime o endTime sono nulli
+     * @throws IllegalArgumentException se startTime non precede endTime
+     */
     @Override
     public Slot build() {
         Objects.requireNonNull(this.professional, "professional è obbligatorio");

@@ -15,6 +15,11 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Utility per la generazione e validazione dei token JWT. Supporta due tipi
+ * di token: auth token (scadenza configurabile, default 24 h) e password-reset
+ * token (scadenza fissa 30 minuti). Il claim {@code purpose} distingue i due tipi.
+ */
 @Component
 public class JwtUtil {
 
@@ -30,6 +35,10 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    /**
+     * Validata a {@code @PostConstruct}: lancia {@link IllegalStateException}
+     * se {@code JWT_SECRET} è mancante o vuota.
+     */
     @PostConstruct
     public void validateSecret() {
         if (secretKey == null || secretKey.isBlank()) {
@@ -40,6 +49,12 @@ public class JwtUtil {
         }
     }
 
+    /**
+     * Estrae il subject (email) dal token JWT.
+     *
+     * @param token il token JWT
+     * @return l'email dell'utente
+     */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -49,6 +64,13 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
+    /**
+     * Genera un JWT di autenticazione per l'utente con scadenza configurata
+     * da {@code jwt.expiration}.
+     *
+     * @param userDetails l'utente autenticato
+     * @return il token JWT firmato
+     */
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
@@ -58,6 +80,13 @@ public class JwtUtil {
                 .compact();
     }
 
+    /**
+     * Genera un JWT con claim {@code purpose=PASSWORD_RESET} e scadenza fissa
+     * di 30 minuti, da inviare via email per il reset della password.
+     *
+     * @param email l'indirizzo email del richiedente
+     * @return il token di reset firmato
+     */
     public String generatePasswordResetToken(String email) {
         return Jwts.builder()
                 .setClaims(Map.of(PURPOSE_CLAIM, PURPOSE_PASSWORD_RESET))
@@ -68,6 +97,14 @@ public class JwtUtil {
                 .compact();
     }
 
+    /**
+     * Verifica il claim {@code purpose} e restituisce l'email del proprietario.
+     * Lancia {@link IllegalArgumentException} se il token non è di tipo
+     * {@code PASSWORD_RESET}.
+     *
+     * @param token il token di reset da validare
+     * @return l'email estratta dal token
+     */
     public String validatePasswordResetToken(String token) {
         Claims claims = extractAllClaims(token);
         String purpose = claims.get(PURPOSE_CLAIM, String.class);
@@ -77,6 +114,13 @@ public class JwtUtil {
         return claims.getSubject();
     }
 
+    /**
+     * Verifica che il token appartenga all'utente indicato e non sia scaduto.
+     *
+     * @param token       il token JWT
+     * @param userDetails l'utente da confrontare
+     * @return {@code true} se il token è valido e non scaduto
+     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);

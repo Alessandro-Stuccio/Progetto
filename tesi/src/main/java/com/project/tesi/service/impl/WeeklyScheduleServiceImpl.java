@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementazione di {@link WeeklyScheduleService}.
+ * Recupera gli schedule settimanali tramite {@link com.project.tesi.repository.WeeklyScheduleRepository}.
+ */
 @Service
 public class WeeklyScheduleServiceImpl implements WeeklyScheduleService {
 

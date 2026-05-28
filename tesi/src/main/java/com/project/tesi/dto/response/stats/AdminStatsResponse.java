@@ -3,6 +3,9 @@ package com.project.tesi.dto.response.stats;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * DTO di risposta con le statistiche aggregate per la dashboard dell'amministratore.
+ */
 public class AdminStatsResponse {
 
     private Map<String, Long> usersByRole;

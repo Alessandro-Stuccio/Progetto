@@ -21,6 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * Controller REST per l'Insurance Manager.
+ * Espone /api/insurance. Richiede ruolo INSURANCE_MANAGER.
+ */
 @RestController
 @RequestMapping("/api/insurance")
 @Tag(name = "Insurance", description = "API riservate all'Insurance Manager")
@@ -32,24 +36,47 @@ public class InsuranceController {
         this.insuranceFacade = insuranceFacade;
     }
 
+    /**
+     * Recupera tutti gli abbonamenti presenti nel sistema (attivi e scaduti).
+     *
+     * @return lista di {@link SubscriptionResponse}
+     */
     @Operation(summary = "Lista abbonamenti", description = "Restituisce tutti gli abbonamenti attivi e scaduti.")
     @GetMapping("/subscriptions")
     public ResponseEntity<List<SubscriptionResponse>> getSubscriptions() {
         return ResponseEntity.ok(insuranceFacade.getAllSubscriptions());
     }
 
+    /**
+     * Recupera admin e moderatori contattabili dall'insurance manager tramite chat.
+     *
+     * @return lista di {@link UserResponse}
+     */
     @Operation(summary = "Contatti chat", description = "Restituisce admin e moderatori contattabili dall'insurance manager.")
     @GetMapping("/chat-contacts")
     public ResponseEntity<List<UserResponse>> getChatContacts() {
         return ResponseEntity.ok(insuranceFacade.getChatContacts());
     }
 
+    /**
+     * Recupera tutti i clienti registrati nel sistema.
+     *
+     * @return lista di {@link UserResponse}
+     */
     @Operation(summary = "Lista clienti", description = "Restituisce tutti i clienti registrati.")
     @GetMapping("/clients")
     public ResponseEntity<List<UserResponse>> getClients() {
         return ResponseEntity.ok(insuranceFacade.getAllClients());
     }
 
+    /**
+     * Carica una polizza assicurativa associandola a un cliente specifico.
+     *
+     * @param clientId identificativo del cliente destinatario
+     * @param file     file della polizza da caricare
+     * @param caller   insurance manager autenticato che esegue il caricamento
+     * @return {@link DocumentUploadResponse} con i metadati del documento salvato
+     */
     @Operation(summary = "Carica polizza assicurativa per un cliente")
     @PostMapping("/clients/{clientId}/policy")
     public ResponseEntity<DocumentUploadResponse> uploadPolicy(
@@ -59,12 +86,25 @@ public class InsuranceController {
         return ResponseEntity.ok(insuranceFacade.uploadPolicy(file, clientId, caller.getId()));
     }
 
+    /**
+     * Recupera tutte le polizze assicurative associate a un cliente.
+     *
+     * @param clientId identificativo del cliente
+     * @return lista di {@link DocumentResponse}
+     */
     @Operation(summary = "Lista polizze di un cliente")
     @GetMapping("/clients/{clientId}/policies")
     public ResponseEntity<List<DocumentResponse>> getClientPolicies(@PathVariable Long clientId) {
         return ResponseEntity.ok(insuranceFacade.getClientPolicies(clientId));
     }
 
+    /**
+     * Scarica il file di una polizza assicurativa tramite il suo identificativo.
+     * Restituisce i byte del file con content-type e header di disposizione appropriati.
+     *
+     * @param id identificativo della polizza da scaricare
+     * @return byte[] del file con header HTTP corretti per il download inline
+     */
     @Operation(summary = "Scarica una polizza assicurativa")
     @GetMapping("/policies/{id}/download")
     public ResponseEntity<byte[]> downloadPolicy(@PathVariable Long id) {
@@ -77,6 +117,12 @@ public class InsuranceController {
                 .body(data);
     }
 
+    /**
+     * Elimina una polizza assicurativa e il file associato dal filesystem.
+     *
+     * @param id identificativo della polizza da eliminare
+     * @return risposta HTTP 204 No Content
+     */
     @Operation(summary = "Elimina una polizza assicurativa")
     @DeleteMapping("/policies/{id}")
     public ResponseEntity<Void> deletePolicy(@PathVariable Long id) {
@@ -84,6 +130,13 @@ public class InsuranceController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Aggiorna le note testuali di una polizza assicurativa.
+     *
+     * @param id   identificativo della polizza
+     * @param body oggetto contenente il testo delle nuove note
+     * @return {@link UpdatedNotesResponse} con le note aggiornate
+     */
     @Operation(summary = "Aggiorna le note di una polizza assicurativa")
     @PutMapping("/policies/{id}/notes")
     public ResponseEntity<UpdatedNotesResponse> updatePolicyNotes(

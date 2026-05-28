@@ -2,6 +2,9 @@ package com.project.tesi.dto.response;
 
 import com.project.tesi.enums.Role;
 
+/**
+ * DTO di risposta completo per un utente, con dati aggiuntivi specifici per ruolo (rating medio, conteggio clienti).
+ */
 public class UserResponse {
 
     private Long id;

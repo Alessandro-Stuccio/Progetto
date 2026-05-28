@@ -2,6 +2,9 @@ package com.project.tesi.dto.response;
 
 import java.time.LocalDate;
 
+/**
+ * DTO di risposta per l'abbonamento attivo di un utente con crediti residui e date.
+ */
 public class SubscriptionResponse {
 
     private Long id;

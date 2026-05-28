@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Implementazione di DocumentService. Gestisce CRUD documenti tramite DocumentRepository
+ * e costruisce entità Document tramite DocumentBuilder.
+ */
 @Service
 public class DocumentServiceImpl implements DocumentService {
 

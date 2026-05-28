@@ -2,6 +2,9 @@ package com.project.tesi.dto.response.stats;
 
 import java.util.List;
 
+/**
+ * DTO di risposta con le statistiche e metriche per la dashboard del professionista.
+ */
 public class ProfessionalStatsResponse {
 
     private List<TodayBookingItem> todayBookings;

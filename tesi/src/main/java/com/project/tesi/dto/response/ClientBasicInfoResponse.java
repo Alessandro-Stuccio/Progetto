@@ -2,6 +2,9 @@ package com.project.tesi.dto.response;
 
 import java.util.Objects;
 
+/**
+ * DTO di risposta con le informazioni essenziali di un utente (usato per professionisti, moderatori, admin).
+ */
 public class ClientBasicInfoResponse {
 
     private Long id;

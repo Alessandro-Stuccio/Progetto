@@ -10,6 +10,17 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Entità JPA per la registrazione delle richieste HTTP.
+ * Popolata da {@code AuditInterceptor} per ogni chiamata alle API.
+ * Traccia utente, metodo, path, IP, status code e body della richiesta.
+ *
+ * <p>Vincoli JPA rilevanti:
+ * <ul>
+ *   <li>{@code logged_at} — non nullable, indica il momento esatto della registrazione.</li>
+ *   <li>{@code request_body} — troncato a 4000 caratteri per evitare payload eccessivi.</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "audit_log")
 public class AuditLog {
@@ -18,24 +29,34 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Timestamp del momento in cui la richiesta è stata registrata nel log. */
     @Column(name = "logged_at", nullable = false)
     private LocalDateTime loggedAt;
 
+    /** Email dell'utente autenticato, oppure la stringa {@code "anonimo"} per richieste non autenticate. */
     @Column(name = "user_identity", length = 255)
     private String userIdentity;
 
+    /** Metodo HTTP della richiesta (es. {@code GET}, {@code POST}, {@code DELETE}). */
     @Column(name = "http_method", length = 10)
     private String httpMethod;
 
+    /** Path dell'endpoint invocato (es. {@code /api/bookings/1}). */
     @Column(name = "http_path", length = 500)
     private String httpPath;
 
+    /** Indirizzo IP del client che ha effettuato la richiesta. */
     @Column(name = "ip_address", length = 50)
     private String ipAddress;
 
+    /** Codice HTTP della risposta restituita al client (es. {@code 200}, {@code 403}, {@code 500}). */
     @Column(name = "http_status")
     private Integer httpStatus;
 
+    /**
+     * Corpo della richiesta HTTP, troncato a 4000 caratteri.
+     * Può essere {@code null} per richieste senza body (es. GET).
+     */
     @Column(name = "request_body", length = 4000)
     private String requestBody;
 

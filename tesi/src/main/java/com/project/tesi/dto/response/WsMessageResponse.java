@@ -2,6 +2,9 @@ package com.project.tesi.dto.response;
 
 import java.util.Objects;
 
+/**
+ * DTO di risposta WebSocket per un messaggio inviato in tempo reale tramite STOMP.
+ */
 public class WsMessageResponse {
 
     private Long id;

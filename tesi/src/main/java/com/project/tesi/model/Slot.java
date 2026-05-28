@@ -8,6 +8,13 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Entità JPA per uno slot di disponibilità di un professionista.
+ * La durata è sempre 30 minuti (startTime → endTime). Quando prenotato,
+ * {@code bookedBy} e {@code status} vengono popolati. Il campo {@code version}
+ * supporta l'optimistic locking per prevenire il double-booking. Il campo
+ * {@code reminderSent} evita l'invio duplicato del promemoria email.
+ */
 @Entity
 @Table(
     name = "slots",
@@ -25,31 +32,40 @@ public class Slot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Professionista proprietario dello slot. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "professional_id", nullable = false, foreignKey = @ForeignKey(name = "fk_slot_professional_id"))
     private User professional;
 
+    /** Inizio dello slot; distanza fissa di 30 minuti da {@code endTime}. */
     @Column(nullable = false)
     private LocalDateTime startTime;
 
+    /** Fine dello slot; distanza fissa di 30 minuti da {@code startTime}. */
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    /** Cliente che ha prenotato lo slot; {@code null} se lo slot è libero. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booked_by_id", foreignKey = @ForeignKey(name = "fk_slot_booked_by_id"))
     private User bookedBy;
 
+    /** Stato corrente della prenotazione (es. AVAILABLE, BOOKED, COMPLETED). */
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
 
+    /** Link Jitsi generato al momento della prenotazione; {@code null} se non prenotato. */
     @Column
     private String meetingLink;
 
+    /** Flag che indica se il promemoria email è già stato inviato per questo slot. */
     private boolean reminderSent = false;
 
+    /** Versione per l'optimistic locking; incrementata automaticamente da JPA ad ogni aggiornamento. */
     @Version
     private Integer version;
 
+    /** Timestamp del momento in cui lo slot è stato prenotato. */
     @Column(name = "booked_at")
     private LocalDateTime bookedAt;
 

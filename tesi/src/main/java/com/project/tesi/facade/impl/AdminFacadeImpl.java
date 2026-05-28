@@ -33,6 +33,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione di {@link com.project.tesi.facade.AdminFacade}.
+ * Estende {@link ModeratorFacadeImpl} aggiungendo gestione dei piani di abbonamento
+ * e aggregazione delle statistiche globali della piattaforma.
+ */
 @Component
 public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade {
 
@@ -55,6 +60,16 @@ public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade 
         this.planMapper = planMapper;
     }
 
+    /**
+     * Crea un nuovo piano di abbonamento.
+     * Valida la presenza di tutti i campi obbligatori e l'unicità del nome
+     * prima di persistere il piano tramite {@link com.project.tesi.service.PlanService}.
+     *
+     * @param request dati del piano da creare
+     * @return DTO del piano creato
+     * @throws ResourceAlreadyExistsException se esiste già un piano con lo stesso nome
+     * @throws IllegalArgumentException se campi obbligatori mancano o la durata è non valida
+     */
     @Override
     @Transactional
     public PlanResponseDTO createPlan(PlanCreateRequestDTO request) {
@@ -82,6 +97,17 @@ public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade 
         return planMapper.toResponse(planService.createPlan(plan));
     }
 
+    /**
+     * Aggiorna un piano esistente.
+     * Verifica l'unicità del nuovo nome (se cambiato) e applica le modifiche
+     * tramite {@link com.project.tesi.service.PlanService}.
+     *
+     * @param id      identificativo del piano da aggiornare
+     * @param request nuovi dati da applicare
+     * @return DTO del piano aggiornato
+     * @throws ResourceAlreadyExistsException se il nuovo nome è già in uso
+     * @throws IllegalArgumentException se la durata fornita non è valida
+     */
     @Override
     @Transactional
     public PlanResponseDTO updatePlan(Long id, PlanCreateRequestDTO request) {
@@ -102,6 +128,15 @@ public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade 
         return planMapper.toResponse(planService.createPlan(plan));
     }
 
+    /**
+     * Elimina un piano di abbonamento.
+     * Verifica che non esistano abbonamenti attivi collegati al piano
+     * prima di procedere con l'eliminazione; in caso contrario lancia
+     * {@link IllegalStateException}.
+     *
+     * @param id identificativo del piano da eliminare
+     * @throws IllegalStateException se esistono sottoscrizioni attive sul piano
+     */
     @Override
     @Transactional
     public void deletePlan(Long id) {
@@ -111,6 +146,18 @@ public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade 
         planService.deletePlan(id);
     }
 
+    /**
+     * Restituisce le statistiche globali della piattaforma.
+     * Aggrega dati da {@link com.project.tesi.service.UserService},
+     * {@link com.project.tesi.service.SubscriptionService},
+     * {@link com.project.tesi.service.SlotService} e
+     * {@link com.project.tesi.service.PlanService} per costruire
+     * un {@link com.project.tesi.dto.response.stats.AdminStatsResponse} comprensivo di:
+     * utenti per ruolo, trend mensile iscrizioni, popolarità piani,
+     * statistiche crediti, revenue stimata e carico di lavoro dei professionisti.
+     *
+     * @return risposta aggregata con tutte le statistiche admin
+     */
     @Override
     @Transactional(readOnly = true)
     public AdminStatsResponse getAdminStats() {

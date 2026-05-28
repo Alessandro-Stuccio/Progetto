@@ -3,6 +3,9 @@ package com.project.tesi.dto.response;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * DTO per uno slot di disponibilità di un professionista (usato sia come request che come response).
+ */
 public class SlotDTO {
 
     private Long id;

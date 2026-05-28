@@ -3,6 +3,9 @@ package com.project.tesi.dto.response;
 import com.project.tesi.enums.Role;
 import java.util.Objects;
 
+/**
+ * DTO di risposta per il login. Contiene il token JWT e i dati essenziali dell'utente autenticato.
+ */
 public class AuthResponse {
 
     private String token;

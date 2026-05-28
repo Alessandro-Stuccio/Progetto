@@ -13,6 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Scheduler che invia promemoria email per appuntamenti imminenti.
+ * Eseguito ogni 5 minuti (cron configurabile via {@code schedule.time.bookings}).
+ * Usa il flag {@code reminderSent} sullo slot per evitare invii duplicati.
+ */
 @Component
 public class BookingReminderScheduler {
 
@@ -26,6 +31,11 @@ public class BookingReminderScheduler {
         this.emailService = emailService;
     }
 
+    /**
+     * Trova gli slot in stato {@code CONFIRMED} nei prossimi 35 minuti senza
+     * reminder già inviato, spedisce email sia al cliente sia al professionista
+     * e imposta {@code reminderSent=true} per prevenire invii duplicati.
+     */
     @Scheduled(cron = "${schedule.time.bookings}")
     @Transactional
     public void sendBookingReminders() {

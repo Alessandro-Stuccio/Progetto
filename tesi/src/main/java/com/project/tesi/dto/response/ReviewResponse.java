@@ -3,6 +3,9 @@ package com.project.tesi.dto.response;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * DTO di risposta per una recensione di un professionista.
+ */
 public class ReviewResponse {
 
     private String authorName;

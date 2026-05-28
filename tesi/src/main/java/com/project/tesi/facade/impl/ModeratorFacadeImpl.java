@@ -27,6 +27,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Implementazione di {@link com.project.tesi.facade.ModeratorFacade}.
+ * Gestisce utenti, abbonamenti e chat per il ruolo {@code MODERATOR}.
+ * Funge anche da classe base per {@link AdminFacadeImpl}.
+ */
 @Primary
 @Component
 public class ModeratorFacadeImpl implements ModeratorFacade {
@@ -57,6 +62,14 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
         this.subscriptionFacade = subscriptionFacade;
     }
 
+    /**
+     * Restituisce gli utenti gestibili dal chiamante in base al suo ruolo.
+     * Un {@code ADMIN} vede tutti gli utenti; un {@code MODERATOR} vede solo
+     * i ruoli definiti da {@link com.project.tesi.enums.Role#getManagebleRoles}.
+     *
+     * @param user utente autenticato che effettua la richiesta
+     * @return lista di DTO degli utenti visibili
+     */
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> getManageableUsers(User user) {
@@ -85,6 +98,18 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
                 .toList();
     }
 
+    /**
+     * Crea un nuovo utente verificando che il ruolo target sia tra quelli
+     * gestibili dal chiamante. Codifica la password, assegna eventuali
+     * professionisti al client e, se forniti piano e frequenza di pagamento,
+     * attiva l'abbonamento tramite {@link com.project.tesi.facade.SubscriptionFacade}.
+     *
+     * @param request dati del nuovo utente
+     * @param user    utente moderatore/admin che esegue la creazione
+     * @return DTO dell'utente creato
+     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il ruolo target non è gestibile
+     * @throws com.project.tesi.exception.common.ResourceAlreadyExistsException se l'email è già in uso
+     */
     @Override
     @Transactional
     public UserResponse createUser(UserCreateRequestDTO request,User user) {
@@ -96,6 +121,18 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
         return buildAndSaveUser(request, targetRole);
     }
 
+    /**
+     * Aggiorna i dati anagrafici di un utente esistente.
+     * Verifica che il ruolo del target sia gestibile dal chiamante e
+     * controlla l'unicità della nuova email (se modificata).
+     *
+     * @param id      ID dell'utente da aggiornare
+     * @param request nuovi dati da applicare
+     * @param user    utente moderatore/admin che esegue la modifica
+     * @return DTO dell'utente aggiornato
+     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il ruolo target non è gestibile
+     * @throws com.project.tesi.exception.common.ResourceAlreadyExistsException se la nuova email è già in uso
+     */
     @Override
     @Transactional
     public UserResponse updateUser(Long id, ModeratorUserUpdateRequest request, User user) {
@@ -119,6 +156,15 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
         return userMapper.toAdminResponse(userService.save(target));
     }
 
+    /**
+     * Esegue il soft delete di un utente impostando il flag {@code deleted=true}.
+     * Verifica che il ruolo del target sia gestibile dal chiamante prima di delegare
+     * a {@link com.project.tesi.service.UserService#deleteUser}.
+     *
+     * @param id   ID dell'utente da eliminare
+     * @param user utente moderatore/admin che richiede l'eliminazione
+     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il ruolo target non è gestibile
+     */
     @Override
     @Transactional
     public void deleteUser(Long id, User user) {

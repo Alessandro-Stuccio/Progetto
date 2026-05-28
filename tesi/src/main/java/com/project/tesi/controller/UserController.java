@@ -37,6 +37,13 @@ public class UserController {
         this.userFacade = userFacade;
     }
 
+    /**
+     * Restituisce la dashboard del cliente con profilo, abbonamento, professionisti assegnati
+     * e prossimi appuntamenti.
+     *
+     * @param user cliente autenticato
+     * @return il {@link ClientDashboardResponse} con i dati aggregati della dashboard
+     */
     @Operation(summary = "Dashboard utente", description = "Restituisce profilo, abbonamento, professionisti assegnati e prossimi appuntamenti.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Dashboard restituita"),
@@ -47,6 +54,12 @@ public class UserController {
         return ResponseEntity.ok(userFacade.getClientDashboard(user.getId()));
     }
 
+    /**
+     * Restituisce la lista dei clienti assegnati al professionista autenticato.
+     *
+     * @param user professionista autenticato
+     * @return lista di {@link ClientBasicInfoResponse}
+     */
     @Operation(summary = "Lista clienti", description = "Restituisce i clienti assegnati al professionista autenticato.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Lista restituita"),
@@ -58,6 +71,13 @@ public class UserController {
         return ResponseEntity.ok(userFacade.getClientsForProfessional(user.getId()));
     }
 
+    /**
+     * Aggiorna i dati anagrafici o la password dell'utente autenticato.
+     *
+     * @param user    utente autenticato da aggiornare
+     * @param request nuovi dati del profilo (nome, cognome, password, immagine)
+     * @return risposta 200 OK senza corpo in caso di successo
+     */
     @Operation(summary = "Aggiorna profilo", description = "Modifica nome, cognome, password o immagine profilo dell'utente autenticato.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profilo aggiornato"),
@@ -70,6 +90,12 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Restituisce i dati di contatto dell'amministratore.
+     * Usato dal frontend per la sezione "Contatta supporto".
+     *
+     * @return {@link ClientBasicInfoResponse} con email e nome dell'amministratore
+     */
     @Operation(summary = "Info admin", description = "Restituisce i dati di contatto dell'amministratore (usato per 'Contatta supporto').")
     @ApiResponse(responseCode = "200", description = "Dati admin restituiti")
     @GetMapping("/admin")

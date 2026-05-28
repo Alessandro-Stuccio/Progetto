@@ -13,6 +13,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Implementazione di ChatAsyncService. Esegue operazioni di chat in modo asincrono
+ * usando il thread pool 'emailTaskExecutor'.
+ */
 @Service
 public class ChatAsyncServiceImpl implements ChatAsyncService {
 
@@ -27,11 +31,19 @@ public class ChatAsyncServiceImpl implements ChatAsyncService {
         this.userService = userService;
     }
 
+    /**
+     * Recupera la chat e l'utente mittente, verifica che la chat sia aperta
+     * e che il mittente ne faccia parte, poi delega la persistenza a MessageService.
+     */
     @Override
     public void saveChatMessage(Long chatId, Long senderId, String content) {
         doSave(chatId, senderId, content);
     }
 
+    /**
+     * Delega a MessageService la marcatura dei messaggi come consegnati,
+     * eseguendo l'operazione in modo asincrono sul thread pool 'emailTaskExecutor'.
+     */
     @Override
     @Async("emailTaskExecutor")
     @Transactional
@@ -43,6 +55,10 @@ public class ChatAsyncServiceImpl implements ChatAsyncService {
         }
     }
 
+    /**
+     * Delega a MessageService la marcatura dei messaggi come letti,
+     * eseguendo l'operazione in modo asincrono sul thread pool 'emailTaskExecutor'.
+     */
     @Override
     @Async("emailTaskExecutor")
     @Transactional

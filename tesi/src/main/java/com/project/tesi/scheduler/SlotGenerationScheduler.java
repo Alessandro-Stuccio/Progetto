@@ -14,6 +14,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Scheduler che genera automaticamente gli slot della settimana successiva
+ * ogni domenica a mezzanotte. Itera su tutti i personal trainer e nutrizionisti
+ * e chiama {@link com.project.tesi.facade.ProfessionalFacade#generateSlotsFromSchedule}.
+ */
 @Component
 public class SlotGenerationScheduler {
 
@@ -27,6 +32,11 @@ public class SlotGenerationScheduler {
         this.userService = userService;
     }
 
+    /**
+     * Eseguito ogni domenica a mezzanotte (cron {@code 0 0 0 * * SUN}).
+     * Calcola il range {@code start = oggi + 7 giorni}, {@code end = start + 6}
+     * e genera gli slot per ogni professionista attivo.
+     */
     @Scheduled(cron = "0 0 0 * * SUN")
     @Transactional
     public void generateWeeklySlotsForAllProfessionals() {

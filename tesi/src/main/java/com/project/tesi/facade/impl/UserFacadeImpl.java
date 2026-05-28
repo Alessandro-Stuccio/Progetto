@@ -25,6 +25,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione di {@link UserFacade}.
+ * Aggrega dati da {@code UserService}, {@code SubscriptionService}, {@code SlotService}
+ * e altri servizi per costruire la dashboard e gestire il profilo utente.
+ */
 @Component
 public class UserFacadeImpl implements UserFacade {
 
@@ -66,6 +71,14 @@ public class UserFacadeImpl implements UserFacade {
         this.subscriptionFacade = subscriptionFacade;
     }
 
+    /**
+     * Aggiorna nome, cognome e immagine profilo dell'utente se i relativi campi
+     * della richiesta sono non nulli e non vuoti. Se viene fornita una nuova password,
+     * la codifica e invia un'email di notifica avvenuta modifica (errori SMTP non bloccanti).
+     *
+     * @param userId  identificatore dell'utente da aggiornare
+     * @param request dati di aggiornamento del profilo
+     */
     @Override
     @Transactional
     public void updateProfile(Long userId, ProfileUpdateRequest request) {
@@ -89,6 +102,15 @@ public class UserFacadeImpl implements UserFacade {
         userService.save(user);
     }
 
+    /**
+     * Aggrega in {@link ClientDashboardResponse} il profilo utente, l'abbonamento attivo
+     * (se presente), i professionisti assegnati (PT e/o nutrizionista) e la lista degli
+     * appuntamenti futuri. Accessibile solo agli utenti con ruolo {@code CLIENT}.
+     *
+     * @param userId identificatore del cliente
+     * @return {@link ClientDashboardResponse} con tutti i dati aggregati della dashboard
+     * @throws UnauthorizedAccessException se l'utente non ha ruolo CLIENT
+     */
     @Override
     @Transactional(readOnly = true)
     public ClientDashboardResponse getClientDashboard(Long userId) {
@@ -170,6 +192,17 @@ public class UserFacadeImpl implements UserFacade {
                 .orElseThrow(() -> new ResourceNotFoundException("Amministratore non trovato nel sistema."));
     }
 
+    /**
+     * Risolve piano e frequenza di pagamento dalla {@link PlanRequest}, verifica che
+     * l'utente sia un CLIENT senza abbonamento attivo, poi delega l'attivazione
+     * a {@code SubscriptionFacade} e restituisce la risposta mappata.
+     *
+     * @param request dati del piano (planId, paymentFrequency)
+     * @param userId  identificatore del cliente che attiva l'abbonamento
+     * @return {@link SubscriptionResponse} con i dati dell'abbonamento attivato
+     * @throws UnauthorizedAccessException    se l'utente non è un CLIENT
+     * @throws ResourceAlreadyExistsException se il cliente ha già un abbonamento attivo
+     */
     @Override
     @Transactional
     public SubscriptionResponse activateSubscription(PlanRequest request, Long userId) {

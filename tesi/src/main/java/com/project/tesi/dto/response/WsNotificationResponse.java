@@ -1,5 +1,8 @@
 package com.project.tesi.dto.response;
 
+/**
+ * DTO di risposta WebSocket per le notifiche private (NEW_MESSAGE, DELIVERED_UPDATE, READ_UPDATE).
+ */
 public class WsNotificationResponse {
 
     private String type;

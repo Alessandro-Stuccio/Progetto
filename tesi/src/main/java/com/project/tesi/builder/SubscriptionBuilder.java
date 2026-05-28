@@ -5,6 +5,9 @@ import java.time.LocalDate;
 import com.project.tesi.model.*;
 
 
+/**
+ * Builder per l'entità Subscription. Fluent interface per la costruzione di un abbonamento utente.
+ */
 public interface SubscriptionBuilder {
     SubscriptionBuilder id(Long id);
     SubscriptionBuilder user(User user);

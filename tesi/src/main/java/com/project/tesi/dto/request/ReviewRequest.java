@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO per la sottomissione di una recensione (rating 1-5 e commento opzionale).
+ */
 public record ReviewRequest(
         @NotNull Long professionalId,
         @Min(1) @Max(5) int rating,

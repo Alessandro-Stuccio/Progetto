@@ -4,6 +4,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+/**
+ * Entry point dell'applicazione Spring Boot. Forza IPv4 per evitare timeout SMTP
+ * su IPv6. In assenza di {@code JWT_SECRET} nell'ambiente imposta un valore di
+ * default per semplificare il run in IDE.
+ */
 @SpringBootApplication
 @EnableScheduling
 public class TesiApplication {

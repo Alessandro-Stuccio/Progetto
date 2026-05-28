@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Controller REST per il feed di attività recente.
+ * Espone GET /api/activity/feed.
+ */
 @RestController
 @RequestMapping("/api/activity")
 @Tag(name = "Activity Feed", description = "Feed delle attività recenti dell'utente autenticato")
@@ -27,6 +31,15 @@ public class ActivityFeedController {
         this.activityFeedFacade = activityFeedFacade;
     }
 
+    /**
+     * Recupera il feed di attività (prenotazioni, documenti) degli ultimi N giorni
+     * per l'utente autenticato.
+     *
+     * @param user  utente autenticato ricavato dal token JWT
+     * @param days  numero di giorni passati da considerare (default 14)
+     * @param size  numero massimo di elementi da restituire (default 15)
+     * @return lista di {@link ActivityFeedItemResponse} ordinata dal più recente
+     */
     @Operation(summary = "Feed attività recenti", description = "Restituisce prenotazioni e documenti degli ultimi N giorni, ordinati dal più recente.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Feed restituito con successo"),

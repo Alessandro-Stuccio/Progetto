@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import com.project.tesi.model.*;
 
 
+/**
+ * Builder per l'entità User. Fluent interface per la costruzione di un utente della piattaforma.
+ */
 public interface UserBuilder {
     UserBuilder id(Long id);
     UserBuilder email(String email);

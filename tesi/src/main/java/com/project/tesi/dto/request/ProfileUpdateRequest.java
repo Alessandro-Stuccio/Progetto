@@ -2,6 +2,9 @@ package com.project.tesi.dto.request;
 
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO per l'aggiornamento del profilo utente. Tutti i campi sono opzionali.
+ */
 public record ProfileUpdateRequest(
         @Size(min = 1, max = 100, message = "Il nome deve essere tra 1 e 100 caratteri")
         String firstName,

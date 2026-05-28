@@ -4,6 +4,9 @@ import com.project.tesi.enums.MessageStatus;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * DTO di risposta per un messaggio di chat con stato di lettura (SENT/DELIVERED/READ).
+ */
 public class ChatMessageResponse {
 
     private Long id;

@@ -31,6 +31,13 @@ public class SubscriptionController {
         this.userFacade = userFacade;
     }
 
+    /**
+     * Attiva un nuovo abbonamento per il cliente autenticato con il piano e la frequenza di pagamento scelti.
+     *
+     * @param request contiene il piano (BASIC/PREMIUM), la durata e la modalità di pagamento
+     * @param user    cliente autenticato che attiva l'abbonamento
+     * @return il {@link SubscriptionResponse} dell'abbonamento attivato
+     */
     @Operation(summary = "Attiva abbonamento", description = "Attiva un nuovo abbonamento per il cliente autenticato con il piano e la modalità di pagamento scelti.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Abbonamento attivato"),
@@ -43,6 +50,12 @@ public class SubscriptionController {
         return ResponseEntity.ok(userFacade.activateSubscription(request, user.getId()));
     }
 
+    /**
+     * Restituisce i crediti residui e i dettagli dell'abbonamento attivo del cliente autenticato.
+     *
+     * @param user cliente autenticato di cui recuperare lo stato abbonamento
+     * @return il {@link SubscriptionResponse} con crediti, data di scadenza e piano
+     */
     @Operation(summary = "Stato abbonamento", description = "Restituisce crediti residui, data di scadenza e dettagli del piano dell'abbonamento attivo.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Stato abbonamento"),

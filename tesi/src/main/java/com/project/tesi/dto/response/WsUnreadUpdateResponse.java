@@ -1,5 +1,8 @@
 package com.project.tesi.dto.response;
 
+/**
+ * DTO di risposta WebSocket per l'aggiornamento del conteggio messaggi non letti (UNREAD_UPDATE).
+ */
 public class WsUnreadUpdateResponse {
 
     private String type;

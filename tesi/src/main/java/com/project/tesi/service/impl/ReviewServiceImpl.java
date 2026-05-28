@@ -8,6 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementazione di ReviewService. Gestisce persistenza e query delle recensioni
+ * tramite ReviewRepository.
+ */
 @Service
 public class ReviewServiceImpl implements ReviewService {
 

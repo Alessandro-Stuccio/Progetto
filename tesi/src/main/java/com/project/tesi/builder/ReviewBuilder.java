@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import com.project.tesi.model.*;
 
 
+/**
+ * Builder per l'entità Review. Fluent interface per la costruzione di una recensione.
+ */
 public interface ReviewBuilder {
     ReviewBuilder id(Long id);
     ReviewBuilder client(User client);

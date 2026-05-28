@@ -2,6 +2,9 @@ package com.project.tesi.dto.request;
 
 import jakarta.validation.constraints.*;
 
+/**
+ * DTO per la creazione di un nuovo utente da parte del moderatore o admin.
+ */
 public record UserCreateRequestDTO(
         @NotBlank @Email String email,
         @NotBlank @Size(min = 2, max = 50) String firstName,

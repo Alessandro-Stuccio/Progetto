@@ -22,6 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * Controller REST per prenotazioni e cancellazioni.
+ * Espone /api/bookings. Richiede autenticazione.
+ */
 @RestController
 @RequestMapping("/api/bookings")
 @Tag(name = "Bookings", description = "Creazione e cancellazione prenotazioni")
@@ -34,6 +38,15 @@ public class BookingController {
         this.bookingFacade = bookingFacade;
     }
 
+    /**
+     * Crea una prenotazione per uno slot disponibile.
+     * Deduce i crediti dall'abbonamento attivo e usa locking pessimistico
+     * per prevenire il double-booking concorrente.
+     *
+     * @param request dati della prenotazione (identificativo dello slot)
+     * @param user    utente autenticato che effettua la prenotazione
+     * @return {@link BookingResponse} con i dettagli della prenotazione confermata
+     */
     @Operation(summary = "Crea prenotazione", description = "Prenota uno slot. Deduce i crediti dall'abbonamento attivo. Usa locking per evitare double-booking.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Prenotazione confermata"),
@@ -50,6 +63,15 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Annulla una prenotazione appartenente all'utente autenticato.
+     * Il credito viene ripristinato sull'abbonamento solo se la cancellazione
+     * avviene con più di 24 ore di anticipo rispetto all'orario dello slot.
+     *
+     * @param id   identificativo della prenotazione da annullare
+     * @param user utente autenticato proprietario della prenotazione
+     * @return messaggio di conferma con indicazione del credito riaccreditato
+     */
     @Operation(summary = "Annulla prenotazione", description = "Annulla una prenotazione propria. Il credito viene restituito solo se mancano più di 24 ore.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Prenotazione annullata"),

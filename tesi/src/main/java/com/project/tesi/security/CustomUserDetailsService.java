@@ -10,6 +10,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+/**
+ * Configurazione del {@link UserDetailsService} di Spring Security.
+ * Carica l'utente dall'email escludendo gli account soft-deleted.
+ */
 @Configuration
 public class CustomUserDetailsService{
 
@@ -19,6 +23,13 @@ public class CustomUserDetailsService{
         this.userRepository = userRepository;
     }
 
+    /**
+     * Espone un bean {@link UserDetailsService} che cerca l'utente per email
+     * con il flag {@code deleted=false}. Lancia {@link org.springframework.security.core.userdetails.UsernameNotFoundException}
+     * se l'utente non esiste o è stato eliminato.
+     *
+     * @return il {@link UserDetailsService} configurato
+     */
     @Bean
     public UserDetailsService getUserDetails(){
         return email -> userRepository.findByEmailAndDeletedFalse(email)

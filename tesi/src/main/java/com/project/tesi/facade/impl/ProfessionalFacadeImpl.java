@@ -31,6 +31,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione di {@link com.project.tesi.facade.ProfessionalFacade}.
+ * Gestisce slot, prenotazioni e statistiche operative dei professionisti
+ * (Personal Trainer e Nutrizionisti).
+ */
 @Component
 public class ProfessionalFacadeImpl implements ProfessionalFacade {
 
@@ -86,6 +91,19 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
         slotService.deleteSlot(slotId);
     }
 
+    /**
+     * Genera automaticamente slot da 30 minuti a partire dagli orari settimanali del professionista.
+     * Itera ogni giorno nel range {@code startDate}–{@code endDate}, ricerca le regole
+     * {@link com.project.tesi.model.WeeklySchedule} corrispondenti al giorno della settimana e
+     * produce slot consecutivi di 30 minuti tra {@code startTime} ed {@code endTime}.
+     * Gli slot già esistenti (verificati con {@link com.project.tesi.service.SlotService#slotExists})
+     * vengono saltati per evitare duplicati.
+     *
+     * @param professional professionista per cui generare gli slot
+     * @param startDate    primo giorno del range (inclusivo)
+     * @param endDate      ultimo giorno del range (inclusivo)
+     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se l'utente non è un professionista
+     */
     @Override
     @Transactional
     public void generateSlotsFromSchedule(User professional, LocalDate startDate, LocalDate endDate) {
@@ -146,6 +164,16 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
                 .toList();
     }
 
+    /**
+     * Calcola e restituisce le statistiche operative del professionista.
+     * Aggrega: prenotazioni del giorno corrente con link meeting, clienti che necessitano
+     * attenzione (nessun documento del tipo rilevante negli ultimi 7 giorni),
+     * documenti caricati nella settimana corrente e totale clienti assegnati.
+     *
+     * @param professionalId ID del professionista
+     * @return DTO con le statistiche aggregate
+     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se l'utente non è un professionista
+     */
     @Override
     @Transactional(readOnly = true)
     public ProfessionalStatsResponse getProfessionalStats(Long professionalId) {

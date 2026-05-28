@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementazione di PlanService. CRUD sui piani di abbonamento tramite PlanRepository.
+ */
 @Service
 public class PlanServiceImpl implements PlanService {
 
@@ -33,6 +36,10 @@ public class PlanServiceImpl implements PlanService {
         return planRepository.save(plan);
     }
 
+    /**
+     * Verifica l'esistenza del piano prima di eliminarlo; lancia
+     * {@link com.project.tesi.exception.common.ResourceNotFoundException} se non trovato.
+     */
     @Override
     public void deletePlan(Long id) {
         if (!planRepository.existsById(id)) {

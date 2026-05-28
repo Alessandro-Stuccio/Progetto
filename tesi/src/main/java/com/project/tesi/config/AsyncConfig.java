@@ -9,10 +9,23 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+/**
+ * Configurazione del thread pool asincrono per operazioni non bloccanti
+ * (invio email, salvataggio messaggi). Espone il bean {@code emailTaskExecutor}
+ * usato da {@code @Async}.
+ */
 @Configuration
 @EnableAsync
 public class AsyncConfig {
 
+    /**
+     * Crea un {@link ThreadPoolTaskExecutor} con core=2, max=10, coda=100.
+     * La policy {@code CallerRunsPolicy} garantisce che, se la coda è piena,
+     * il chiamante esegua il task direttamente, evitando la perdita silenziosa
+     * di email o messaggi.
+     *
+     * @return l'executor configurato
+     */
     @Bean(name = "emailTaskExecutor")
     public Executor emailTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

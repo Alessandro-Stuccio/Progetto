@@ -20,6 +20,12 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.Objects;
 
+/**
+ * Entità JPA per la disponibilità settimanale ricorrente di un professionista.
+ * Vincolo unico su (professional_id, dayOfWeek): un solo slot orario per giorno
+ * per professionista. Usata dallo {@code SlotGenerationScheduler} per creare
+ * automaticamente gli slot futuri.
+ */
 @Entity
 @Table(name = "weekly_schedules", uniqueConstraints = {
         @UniqueConstraint(name = "uq_weekly_schedule_prof_day", columnNames = {"professional_id", "dayOfWeek"})
@@ -30,17 +36,21 @@ public class WeeklySchedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Professionista a cui appartiene questa fascia oraria settimanale. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "professional_id", nullable = false, foreignKey = @ForeignKey(name = "fk_weekly_schedule_professional_id"))
     private User professional;
 
+    /** Giorno della settimana a cui si applica la disponibilità (es. MONDAY, TUESDAY). */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DayOfWeek dayOfWeek;
 
+    /** Orario di inizio della disponibilità nel giorno indicato. */
     @Column(nullable = false)
     private LocalTime startTime;
 
+    /** Orario di fine della disponibilità nel giorno indicato. */
     @Column(nullable = false)
     private LocalTime endTime;
 

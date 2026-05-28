@@ -1,5 +1,8 @@
 package com.project.tesi.dto.response;
 
+/**
+ * DTO di risposta per un piano di abbonamento con prezzi e crediti mensili.
+ */
 public class PlanResponseDTO {
 
     private Long id;

@@ -2,6 +2,9 @@ package com.project.tesi.dto.request;
 
 import jakarta.validation.constraints.*;
 
+/**
+ * DTO per la creazione o aggiornamento di un piano di abbonamento.
+ */
 public record PlanCreateRequestDTO(
         @NotBlank @Size(min = 2, max = 100) String name,
         @NotBlank String duration,

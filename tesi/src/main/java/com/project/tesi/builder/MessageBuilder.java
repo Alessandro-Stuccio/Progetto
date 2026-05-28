@@ -6,6 +6,9 @@ import com.project.tesi.model.Message;
 
 import java.time.LocalDateTime;
 
+/**
+ * Builder per l'entità Message. Fluent interface per la costruzione di un messaggio di chat.
+ */
 public interface MessageBuilder {
     MessageBuilder id(Long id);
     MessageBuilder content(String content);

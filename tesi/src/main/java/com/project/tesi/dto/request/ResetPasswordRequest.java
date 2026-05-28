@@ -3,6 +3,9 @@ package com.project.tesi.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO per il reset della password tramite token ricevuto via email.
+ */
 public record ResetPasswordRequest(
         @NotBlank(message = "Il token è obbligatorio")
         String token,
