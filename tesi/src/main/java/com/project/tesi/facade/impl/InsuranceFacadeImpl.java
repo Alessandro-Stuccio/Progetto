@@ -60,6 +60,15 @@ public class InsuranceFacadeImpl implements InsuranceFacade {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UserResponse> getChatContacts() {
+        return userService.findAll().stream()
+                .filter(u -> u.getRole() == Role.ADMIN || u.getRole() == Role.MODERATOR)
+                .map(userMapper::toAdminResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<SubscriptionResponse> getAllSubscriptions() {
         return subscriptionService.getAllSubscriptions().stream()
                 .map(subscriptionMapper::toResponse)

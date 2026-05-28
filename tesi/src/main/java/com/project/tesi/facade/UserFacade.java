@@ -7,7 +7,6 @@ import com.project.tesi.dto.response.ClientDashboardResponse;
 import com.project.tesi.dto.response.ProfessionalSummaryDTO;
 import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
-import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.Role;
 
 import java.util.List;
@@ -20,5 +19,4 @@ public interface UserFacade {
     SubscriptionResponse activateSubscription(PlanRequest request, Long userId);
     SubscriptionResponse getSubscriptionStatus(Long userId);
     List<ProfessionalSummaryDTO> findAvailableProfessionals(Role role);
-    ProfessionalStatsResponse getProfessionalStats(Long professionalId);
 }

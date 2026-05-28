@@ -20,6 +20,7 @@ public class DocumentMapper {
                 .type(doc.getType().name())
                 .uploadDate(doc.getUploadDate().toString())
                 .notes(doc.getNotes())
+                .uploadedByName(doc.getUploadedBy() != null ? doc.getUploadedBy().getFullName() : null)
                 .build();
     }
 

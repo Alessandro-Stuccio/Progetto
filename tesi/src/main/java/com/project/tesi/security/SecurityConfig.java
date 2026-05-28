@@ -47,7 +47,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/ws/**").permitAll()
                             .requestMatchers("/api/plans/**").permitAll()
-                            .requestMatchers("/api/professionals/*/slots").hasRole(Role.CLIENT.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/professionals/*/slots").hasAnyRole(Role.CLIENT.name(), Role.PERSONAL_TRAINER.name(), Role.NUTRITIONIST.name())
                             .requestMatchers("/api/professionals/**").permitAll()
                             .requestMatchers("/api/reviews/professional/**").permitAll()
                             .requestMatchers("/api/job-applications/**").permitAll()

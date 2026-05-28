@@ -1,25 +1,35 @@
 package com.project.tesi.facade.impl;
 
+import com.project.tesi.dto.response.BookingResponse;
 import com.project.tesi.dto.response.SlotDTO;
+import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.BookingStatus;
+import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.facade.ProfessionalFacade;
+import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SlotMapper;
+import com.project.tesi.model.Document;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.model.WeeklySchedule;
+import com.project.tesi.service.DocumentService;
 import com.project.tesi.service.SlotService;
 import com.project.tesi.service.UserService;
 import com.project.tesi.service.WeeklyScheduleService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ProfessionalFacadeImpl implements ProfessionalFacade {
@@ -27,16 +37,22 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     private final UserService userService;
     private final SlotService slotService;
     private final WeeklyScheduleService weeklyScheduleService;
+    private final DocumentService documentService;
     private final SlotMapper slotMapper;
+    private final BookingMapper bookingMapper;
 
     public ProfessionalFacadeImpl(UserService userService,
                                    SlotService slotService,
                                    WeeklyScheduleService weeklyScheduleService,
-                                   SlotMapper slotMapper) {
+                                   DocumentService documentService,
+                                   SlotMapper slotMapper,
+                                   BookingMapper bookingMapper) {
         this.userService = userService;
         this.slotService = slotService;
         this.weeklyScheduleService = weeklyScheduleService;
+        this.documentService = documentService;
         this.slotMapper = slotMapper;
+        this.bookingMapper = bookingMapper;
     }
 
     @Override
@@ -113,5 +129,82 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
         if (!newSlots.isEmpty()) {
             slotService.createSlots(newSlots);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getUpcomingBookings(Long professionalId) {
+        User professional = userService.getUserById(professionalId);
+        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
+            throw new UnauthorizedAccessException("Solo i professionisti possono accedere agli appuntamenti.");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        return slotService.findBookingsByProfessional(professional).stream()
+                .filter(slot -> slot.getStartTime() != null && slot.getStartTime().isAfter(now))
+                .sorted((a, b) -> a.getStartTime().compareTo(b.getStartTime()))
+                .map(bookingMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProfessionalStatsResponse getProfessionalStats(Long professionalId) {
+        User professional = userService.getUserById(professionalId);
+        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
+            throw new UnauthorizedAccessException("Solo i professionisti possono accedere alle statistiche.");
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime dayStart = today.atStartOfDay();
+        LocalDateTime dayEnd = today.plusDays(1).atStartOfDay();
+        List<Slot> todaySlots = slotService.findTodayByProfessional(professional, dayStart, dayEnd);
+
+        List<ProfessionalStatsResponse.TodayBookingItem> todayList = todaySlots.stream().map(s ->
+                ProfessionalStatsResponse.TodayBookingItem.builder()
+                        .id(s.getId())
+                        .clientName(s.getBookedBy() != null ? s.getBookedBy().getFullName() : "")
+                        .clientId(s.getBookedBy() != null ? s.getBookedBy().getId() : null)
+                        .startTime(s.getStartTime().toLocalTime().toString().substring(0, 5))
+                        .endTime(s.getEndTime().toLocalTime().toString().substring(0, 5))
+                        .status(s.getStatus() != null ? s.getStatus().name() : "")
+                        .meetingLink(s.getMeetingLink())
+                        .build()
+        ).collect(Collectors.toList());
+
+        DocumentType relevantDocType = professional.getRole() == Role.PERSONAL_TRAINER
+                ? DocumentType.WORKOUT_PLAN : DocumentType.DIET_PLAN;
+        List<User> clients = professional.getRole() == Role.PERSONAL_TRAINER
+                ? userService.findByAssignedPT(professional)
+                : userService.findByAssignedNutritionist(professional);
+
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        List<ProfessionalStatsResponse.ClientAttentionItem> clientsNeedingAttention = new ArrayList<>();
+        for (User client : clients) {
+            Document latestDoc = documentService.findLatestByOwnerAndType(client, relevantDocType);
+            boolean needsAttention = (latestDoc == null || latestDoc.getUploadDate().isBefore(sevenDaysAgo));
+            if (needsAttention) {
+                clientsNeedingAttention.add(ProfessionalStatsResponse.ClientAttentionItem.builder()
+                        .id(client.getId())
+                        .firstName(client.getFirstName())
+                        .lastName(client.getLastName())
+                        .lastDocDate(latestDoc != null ? latestDoc.getUploadDate().toString() : null)
+                        .daysSinceLastDoc(latestDoc != null
+                                ? Duration.between(latestDoc.getUploadDate(), LocalDateTime.now()).toDays()
+                                : -1)
+                        .build());
+            }
+        }
+
+        LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        int docsUploadedThisWeek = documentService.countUploadedSince(professional, startOfWeek.atStartOfDay());
+
+        return ProfessionalStatsResponse.builder()
+                .todayBookings(todayList)
+                .todayBookingsCount(todayList.size())
+                .clientsNeedingAttention(clientsNeedingAttention)
+                .clientsNeedingAttentionCount(clientsNeedingAttention.size())
+                .docsUploadedThisWeek(docsUploadedThisWeek)
+                .totalClients(clients.size())
+                .build();
     }
 }

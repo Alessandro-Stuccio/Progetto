@@ -169,7 +169,12 @@ public class ChatFacadeImpl implements ChatFacade {
         if (uA.getRole() == Role.ADMIN || uB.getRole() == Role.ADMIN) return;
 
         if (uA.getRole() == Role.INSURANCE_MANAGER || uB.getRole() == Role.INSURANCE_MANAGER) {
-            throw new ChatNotAllowedException("Insurance manager può contattare solo l'amministratore.");
+            boolean otherIsAdmin = uA.getRole() == Role.ADMIN || uB.getRole() == Role.ADMIN;
+            boolean otherIsModerator = uA.getRole() == Role.MODERATOR || uB.getRole() == Role.MODERATOR;
+            if (!otherIsAdmin && !otherIsModerator) {
+                throw new ChatNotAllowedException("Insurance manager può contattare solo admin e moderatori.");
+            }
+            return;
         }
 
         if (uA.getRole() == Role.MODERATOR || uB.getRole() == Role.MODERATOR) return;

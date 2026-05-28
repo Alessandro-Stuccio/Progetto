@@ -13,6 +13,7 @@ import java.util.List;
 public interface InsuranceFacade {
     List<UserResponse> getAllClients();
     List<SubscriptionResponse> getAllSubscriptions();
+    List<UserResponse> getChatContacts();
     Document getDocumentById(Long documentId);
     DocumentUploadResponse uploadPolicy(MultipartFile file, Long clientId, Long callerId);
     byte[] downloadPolicy(Long documentId);

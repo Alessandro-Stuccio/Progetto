@@ -8,6 +8,7 @@ import com.project.tesi.dto.request.ws.WsSendMessageRequest;
 import com.project.tesi.dto.response.WsMessageResponse;
 import com.project.tesi.dto.response.WsNotificationResponse;
 import com.project.tesi.dto.response.WsUnreadUpdateResponse;
+import com.project.tesi.enums.ChatStatus;
 import com.project.tesi.enums.MessageStatus;
 import com.project.tesi.messaging.ChatMessagePublisher;
 import com.project.tesi.model.Chat;
@@ -106,6 +107,11 @@ public class ChatWebSocketController {
             if (chat == null) {
                 log.warn("[WS] /chat.send: chat {} non trovata.", chatId);
             } else {
+                if (chat.getStatus() == ChatStatus.CLOSED) {
+                    chat.setStatus(ChatStatus.OPEN);
+                    chatService.save(chat);
+                    log.info("[WS] /chat.send: chat {} riaperta (era CLOSED).", chatId);
+                }
                 User receiver = chat.getUser1().getId().equals(senderId)
                         ? chat.getUser2()
                         : chat.getUser1();
@@ -181,6 +187,22 @@ public class ChatWebSocketController {
         }
         chatAsyncService.markAsReadAsync(request.chatId(), user.getId());
         sendUnreadUpdate(user.getId(), user.getEmail());
+        try {
+            Chat chat = chatService.getChatEntity(request.chatId());
+            User sender = chat.getUser1().getId().equals(user.getId())
+                    ? chat.getUser2() : chat.getUser1();
+            messagingTemplate.convertAndSendToUser(
+                    sender.getEmail(), "/queue/notifications",
+                    WsNotificationResponse.builder()
+                            .type("READ_UPDATE")
+                            .message(WsMessageResponse.builder()
+                                    .chatId(request.chatId())
+                                    .status(MessageStatus.READ.name())
+                                    .build())
+                            .build());
+        } catch (Exception e) {
+            log.warn("[WS] READ_UPDATE non recapitata chatId={}: {}", request.chatId(), e.getMessage());
+        }
     }
 
     private void sendUnreadUpdate(Long userId, String userEmail) {

@@ -72,7 +72,7 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
     @Transactional(readOnly = true)
     public List<UserResponse> getChatContacts() {
         return userService.findAll().stream()
-                .filter(u -> u.getRole() == Role.ADMIN || u.getRole() == Role.INSURANCE_MANAGER)
+                .filter(u -> u.getRole() == Role.ADMIN || u.getRole() == Role.INSURANCE_MANAGER || u.getRole() == Role.MODERATOR)
                 .map(userMapper::toAdminResponse)
                 .toList();
     }

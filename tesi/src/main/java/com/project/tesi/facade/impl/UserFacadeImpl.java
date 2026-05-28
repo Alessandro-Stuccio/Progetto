@@ -3,7 +3,6 @@ package com.project.tesi.facade.impl;
 import com.project.tesi.dto.request.PlanRequest;
 import com.project.tesi.dto.request.ProfileUpdateRequest;
 import com.project.tesi.dto.response.*;
-import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
@@ -21,12 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.project.tesi.enums.DocumentType;
-import java.time.DayOfWeek;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -194,68 +189,6 @@ public class UserFacadeImpl implements UserFacade {
     public SubscriptionResponse getSubscriptionStatus(Long userId) {
         User user = userService.getUserById(userId);
         return subscriptionMapper.toResponse(subscriptionService.getSubscriptionStatus(user));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ProfessionalStatsResponse getProfessionalStats(Long professionalId) {
-        User professional = userService.getUserById(professionalId);
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new IllegalArgumentException("L'utente con ID " + professionalId + " non è un professionista.");
-        }
-
-        LocalDate today = LocalDate.now();
-        LocalDateTime dayStart = today.atStartOfDay();
-        LocalDateTime dayEnd = today.plusDays(1).atStartOfDay();
-        List<Slot> todaySlots = slotService.findTodayByProfessional(professional, dayStart, dayEnd);
-
-        List<ProfessionalStatsResponse.TodayBookingItem> todayList = todaySlots.stream().map(s ->
-                ProfessionalStatsResponse.TodayBookingItem.builder()
-                        .id(s.getId())
-                        .clientName(s.getBookedBy() != null ? s.getBookedBy().getFullName() : "")
-                        .clientId(s.getBookedBy() != null ? s.getBookedBy().getId() : null)
-                        .startTime(s.getStartTime().toLocalTime().toString().substring(0, 5))
-                        .endTime(s.getEndTime().toLocalTime().toString().substring(0, 5))
-                        .status(s.getStatus() != null ? s.getStatus().name() : "")
-                        .meetingLink(s.getMeetingLink())
-                        .build()
-        ).collect(Collectors.toList());
-
-        DocumentType relevantDocType = professional.getRole() == Role.PERSONAL_TRAINER
-                ? DocumentType.WORKOUT_PLAN : DocumentType.DIET_PLAN;
-        List<User> clients = professional.getRole() == Role.PERSONAL_TRAINER
-                ? userService.findByAssignedPT(professional)
-                : userService.findByAssignedNutritionist(professional);
-
-        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        List<ProfessionalStatsResponse.ClientAttentionItem> clientsNeedingAttention = new ArrayList<>();
-        for (User client : clients) {
-            Document latestDoc = documentService.findLatestByOwnerAndType(client, relevantDocType);
-            boolean needsAttention = (latestDoc == null || latestDoc.getUploadDate().isBefore(sevenDaysAgo));
-            if (needsAttention) {
-                clientsNeedingAttention.add(ProfessionalStatsResponse.ClientAttentionItem.builder()
-                        .id(client.getId())
-                        .firstName(client.getFirstName())
-                        .lastName(client.getLastName())
-                        .lastDocDate(latestDoc != null ? latestDoc.getUploadDate().toString() : null)
-                        .daysSinceLastDoc(latestDoc != null
-                                ? Duration.between(latestDoc.getUploadDate(), LocalDateTime.now()).toDays()
-                                : -1)
-                        .build());
-            }
-        }
-
-        LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        int docsUploadedThisWeek = documentService.countUploadedSince(professional, startOfWeek.atStartOfDay());
-
-        return ProfessionalStatsResponse.builder()
-                .todayBookings(todayList)
-                .todayBookingsCount(todayList.size())
-                .clientsNeedingAttention(clientsNeedingAttention)
-                .clientsNeedingAttentionCount(clientsNeedingAttention.size())
-                .docsUploadedThisWeek(docsUploadedThisWeek)
-                .totalClients(clients.size())
-                .build();
     }
 
 }

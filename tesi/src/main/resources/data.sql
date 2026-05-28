@@ -448,35 +448,35 @@ ON CONFLICT DO NOTHING;
 -- ============================================================
 -- Documenti
 -- ============================================================
-INSERT INTO documents (file_name, content_type, type, upload_date, owner_id, uploaded_by_id, notes)
+INSERT INTO documents (file_name, file_path, content_type, type, upload_date, owner_id, uploaded_by_id, notes)
 VALUES
-    ('polizza_luca.pdf',        'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '30 days',
+    ('polizza_luca.pdf',        'uploads/seed/polizza_luca.pdf',        'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '30 days',
      (SELECT id FROM users WHERE email = 'luca@test.com'),    (SELECT id FROM users WHERE email = 'insurance@test.com'), 'Polizza assicurativa attiva per Luca Ferri'),
-    ('scheda_luca_pt1.pdf',     'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '20 days',
+    ('scheda_luca_pt1.pdf',     'uploads/seed/scheda_luca_pt1.pdf',     'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '20 days',
      (SELECT id FROM users WHERE email = 'luca@test.com'),    (SELECT id FROM users WHERE email = 'pt1@test.com'),       'Scheda funzionale settimana 1-4'),
-    ('dieta_luca_n1.pdf',       'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '15 days',
+    ('dieta_luca_n1.pdf',       'uploads/seed/dieta_luca_n1.pdf',       'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '15 days',
      (SELECT id FROM users WHERE email = 'luca@test.com'),    (SELECT id FROM users WHERE email = 'nutri1@test.com'),    'Piano alimentare mediterraneo fase 1'),
-    ('polizza_sofia.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '28 days',
+    ('polizza_sofia.pdf',       'uploads/seed/polizza_sofia.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '28 days',
      (SELECT id FROM users WHERE email = 'sofia@test.com'),   (SELECT id FROM users WHERE email = 'insurance@test.com'), 'Polizza assicurativa attiva per Sofia Conti'),
-    ('scheda_sofia_pt1.pdf',    'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '18 days',
+    ('scheda_sofia_pt1.pdf',    'uploads/seed/scheda_sofia_pt1.pdf',    'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '18 days',
      (SELECT id FROM users WHERE email = 'sofia@test.com'),   (SELECT id FROM users WHERE email = 'pt1@test.com'),       'Scheda powerlifting introduttivo'),
-    ('dieta_sofia_n2.pdf',      'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '12 days',
+    ('dieta_sofia_n2.pdf',      'uploads/seed/dieta_sofia_n2.pdf',      'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '12 days',
      (SELECT id FROM users WHERE email = 'sofia@test.com'),   (SELECT id FROM users WHERE email = 'nutri2@test.com'),    'Dieta ipolipidica personalizzata'),
-    ('polizza_matteo.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '25 days',
+    ('polizza_matteo.pdf',      'uploads/seed/polizza_matteo.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '25 days',
      (SELECT id FROM users WHERE email = 'matteo@test.com'),  (SELECT id FROM users WHERE email = 'insurance@test.com'), 'Polizza assicurativa attiva per Matteo Galli'),
-    ('scheda_matteo_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '16 days',
+    ('scheda_matteo_pt2.pdf',   'uploads/seed/scheda_matteo_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '16 days',
      (SELECT id FROM users WHERE email = 'matteo@test.com'),  (SELECT id FROM users WHERE email = 'pt2@test.com'),       'Programma forza massimale 8 settimane'),
-    ('dieta_matteo_n1.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '10 days',
+    ('dieta_matteo_n1.pdf',     'uploads/seed/dieta_matteo_n1.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '10 days',
      (SELECT id FROM users WHERE email = 'matteo@test.com'),  (SELECT id FROM users WHERE email = 'nutri1@test.com'),    'Piano sportivo ad alto contenuto proteico'),
-    ('polizza_chiara.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '22 days',
+    ('polizza_chiara.pdf',      'uploads/seed/polizza_chiara.pdf',      'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '22 days',
      (SELECT id FROM users WHERE email = 'chiara@test.com'),  (SELECT id FROM users WHERE email = 'insurance@test.com'), 'Polizza assicurativa attiva per Chiara Fontana'),
-    ('scheda_chiara_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '14 days',
+    ('scheda_chiara_pt2.pdf',   'uploads/seed/scheda_chiara_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '14 days',
      (SELECT id FROM users WHERE email = 'chiara@test.com'),  (SELECT id FROM users WHERE email = 'pt2@test.com'),       'Allenamento funzionale misto'),
-    ('dieta_chiara_n2.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '8 days',
+    ('dieta_chiara_n2.pdf',     'uploads/seed/dieta_chiara_n2.pdf',     'application/pdf', 'DIET_PLAN',        NOW() - INTERVAL '8 days',
      (SELECT id FROM users WHERE email = 'chiara@test.com'),  (SELECT id FROM users WHERE email = 'nutri2@test.com'),    'Dieta per intolleranza al lattosio'),
-    ('polizza_elena.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '20 days',
+    ('polizza_elena.pdf',       'uploads/seed/polizza_elena.pdf',       'application/pdf', 'INSURANCE_POLICE', NOW() - INTERVAL '20 days',
      (SELECT id FROM users WHERE email = 'elena@test.com'),   (SELECT id FROM users WHERE email = 'insurance@test.com'), 'Polizza assicurativa attiva per Elena Marino'),
-    ('scheda_davide_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '11 days',
+    ('scheda_davide_pt2.pdf',   'uploads/seed/scheda_davide_pt2.pdf',   'application/pdf', 'WORKOUT_PLAN',     NOW() - INTERVAL '11 days',
      (SELECT id FROM users WHERE email = 'davide@test.com'),  (SELECT id FROM users WHERE email = 'pt2@test.com'),       'Scheda ipertrofia muscolare 12 settimane')
 ON CONFLICT DO NOTHING;
 

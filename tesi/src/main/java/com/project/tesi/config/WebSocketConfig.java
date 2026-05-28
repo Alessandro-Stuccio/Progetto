@@ -1,12 +1,15 @@
 package com.project.tesi.config;
 
 import com.project.tesi.security.WebSocketChannelInterceptor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.util.List;
 
 /**
  * Configurazione del broker WebSocket (STOMP).
@@ -16,6 +19,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Value("${cors.allowed-origins}")
+    private List<String> allowedOrigins;
 
     private final WebSocketChannelInterceptor webSocketChannelInterceptor;
 
@@ -39,13 +45,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // Espone l'endpoint di connessione, con o senza fallback SockJS
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        String[] origins = allowedOrigins.toArray(new String[0]);
+
         // Endpoint con SockJS fallback (per client legacy)
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("https://progetto-fe.vercel.app")
+                .setAllowedOriginPatterns(origins)
                 .withSockJS();
 
         // Endpoint WebSocket nativo (per client moderni come @stomp/stompjs)
         registry.addEndpoint("/ws/websocket")
-                .setAllowedOriginPatterns("https://progetto-fe.vercel.app");
+                .setAllowedOriginPatterns(origins);
     }
 }

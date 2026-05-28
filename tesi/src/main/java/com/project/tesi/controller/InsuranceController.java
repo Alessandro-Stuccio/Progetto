@@ -38,6 +38,12 @@ public class InsuranceController {
         return ResponseEntity.ok(insuranceFacade.getAllSubscriptions());
     }
 
+    @Operation(summary = "Contatti chat", description = "Restituisce admin e moderatori contattabili dall'insurance manager.")
+    @GetMapping("/chat-contacts")
+    public ResponseEntity<List<UserResponse>> getChatContacts() {
+        return ResponseEntity.ok(insuranceFacade.getChatContacts());
+    }
+
     @Operation(summary = "Lista clienti", description = "Restituisce tutti i clienti registrati.")
     @GetMapping("/clients")
     public ResponseEntity<List<UserResponse>> getClients() {
