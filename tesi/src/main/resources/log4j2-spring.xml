@@ -14,6 +14,24 @@
             </Policies>
             <DefaultRolloverStrategy max="30"/>
         </RollingFile>
+
+        <JDBC name="LogDB" tableName="app_logs">
+            <DriverManager
+                connectionString="jdbc:postgresql://localhost:5432/tesi_logs"
+                driverClassName="org.postgresql.Driver"
+                userName="postgres"
+                password="secret"/>
+            <Column name="event_date" isEventTimestamp="true"/>
+            <Column name="level"      pattern="%level"             isUnicode="false"/>
+            <Column name="logger"     pattern="%logger{50}"        isUnicode="false"/>
+            <Column name="message"    pattern="%message"           isUnicode="false"/>
+            <Column name="thread"     pattern="%thread"            isUnicode="false"/>
+            <Column name="throwable"  pattern="%throwable{short}"  isUnicode="false"/>
+        </JDBC>
+
+        <Async name="AsyncLogDB" bufferSize="512">
+            <AppenderRef ref="LogDB"/>
+        </Async>
     </Appenders>
 
     <Loggers>
@@ -21,36 +39,42 @@
         <Logger name="com.project.tesi.controller" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Service layer: DEBUG — log logica di business dettagliata -->
         <Logger name="com.project.tesi.service" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Security layer: INFO — log autenticazione e autorizzazione -->
         <Logger name="com.project.tesi.security" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Observer/Event listeners: INFO -->
         <Logger name="com.project.tesi.observer" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Scheduler: INFO -->
         <Logger name="com.project.tesi.scheduler" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Exception handler: WARN -->
         <Logger name="com.project.tesi.exception" level="WARN" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Hibernate/JPA: WARN — evita SQL spam in console -->
@@ -70,6 +94,7 @@
         <Logger name="com.project.tesi.config.AuditInterceptor" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
+            <AppenderRef ref="AsyncLogDB"/>
         </Logger>
 
         <!-- Root logger: WARN — tutto ciò che non ha un logger specifico -->

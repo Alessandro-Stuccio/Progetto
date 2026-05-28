@@ -184,7 +184,7 @@ public class EmailServiceImpl implements EmailService {
              + "<p style=\"color:#495057;font-size:15px;line-height:1.6;margin:0 0 20px\">Siamo felici di averti con noi! "
              + "Il tuo account è attivo e pronto all'uso. Ora puoi accedere alla piattaforma e iniziare a prenotare le tue consulenze.</p>"
              + "<div style=\"text-align:center;margin:30px 0\">"
-             + "<a href=\"https://progetto-fe.vercel.app/login\" style=\"background:linear-gradient(135deg,#e2b93b,#c49a20);color:#1a3462;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block\">Accedi alla Piattaforma</a>"
+             + "<a href=\"http://localhost:4200/login\" style=\"background:linear-gradient(135deg,#e2b93b,#c49a20);color:#1a3462;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block\">Accedi alla Piattaforma</a>"
              + "</div>"
              + "<p style=\"color:#6c757d;font-size:14px;line-height:1.5;margin:0\">Se hai bisogno di aiuto, rispondi a questa email o contattaci nella chat di supporto.</p>"
              + "</div>"
@@ -306,7 +306,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             validateRecipient(toEmail);
             String subject = "🔑 Recupero Password — Kore";
-            String resetLink = "https://progetto-fe.vercel.app/reset-password?token=" + resetToken;
+            String resetLink = "http://localhost:4200/reset-password?token=" + resetToken;
             String html = buildPasswordResetHtml(firstName, resetLink);
             sendSimpleEmail(toEmail, subject, html);
             log.info("Email di reset password inviata a {}", toEmail);
