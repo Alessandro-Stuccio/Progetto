@@ -7,7 +7,6 @@ import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -31,7 +30,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/documents")
-@Tag(name = "Documents", description = "API per la gestione sicura dei documenti")
 public class DocumentController {
 
     private final DocumentFacade documentFacade;

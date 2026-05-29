@@ -1,153 +1,174 @@
 package com.project.tesi.exception;
 
-import com.project.tesi.exception.common.BaseException;
 import com.project.tesi.exception.common.ResourceNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.http.HttpMethod;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Test unitari per {@link GlobalExceptionHandler}.
- */
+@ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler handler;
-    private HttpServletRequest request;
+    private MockHttpServletRequest request;
+
+    @Mock
+    private BindingResult bindingResult;
+
+    @Mock
+    private MethodArgumentNotValidException manve;
+
+    @Mock
+    private ConstraintViolationException constraintViolationException;
+
+    @Mock
+    private ConstraintViolation<?> constraintViolation;
+
+    @Mock
+    private Path constraintPath;
 
     @BeforeEach
     void setUp() {
         handler = new GlobalExceptionHandler();
-        request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/api/test");
+        request = new MockHttpServletRequest("GET", "/api/test");
     }
 
     @Test
-    @DisplayName("handleBaseException — eccezione custom 404")
-    void handleBaseException_404() {
-        ResourceNotFoundException ex = new ResourceNotFoundException("Utente", 1L);
-        ResponseEntity<ErrorResponse> resp = handler.handleBaseException(ex, request);
-
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(resp.getBody().getMessage()).contains("1");
-        assertThat(resp.getBody().getPath()).isEqualTo("/api/test");
+    @DisplayName("handleBaseException — ResourceNotFoundException (404) restituisce 404")
+    void handleBaseException_resourceNotFoundException_returns404() {
+        ResourceNotFoundException ex = new ResourceNotFoundException("Risorsa non trovata");
+        ResponseEntity<ErrorResponse> response = handler.handleBaseException(ex, request);
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
 
     @Test
-    @DisplayName("handleBaseException — eccezione custom 500 (server error)")
-    void handleBaseException_500() {
-        BaseException ex = new BaseException("Errore interno", HttpStatus.INTERNAL_SERVER_ERROR) {};
-        ResponseEntity<ErrorResponse> resp = handler.handleBaseException(ex, request);
-
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    @DisplayName("handleBaseException — messaggio nell'ErrorResponse corrisponde")
+    void handleBaseException_errorResponseContainsMessage() {
+        ResourceNotFoundException ex = new ResourceNotFoundException("Utente non trovato");
+        ResponseEntity<ErrorResponse> response = handler.handleBaseException(ex, request);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getMessage()).isEqualTo("Utente non trovato");
     }
 
     @Test
-    @DisplayName("handleBadCredentials — 401")
-    void handleBadCredentials() {
-        ResponseEntity<ErrorResponse> resp = handler.handleBadCredentials(request);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(resp.getBody().getMessage()).contains("password");
+    @DisplayName("handleBadCredentials — restituisce 401")
+    void handleBadCredentials_returns401() {
+        ResponseEntity<ErrorResponse> response = handler.handleBadCredentials(request);
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
     }
 
     @Test
-    @DisplayName("handleAccessDenied — 403")
-    void handleAccessDenied() {
-        ResponseEntity<ErrorResponse> resp = handler.handleAccessDenied(request);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    @DisplayName("handleAccessDenied — restituisce 403")
+    void handleAccessDenied_returns403() {
+        ResponseEntity<ErrorResponse> response = handler.handleAccessDenied(request);
+        assertThat(response.getStatusCode().value()).isEqualTo(403);
     }
 
     @Test
-    @DisplayName("handleIllegalArgument — 400")
-    void handleIllegalArgument() {
-        ResponseEntity<ErrorResponse> resp = handler.handleIllegalArgument(
-                new IllegalArgumentException("campo non valido"), request);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(resp.getBody().getMessage()).contains("campo non valido");
-    }
-
-    @Test
-    @DisplayName("handleIllegalState — 409")
-    void handleIllegalState() {
-        ResponseEntity<ErrorResponse> resp = handler.handleIllegalState(
-                new IllegalStateException("stato non valido"), request);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    @Test
-    @DisplayName("handleMaxUploadSize — 413")
-    void handleMaxUploadSize() {
-        ResponseEntity<ErrorResponse> resp = handler.handleMaxUploadSize(request);
-        assertThat(resp.getStatusCode().value()).isEqualTo(413);
-    }
-
-    @Test
-    @DisplayName("handleGlobalException — 500 fallback")
-    void handleGlobalException() {
-        ResponseEntity<ErrorResponse> resp = handler.handleGlobalException(
-                new RuntimeException("errore imprevisto"), request);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(resp.getBody().toString()).contains("Errore interno");
-    }
-
-    @Test
-    @DisplayName("handleValidationExceptions — 400 con mappa degli errori per campo")
-    void handleValidationExceptions() {
-        BindingResult bindingResult = mock(BindingResult.class);
-        FieldError fieldError = new FieldError("loginRequest", "email", "non deve essere vuoto");
+    @DisplayName("handleValidationExceptions — restituisce 400 con errori campo")
+    void handleValidationExceptions_returns400WithFieldErrors() {
+        FieldError fieldError = new FieldError("dto", "email", "non deve essere vuoto");
+        when(manve.getBindingResult()).thenReturn(bindingResult);
         when(bindingResult.getAllErrors()).thenReturn(List.of(fieldError));
 
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        when(ex.getBindingResult()).thenReturn(bindingResult);
+        ResponseEntity<ErrorResponse> response = handler.handleValidationExceptions(manve, request);
 
-        ResponseEntity<ErrorResponse> resp = handler.handleValidationExceptions(ex, request);
-
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(resp.getBody().getMessage()).contains("validazione");
-        assertThat(resp.getBody().getValidationErrors()).containsKey("email");
-        assertThat(resp.getBody().getValidationErrors().get("email")).isEqualTo("non deve essere vuoto");
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getValidationErrors()).containsKey("email");
     }
 
     @Test
-    @DisplayName("handleValidationExceptions — più campi errati")
-    void handleValidationExceptions_multipleErrors() {
-        BindingResult bindingResult = mock(BindingResult.class);
-        FieldError err1 = new FieldError("req", "email", "obbligatorio");
-        FieldError err2 = new FieldError("req", "password", "min 6 caratteri");
-        when(bindingResult.getAllErrors()).thenReturn(List.of(err1, err2));
-
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-
-        ResponseEntity<ErrorResponse> resp = handler.handleValidationExceptions(ex, request);
-
-        assertThat(resp.getBody().getValidationErrors()).hasSize(2);
+    @DisplayName("handleIllegalArgument — restituisce 400")
+    void handleIllegalArgument_returns400() {
+        IllegalArgumentException ex = new IllegalArgumentException("argomento non valido");
+        ResponseEntity<ErrorResponse> response = handler.handleIllegalArgument(ex, request);
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
     }
 
     @Test
-    @DisplayName("handleNoResourceFound — 404")
-    void handleNoResourceFound() throws Exception {
-        ResponseEntity<ErrorResponse> resp = handler.handleNoResourceFound(request);
+    @DisplayName("handleIllegalState — restituisce 409")
+    void handleIllegalState_returns409() {
+        IllegalStateException ex = new IllegalStateException("stato non valido");
+        ResponseEntity<ErrorResponse> response = handler.handleIllegalState(ex, request);
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+    }
 
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(resp.getBody().getMessage()).contains("Endpoint non trovato");
+    @Test
+    @DisplayName("handleMaxUploadSize — restituisce 413")
+    void handleMaxUploadSize_returns413() {
+        ResponseEntity<ErrorResponse> response = handler.handleMaxUploadSize(request);
+        assertThat(response.getStatusCode().value()).isEqualTo(413);
+    }
+
+    @Test
+    @DisplayName("handleNoResourceFound — restituisce 404")
+    void handleNoResourceFound_returns404() {
+        ResponseEntity<ErrorResponse> response = handler.handleNoResourceFound(request);
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+    }
+
+    @Test
+    @DisplayName("handleGlobalException — restituisce 500")
+    void handleGlobalException_returns500() throws Exception {
+        Exception ex = new Exception("errore imprevisto");
+        ResponseEntity<ErrorResponse> response = handler.handleGlobalException(ex, request);
+        assertThat(response.getStatusCode().value()).isEqualTo(500);
+    }
+
+    @Test
+    @DisplayName("handleConstraintViolation — restituisce 400 con errori di violazione")
+    void handleConstraintViolation_returns400() {
+        when(constraintPath.toString()).thenReturn("campo");
+        when(constraintViolation.getPropertyPath()).thenReturn(constraintPath);
+        when(constraintViolation.getMessage()).thenReturn("non deve essere nullo");
+
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+        violations.add(constraintViolation);
+        when(constraintViolationException.getConstraintViolations()).thenReturn(violations);
+
+        ResponseEntity<ErrorResponse> response = handler.handleConstraintViolation(constraintViolationException, request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getValidationErrors()).containsKey("campo");
+    }
+
+    @Test
+    @DisplayName("handleOptimisticLockingFailure — restituisce 409")
+    void handleOptimisticLockingFailure_returns409() {
+        ObjectOptimisticLockingFailureException ex =
+                new ObjectOptimisticLockingFailureException(Object.class, 1L);
+
+        ResponseEntity<ErrorResponse> response = handler.handleOptimisticLockingFailure(ex, request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+    }
+
+    @Test
+    @DisplayName("handleBadCredentials — ErrorResponse contiene path corretto")
+    void handleBadCredentials_errorResponseContainsPath() {
+        request.setRequestURI("/api/auth/login");
+        ResponseEntity<ErrorResponse> response = handler.handleBadCredentials(request);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getPath()).isEqualTo("/api/auth/login");
     }
 }

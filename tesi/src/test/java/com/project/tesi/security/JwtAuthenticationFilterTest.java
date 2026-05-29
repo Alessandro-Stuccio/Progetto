@@ -1,10 +1,11 @@
 package com.project.tesi.security;
 
 import com.project.tesi.enums.Role;
+import com.project.tesi.model.User;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.PrintWriter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,37 +13,50 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Test unitari per {@link JwtAuthenticationFilter}.
- */
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
 
-    @Mock private JwtUtil jwtUtil;
-    @Mock private UserDetailsService userDetailsService;
-    @Mock private HttpServletRequest request;
-    @Mock private HttpServletResponse response;
-    @Mock private FilterChain filterChain;
+    @Mock
+    private JwtUtil jwtUtil;
+
+    @Mock
+    private UserDetailsService userDetailsService;
+
+    @Mock
+    private FilterChain filterChain;
 
     @InjectMocks
     private JwtAuthenticationFilter filter;
 
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
+
     @BeforeEach
     void setUp() {
+        request = new MockHttpServletRequest();
+        response = new MockHttpServletResponse();
+        SecurityContextHolder.clearContext();
+    }
+
+    @AfterEach
+    void tearDown() {
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("doFilterInternal — nessun header Authorization, passa senza autenticare")
-    void noAuthHeader() throws Exception {
-        when(request.getHeader("Authorization")).thenReturn(null);
-
+    @DisplayName("doFilterInternal — nessun header Authorization: chain continua")
+    void doFilterInternal_noAuthHeader_chainContinues() throws Exception {
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
@@ -50,76 +64,97 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("doFilterInternal — header senza Bearer prefix, passa senza autenticare")
-    void noBearerPrefix() throws Exception {
-        when(request.getHeader("Authorization")).thenReturn("Basic abc123");
+    @DisplayName("doFilterInternal — header senza prefisso Bearer: chain continua")
+    void doFilterInternal_bearerPrefixMissing_chainContinues() throws Exception {
+        request.addHeader("Authorization", "Basic dXNlcjpwYXNz");
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
-    @DisplayName("doFilterInternal — token valido, imposta autenticazione nel contesto")
-    void validToken() throws Exception {
-        when(request.getHeader("Authorization")).thenReturn("Bearer valid-jwt-token");
-        when(jwtUtil.extractUsername("valid-jwt-token")).thenReturn("mario@test.com");
+    @DisplayName("doFilterInternal — token valido: imposta SecurityContext e continua chain")
+    void doFilterInternal_validToken_setsSecurityContext() throws Exception {
+        String jwt = "valid.jwt.token";
+        String email = "user@test.com";
 
-        com.project.tesi.model.User userDetails = com.project.tesi.model.User.builder()
-                .id(1L).email("mario@test.com").password("password123").role(Role.CLIENT).build();
-        when(userDetailsService.loadUserByUsername("mario@test.com")).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid("valid-jwt-token", userDetails)).thenReturn(true);
+        User user = new User();
+        user.setId(1L);
+        user.setEmail(email);
+        user.setRole(Role.CLIENT);
+
+        request.addHeader("Authorization", "Bearer " + jwt);
+        when(jwtUtil.extractUsername(jwt)).thenReturn(email);
+        when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
+        when(jwtUtil.isTokenValid(jwt, user)).thenReturn(true);
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("mario@test.com");
-    }
-
-    @Test
-    @DisplayName("doFilterInternal — token non valido, non imposta autenticazione")
-    void invalidToken() throws Exception {
-        when(request.getHeader("Authorization")).thenReturn("Bearer invalid-token");
-        when(jwtUtil.extractUsername("invalid-token")).thenReturn("mario@test.com");
-
-        com.project.tesi.model.User userDetails = com.project.tesi.model.User.builder()
-                .id(1L).email("mario@test.com").password("password123").role(Role.CLIENT).build();
-        when(userDetailsService.loadUserByUsername("mario@test.com")).thenReturn(userDetails);
-        when(jwtUtil.isTokenValid("invalid-token", userDetails)).thenReturn(false);
-
-        filter.doFilterInternal(request, response, filterChain);
-
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(user);
         verify(filterChain).doFilter(request, response);
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
-    @DisplayName("doFilterInternal — eccezione JWT, risponde 401 senza autenticazione")
-    void jwtException() throws Exception {
-        PrintWriter writer = mock(PrintWriter.class);
-        when(request.getHeader("Authorization")).thenReturn("Bearer malformed-token");
-        when(jwtUtil.extractUsername("malformed-token")).thenThrow(new RuntimeException("JWT malformato"));
-        when(response.getWriter()).thenReturn(writer);
+    @DisplayName("doFilterInternal — token scaduto: restituisce 401 e interrompe chain")
+    void doFilterInternal_expiredToken_returns401() throws Exception {
+        String jwt = "expired.jwt.token";
+        request.addHeader("Authorization", "Bearer " + jwt);
+        when(jwtUtil.extractUsername(jwt)).thenThrow(new ExpiredJwtException(null, null, "Token scaduto"));
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(filterChain, never()).doFilter(request, response);
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(filterChain, never()).doFilter(any(), any());
     }
 
     @Test
-    @DisplayName("doFilterInternal — email null non imposta autenticazione")
-    void nullEmail() throws Exception {
-        when(request.getHeader("Authorization")).thenReturn("Bearer some-token");
-        when(jwtUtil.extractUsername("some-token")).thenReturn(null);
+    @DisplayName("doFilterInternal — firma JWT non valida: restituisce 401 e interrompe chain")
+    void doFilterInternal_invalidSignature_returns401() throws Exception {
+        String jwt = "bad.signature.token";
+        request.addHeader("Authorization", "Bearer " + jwt);
+        when(jwtUtil.extractUsername(jwt)).thenThrow(new SignatureException("Firma non valida"));
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    @DisplayName("doFilterInternal — utente disabilitato (deleted): restituisce 401 e interrompe chain")
+    void doFilterInternal_disabledUser_returns401() throws Exception {
+        String jwt = "valid.jwt.for.deleted.user";
+        String email = "deleted@test.com";
+
+        User disabledUser = new User();
+        disabledUser.setId(2L);
+        disabledUser.setEmail(email);
+        disabledUser.setRole(Role.CLIENT);
+        disabledUser.setDeleted(true);
+
+        request.addHeader("Authorization", "Bearer " + jwt);
+        when(jwtUtil.extractUsername(jwt)).thenReturn(email);
+        when(userDetailsService.loadUserByUsername(email)).thenReturn(disabledUser);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(401);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    @DisplayName("doFilterInternal — eccezione generica: restituisce 401 e interrompe chain")
+    void doFilterInternal_genericException_returns401() throws Exception {
+        String jwt = "unparseable.token";
+        request.addHeader("Authorization", "Bearer " + jwt);
+        when(jwtUtil.extractUsername(jwt)).thenThrow(new RuntimeException("errore inaspettato"));
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        verify(filterChain, never()).doFilter(any(), any());
     }
 }
-

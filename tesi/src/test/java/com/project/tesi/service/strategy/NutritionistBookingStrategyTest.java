@@ -5,75 +5,88 @@ import com.project.tesi.exception.booking.InsufficientCreditsException;
 import com.project.tesi.exception.booking.ProfessionalNotAssignedException;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
-/**
- * Test unitari per {@link NutritionistBookingStrategy}.
- */
 class NutritionistBookingStrategyTest {
 
-    private final NutritionistBookingStrategy strategy = new NutritionistBookingStrategy();
+    private NutritionistBookingStrategy strategy;
+
+    private User client;
+    private User professional;
+    private Subscription subscription;
+
+    @BeforeEach
+    void setUp() {
+        strategy = new NutritionistBookingStrategy();
+
+        professional = new User();
+        professional.setId(1L);
+
+        client = new User();
+        client.setId(2L);
+        client.setAssignedNutritionist(professional);
+
+        subscription = new Subscription();
+        subscription.setCurrentCreditsNutri(2);
+    }
 
     @Test
     @DisplayName("getSupportedRole — restituisce NUTRITIONIST")
-    void getSupportedRole() {
+    void getSupportedRole_returnsNutritionist() {
         assertThat(strategy.getSupportedRole()).isEqualTo(Role.NUTRITIONIST);
     }
 
     @Test
-    @DisplayName("verifyAssignment — successo quando nutrizionista è assegnato correttamente")
-    void verifyAssignment_success() {
-        User nutri = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(3L).email("x@x.com").password("testpass").role(Role.NUTRITIONIST).build();
-        User client = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(1L).email("y@y.com").password("testpass").role(Role.CLIENT).assignedNutritionist(nutri).build();
-
-        assertThatCode(() -> strategy.verifyAssignment(client, nutri)).doesNotThrowAnyException();
+    @DisplayName("verifyAssignment — nutrizionista assegnato coincide: nessuna eccezione")
+    void verifyAssignment_nutriAssigned_doesNotThrow() {
+        assertThatNoException().isThrownBy(() -> strategy.verifyAssignment(client, professional));
     }
 
     @Test
-    @DisplayName("verifyAssignment — fallisce quando nutrizionista non è assegnato")
-    void verifyAssignment_notAssigned() {
-        User nutri = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(3L).email("x@x.com").password("testpass").role(Role.NUTRITIONIST).build();
-        User client = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(1L).email("y@y.com").password("testpass").role(Role.CLIENT).assignedNutritionist(null).build();
-
-        assertThatThrownBy(() -> strategy.verifyAssignment(client, nutri))
+    @DisplayName("verifyAssignment — nutrizionista null: lancia ProfessionalNotAssignedException")
+    void verifyAssignment_nutriNull_throwsProfessionalNotAssignedException() {
+        client.setAssignedNutritionist(null);
+        assertThatThrownBy(() -> strategy.verifyAssignment(client, professional))
                 .isInstanceOf(ProfessionalNotAssignedException.class);
     }
 
     @Test
-    @DisplayName("verifyAssignment — fallisce quando nutrizionista diverso da quello assegnato")
-    void verifyAssignment_differentNutri() {
-        User nutriAssigned = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(4L).email("z@z.com").password("testpass").role(Role.NUTRITIONIST).build();
-        User nutriRequested = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(3L).email("x@x.com").password("testpass").role(Role.NUTRITIONIST).build();
-        User client = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).id(1L).email("c@c.com").password("testpass").role(Role.CLIENT).assignedNutritionist(nutriAssigned).build();
+    @DisplayName("verifyAssignment — nutrizionista diverso da quello richiesto: lancia ProfessionalNotAssignedException")
+    void verifyAssignment_differentNutri_throwsProfessionalNotAssignedException() {
+        User otherNutri = new User();
+        otherNutri.setId(99L);
+        client.setAssignedNutritionist(otherNutri);
 
-        assertThatThrownBy(() -> strategy.verifyAssignment(client, nutriRequested))
+        assertThatThrownBy(() -> strategy.verifyAssignment(client, professional))
                 .isInstanceOf(ProfessionalNotAssignedException.class);
     }
 
     @Test
-    @DisplayName("consumeCredits — scala un credito Nutrizionista")
-    void consumeCredits_success() {
-        com.project.tesi.model.Plan plan = new com.project.tesi.model.Plan();
-        com.project.tesi.model.User user = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).email("x@x.com").password("testpass").role(Role.CLIENT).build();
-        Subscription sub = Subscription.builder().user(new com.project.tesi.model.User()).plan(new com.project.tesi.model.Plan()).paymentFrequency(com.project.tesi.enums.PaymentFrequency.UNICA_SOLUZIONE).user(user).plan(plan).paymentFrequency(com.project.tesi.enums.PaymentFrequency.UNICA_SOLUZIONE).currentCreditsNutri(3).build();
-
-        strategy.consumeCredits(sub);
-
-        assertThat(sub.getCurrentCreditsNutri()).isEqualTo(2);
+    @DisplayName("consumeCredits — crediti sufficienti: decrementa di 1")
+    void consumeCredits_sufficientCredits_decrementsCredits() {
+        strategy.consumeCredits(subscription);
+        assertThat(subscription.getCurrentCreditsNutri()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("consumeCredits — crediti esauriti lancia InsufficientCreditsException")
-    void consumeCredits_noCredits() {
-        com.project.tesi.model.Plan plan = new com.project.tesi.model.Plan();
-        com.project.tesi.model.User user = User.builder().email("test@test.com").password("testpass").role(com.project.tesi.enums.Role.CLIENT).email("x@x.com").password("testpass").role(Role.CLIENT).build();
-        Subscription sub = Subscription.builder().user(new com.project.tesi.model.User()).plan(new com.project.tesi.model.Plan()).paymentFrequency(com.project.tesi.enums.PaymentFrequency.UNICA_SOLUZIONE).user(user).plan(plan).paymentFrequency(com.project.tesi.enums.PaymentFrequency.UNICA_SOLUZIONE).currentCreditsNutri(0).build();
-
-        assertThatThrownBy(() -> strategy.consumeCredits(sub))
+    @DisplayName("consumeCredits — crediti a 0: lancia InsufficientCreditsException")
+    void consumeCredits_zeroCredits_throwsInsufficientCreditsException() {
+        subscription.setCurrentCreditsNutri(0);
+        assertThatThrownBy(() -> strategy.consumeCredits(subscription))
                 .isInstanceOf(InsufficientCreditsException.class);
     }
-}
 
+    @Test
+    @DisplayName("refundCredits — incrementa currentCreditsNutri di 1")
+    void refundCredits_incrementsCurrentCreditsNutri() {
+        subscription.setCurrentCreditsNutri(1);
+        strategy.refundCredits(subscription);
+        assertThat(subscription.getCurrentCreditsNutri()).isEqualTo(2);
+    }
+}

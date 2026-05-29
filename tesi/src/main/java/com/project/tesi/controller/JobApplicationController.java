@@ -2,8 +2,6 @@ package com.project.tesi.controller;
 
 import com.project.tesi.dto.request.JobApplicationRequest;
 import com.project.tesi.service.EmailService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +18,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/job-applications")
-@Tag(name = "Job Applications", description = "Invio candidature lavorative con CV allegato")
 public class JobApplicationController {
 
     private final EmailService emailService;

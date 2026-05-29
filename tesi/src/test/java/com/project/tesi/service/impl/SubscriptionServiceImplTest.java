@@ -1,10 +1,7 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.enums.PaymentFrequency;
-import com.project.tesi.enums.PlanDuration;
-import com.project.tesi.enums.Role;
+import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
-import com.project.tesi.model.Plan;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SubscriptionRepository;
@@ -16,93 +13,113 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SubscriptionServiceImplTest {
 
-    @Mock private SubscriptionRepository subscriptionRepository;
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
 
     @InjectMocks
     private SubscriptionServiceImpl subscriptionService;
 
     private User user;
-    private Plan plan;
-    private Subscription subscription;
+    private Subscription activeSubscription;
+    private Subscription inactiveSubscription;
 
     @BeforeEach
     void setUp() {
-        user = User.builder().id(1L).firstName("Mario").lastName("Rossi")
-                .email("x@x.com").password("testpass").role(Role.CLIENT).build();
+        user = new User();
+        user.setId(1L);
+        user.setEmail("client@test.com");
 
-        plan = Plan.builder().id(1L).name("Premium Annuale")
-                .duration(PlanDuration.ANNUALE)
-                .monthlyCreditsPT(8).monthlyCreditsNutri(4)
-                .fullPrice(1200.0).monthlyInstallmentPrice(100.0).build();
+        activeSubscription = new Subscription();
+        activeSubscription.setId(100L);
+        activeSubscription.setUser(user);
+        activeSubscription.setActive(true);
+        activeSubscription.setCurrentCreditsPT(2);
+        activeSubscription.setCurrentCreditsNutri(2);
 
-        subscription = Subscription.builder().id(100L).user(user).plan(plan)
-                .paymentFrequency(PaymentFrequency.UNICA_SOLUZIONE)
-                .active(true).startDate(LocalDate.now()).endDate(LocalDate.now().plusYears(1))
-                .currentCreditsPT(8).currentCreditsNutri(4).build();
+        inactiveSubscription = new Subscription();
+        inactiveSubscription.setId(200L);
+        inactiveSubscription.setUser(user);
+        inactiveSubscription.setActive(false);
+        inactiveSubscription.setCurrentCreditsPT(0);
+        inactiveSubscription.setCurrentCreditsNutri(0);
     }
 
-    // ── getSubscriptionStatus ────────────────────────────────────────────────
+    // ---- getSubscriptionStatus ----
 
     @Test
-    @DisplayName("getSubscriptionStatus — restituisce l'entità abbonamento attivo")
-    void getSubscriptionStatus_success() {
-        when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.of(subscription));
+    @DisplayName("getSubscriptionStatus: returns active subscription for user")
+    void getSubscriptionStatus_activeSubscriptionExists_returnsIt() {
+        when(subscriptionRepository.findByUserAndActiveTrue(user))
+                .thenReturn(Optional.of(activeSubscription));
 
         Subscription result = subscriptionService.getSubscriptionStatus(user);
 
-        assertThat(result).isNotNull();
+        assertThat(result).isSameAs(activeSubscription);
         assertThat(result.isActive()).isTrue();
-        assertThat(result.getCurrentCreditsPT()).isEqualTo(8);
     }
 
     @Test
-    @DisplayName("getSubscriptionStatus — nessun abbonamento attivo lancia SubscriptionNotFoundException")
-    void getSubscriptionStatus_noSubscription() {
-        when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.empty());
+    @DisplayName("getSubscriptionStatus: throws SubscriptionNotFoundException when user has no active subscription")
+    void getSubscriptionStatus_noActiveSubscription_throwsSubscriptionNotFoundException() {
+        when(subscriptionRepository.findByUserAndActiveTrue(user))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> subscriptionService.getSubscriptionStatus(user))
                 .isInstanceOf(SubscriptionNotFoundException.class);
     }
 
-    // ── save ─────────────────────────────────────────────────────────────────
-
     @Test
-    @DisplayName("save — persiste e restituisce l'abbonamento")
-    void save_success() {
-        when(subscriptionRepository.save(subscription)).thenReturn(subscription);
+    @DisplayName("getSubscriptionStatus: uses findByUserAndActiveTrue (not findById) to query the subscription")
+    void getSubscriptionStatus_usesCorrectRepositoryQuery() {
+        when(subscriptionRepository.findByUserAndActiveTrue(user))
+                .thenReturn(Optional.of(activeSubscription));
 
-        Subscription result = subscriptionService.save(subscription);
+        subscriptionService.getSubscriptionStatus(user);
 
-        assertThat(result).isSameAs(subscription);
-        verify(subscriptionRepository).save(subscription);
+        verify(subscriptionRepository).findByUserAndActiveTrue(user);
+        verify(subscriptionRepository, never()).findById(any());
     }
 
-    // ── findActiveByUser ─────────────────────────────────────────────────────
+    // ---- save ----
 
     @Test
-    @DisplayName("findActiveByUser — abbonamento attivo trovato")
-    void findActiveByUser_found() {
-        when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.of(subscription));
+    @DisplayName("save: persists subscription and returns the saved entity")
+    void save_persistsAndReturnsSavedSubscription() {
+        when(subscriptionRepository.save(activeSubscription)).thenReturn(activeSubscription);
+
+        Subscription result = subscriptionService.save(activeSubscription);
+
+        assertThat(result).isSameAs(activeSubscription);
+        verify(subscriptionRepository).save(activeSubscription);
+    }
+
+    // ---- findActiveByUser ----
+
+    @Test
+    @DisplayName("findActiveByUser: returns Optional with subscription when active subscription exists")
+    void findActiveByUser_exists_returnsOptionalWithSubscription() {
+        when(subscriptionRepository.findByUserAndActiveTrue(user))
+                .thenReturn(Optional.of(activeSubscription));
 
         Optional<Subscription> result = subscriptionService.findActiveByUser(user);
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(100L);
+        assertThat(result).isPresent().contains(activeSubscription);
     }
 
     @Test
-    @DisplayName("findActiveByUser — nessun abbonamento attivo restituisce Optional vuoto")
-    void findActiveByUser_empty() {
+    @DisplayName("findActiveByUser: returns empty Optional when user has no active subscription")
+    void findActiveByUser_noActiveSubscription_returnsEmptyOptional() {
         when(subscriptionRepository.findByUserAndActiveTrue(user)).thenReturn(Optional.empty());
 
         Optional<Subscription> result = subscriptionService.findActiveByUser(user);
@@ -110,26 +127,135 @@ class SubscriptionServiceImplTest {
         assertThat(result).isEmpty();
     }
 
-    // ── findActiveByUserWithLock ─────────────────────────────────────────────
+    // ---- findActiveByUserWithLock ----
 
     @Test
-    @DisplayName("findActiveByUserWithLock — abbonamento trovato con lock pessimistico")
-    void findActiveByUserWithLock_found() {
-        when(subscriptionRepository.findByUserAndActiveTrueWithLock(user)).thenReturn(Optional.of(subscription));
+    @DisplayName("findActiveByUserWithLock: returns Optional with locked active subscription")
+    void findActiveByUserWithLock_exists_returnsOptionalWithSubscription() {
+        when(subscriptionRepository.findByUserAndActiveTrueWithLock(user))
+                .thenReturn(Optional.of(activeSubscription));
 
         Optional<Subscription> result = subscriptionService.findActiveByUserWithLock(user);
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(100L);
+        assertThat(result).isPresent().contains(activeSubscription);
+        verify(subscriptionRepository).findByUserAndActiveTrueWithLock(user);
     }
 
     @Test
-    @DisplayName("findActiveByUserWithLock — nessun abbonamento restituisce Optional vuoto")
-    void findActiveByUserWithLock_empty() {
-        when(subscriptionRepository.findByUserAndActiveTrueWithLock(user)).thenReturn(Optional.empty());
+    @DisplayName("findActiveByUserWithLock: returns empty Optional when no active subscription is found under lock")
+    void findActiveByUserWithLock_notFound_returnsEmptyOptional() {
+        when(subscriptionRepository.findByUserAndActiveTrueWithLock(user))
+                .thenReturn(Optional.empty());
 
         Optional<Subscription> result = subscriptionService.findActiveByUserWithLock(user);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("findActiveByUserWithLock: uses the WITH_LOCK variant, not the standard findByUserAndActiveTrue")
+    void findActiveByUserWithLock_doesNotDelegateToStandardQuery() {
+        when(subscriptionRepository.findByUserAndActiveTrueWithLock(user))
+                .thenReturn(Optional.of(activeSubscription));
+
+        subscriptionService.findActiveByUserWithLock(user);
+
+        verify(subscriptionRepository).findByUserAndActiveTrueWithLock(user);
+        verify(subscriptionRepository, never()).findByUserAndActiveTrue(any());
+    }
+
+    // ---- getAllSubscriptions ----
+
+    @Test
+    @DisplayName("getAllSubscriptions: returns all subscriptions from repository")
+    void getAllSubscriptions_returnsAll() {
+        when(subscriptionRepository.findAll()).thenReturn(List.of(activeSubscription, inactiveSubscription));
+
+        List<Subscription> result = subscriptionService.getAllSubscriptions();
+
+        assertThat(result).hasSize(2).containsExactlyInAnyOrder(activeSubscription, inactiveSubscription);
+        verify(subscriptionRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("getAllSubscriptions: returns empty list when no subscriptions exist")
+    void getAllSubscriptions_empty_returnsEmptyList() {
+        when(subscriptionRepository.findAll()).thenReturn(List.of());
+
+        assertThat(subscriptionService.getAllSubscriptions()).isEmpty();
+    }
+
+    // ---- updateSubscriptionCredits ----
+
+    @Test
+    @DisplayName("updateSubscriptionCredits: loads subscription, updates PT and Nutri credits, then saves")
+    void updateSubscriptionCredits_validId_updatesAndSaves() {
+        when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeSubscription));
+        when(subscriptionRepository.save(activeSubscription)).thenReturn(activeSubscription);
+
+        Subscription result = subscriptionService.updateSubscriptionCredits(100L, 3, 1);
+
+        assertThat(result.getCurrentCreditsPT()).isEqualTo(3);
+        assertThat(result.getCurrentCreditsNutri()).isEqualTo(1);
+        verify(subscriptionRepository).save(activeSubscription);
+    }
+
+    @Test
+    @DisplayName("updateSubscriptionCredits: sets both credits to zero correctly")
+    void updateSubscriptionCredits_setToZero_persistsZeroValues() {
+        when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeSubscription));
+        when(subscriptionRepository.save(activeSubscription)).thenReturn(activeSubscription);
+
+        subscriptionService.updateSubscriptionCredits(100L, 0, 0);
+
+        assertThat(activeSubscription.getCurrentCreditsPT()).isZero();
+        assertThat(activeSubscription.getCurrentCreditsNutri()).isZero();
+    }
+
+    @Test
+    @DisplayName("updateSubscriptionCredits: throws ResourceNotFoundException when subscription id does not exist")
+    void updateSubscriptionCredits_notFound_throwsResourceNotFoundException() {
+        when(subscriptionRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> subscriptionService.updateSubscriptionCredits(999L, 2, 2))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("999");
+
+        verify(subscriptionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updateSubscriptionCredits: returns the updated subscription returned by save")
+    void updateSubscriptionCredits_returnsEntityFromSave() {
+        Subscription updatedSub = new Subscription();
+        updatedSub.setId(100L);
+        updatedSub.setCurrentCreditsPT(5);
+        updatedSub.setCurrentCreditsNutri(5);
+
+        when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeSubscription));
+        when(subscriptionRepository.save(activeSubscription)).thenReturn(updatedSub);
+
+        Subscription result = subscriptionService.updateSubscriptionCredits(100L, 5, 5);
+
+        assertThat(result).isSameAs(updatedSub);
+    }
+
+    // ---- hasSubscribersByPlan ----
+
+    @Test
+    @DisplayName("hasSubscribersByPlan: returns true when at least one subscription references the plan")
+    void hasSubscribersByPlan_hasSubs_returnsTrue() {
+        when(subscriptionRepository.existsByPlanId(42L)).thenReturn(true);
+
+        assertThat(subscriptionService.hasSubscribersByPlan(42L)).isTrue();
+        verify(subscriptionRepository).existsByPlanId(42L);
+    }
+
+    @Test
+    @DisplayName("hasSubscribersByPlan: returns false when no subscription references the plan")
+    void hasSubscribersByPlan_noSubs_returnsFalse() {
+        when(subscriptionRepository.existsByPlanId(99L)).thenReturn(false);
+
+        assertThat(subscriptionService.hasSubscribersByPlan(99L)).isFalse();
     }
 }

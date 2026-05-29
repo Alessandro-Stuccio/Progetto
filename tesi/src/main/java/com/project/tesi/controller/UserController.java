@@ -6,10 +6,6 @@ import com.project.tesi.dto.response.ClientDashboardResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.project.tesi.facade.UserFacade;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,7 +23,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/users")
-@Tag(name = "Users", description = "Profilo utente e dashboard cliente")
 public class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
@@ -44,11 +39,6 @@ public class UserController {
      * @param user cliente autenticato
      * @return il {@link ClientDashboardResponse} con i dati aggregati della dashboard
      */
-    @Operation(summary = "Dashboard utente", description = "Restituisce profilo, abbonamento, professionisti assegnati e prossimi appuntamenti.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Dashboard restituita"),
-        @ApiResponse(responseCode = "401", description = "Token JWT mancante o non valido")
-    })
     @GetMapping("/dashboard")
     public ResponseEntity<ClientDashboardResponse> getDashboard(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.getClientDashboard(user.getId()));
@@ -60,12 +50,6 @@ public class UserController {
      * @param user professionista autenticato
      * @return lista di {@link ClientBasicInfoResponse}
      */
-    @Operation(summary = "Lista clienti", description = "Restituisce i clienti assegnati al professionista autenticato.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Lista restituita"),
-        @ApiResponse(responseCode = "401", description = "Non autenticato"),
-        @ApiResponse(responseCode = "403", description = "Solo i professionisti possono accedere a questa risorsa")
-    })
     @GetMapping("/clients")
     public ResponseEntity<List<ClientBasicInfoResponse>> getClientsForProfessional(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.getClientsForProfessional(user.getId()));
@@ -78,12 +62,6 @@ public class UserController {
      * @param request nuovi dati del profilo (nome, cognome, password, immagine)
      * @return risposta 200 OK senza corpo in caso di successo
      */
-    @Operation(summary = "Aggiorna profilo", description = "Modifica nome, cognome, password o immagine profilo dell'utente autenticato.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Profilo aggiornato"),
-        @ApiResponse(responseCode = "400", description = "Dati non validi"),
-        @ApiResponse(responseCode = "401", description = "Non autenticato")
-    })
     @PutMapping("/profile")
     public ResponseEntity<Void> updateProfile(@AuthenticationPrincipal User user, @Valid @RequestBody ProfileUpdateRequest request) {
         userFacade.updateProfile(user.getId(), request);
@@ -96,8 +74,6 @@ public class UserController {
      *
      * @return {@link ClientBasicInfoResponse} con email e nome dell'amministratore
      */
-    @Operation(summary = "Info admin", description = "Restituisce i dati di contatto dell'amministratore (usato per 'Contatta supporto').")
-    @ApiResponse(responseCode = "200", description = "Dati admin restituiti")
     @GetMapping("/admin")
     public ResponseEntity<ClientBasicInfoResponse> getAdmin() {
         return ResponseEntity.ok(userFacade.getAdmin());

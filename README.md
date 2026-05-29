@@ -35,8 +35,7 @@ Backend RESTful per una piattaforma SaaS che connette clienti con Personal Train
 | Sicurezza | Spring Security + JWT (stateless) |
 | Messaggistica real-time | STOMP / WebSocket |
 | Messaggistica asincrona | RabbitMQ (Dead Letter Queue inclusa) |
-| Logging | Log4j2 (via SLF4J) |
-| Documentazione API | SpringDoc OpenAPI 3 / Swagger UI |
+| Logging | Log4j2 (via SLF4J) — Console + RollingFile + JDBC async su DB dedicato |
 | Build | Maven Wrapper (`mvnw`) |
 | Container | Docker Compose (PostgreSQL + pgAdmin + RabbitMQ) |
 | Testing | JUnit 5, Mockito, H2 (in-memory) |
@@ -255,13 +254,6 @@ Docker Compose avvia automaticamente:
 
 Il database viene ricreato e popolato con dati di test ad ogni avvio (`create` DDL + `data.sql`).
 
-### Profilo prod (database cloud)
-
-```bash
-# Richiede le variabili d'ambiente configurate (vedi sezione Configurazione)
-./mvnw spring-boot:run
-```
-
 ### Comandi utili
 
 ```bash
@@ -305,12 +297,6 @@ Disponibili solo con il profilo `dev`. Password comune: `password`.
 
 ## API Docs
 
-Swagger UI disponibile a runtime:
-
-```
-http://localhost:8080/swagger-ui.html
-```
-
 ### Endpoint principali
 
 | Gruppo | Base path | Ruoli |
@@ -336,38 +322,59 @@ http://localhost:8080/swagger-ui.html
 
 ## Configurazione
 
-### Variabili d'ambiente (produzione)
+### Variabili d'ambiente
 
-| Variabile | Descrizione |
-|---|---|
-| `JWT_SECRET` | Chiave segreta per la firma dei token JWT (min. 32 caratteri) |
-| `MAIL_FROM` | Indirizzo mittente delle email transazionali |
-| `SPRING_MAIL_HOST` | SMTP host (es. `smtp.gmail.com`) |
-| `SPRING_MAIL_PORT` | SMTP port (es. `587`) |
-| `SPRING_MAIL_USERNAME` | Credenziale SMTP — username |
-| `SPRING_MAIL_PASSWORD` | Credenziale SMTP — password o app password |
-| `SPRING_DATASOURCE_URL` | JDBC URL del database di produzione |
-| `SPRING_DATASOURCE_USERNAME` | Username database |
-| `SPRING_DATASOURCE_PASSWORD` | Password database |
+| Variabile | Default dev | Descrizione |
+|---|---|---|
+| `JWT_SECRET` | valore di fallback in `TesiApplication` | Chiave segreta JWT (min. 32 caratteri, obbligatoria in prod) |
+| `MAIL_FROM` | `koreadministration@gmail.com` | Indirizzo mittente email transazionali |
+| `SMTP_HOST` | `smtp.gmail.com` | SMTP host |
+| `SMTP_PORT` | `587` | SMTP port |
+| `SMTP_USERNAME` | `koreadministration@gmail.com` | Credenziale SMTP — username |
+| `SMTP_PASSWORD` | *(app password configurata)* | Credenziale SMTP — password o app password |
 
-In sviluppo (`dev`), i valori di default sono definiti in `application-dev.properties`.
+In sviluppo, i valori di default sono definiti in `application-dev.yaml`.
 
 ### Profili
 
 | Profilo | DB | Docker Compose | DDL |
 |---|---|---|---|
-| `dev` | PostgreSQL locale (`localhost:5432`) | Auto-avviato | `create` (schema ricreato ad ogni restart) |
-| `prod` (default) | Supabase via Transaction Pooler | Disabilitato | `validate` |
+| `dev` (default) | PostgreSQL locale (`localhost:5432`) | Auto-avviato | `create` (schema ricreato ad ogni restart) |
 
 ### Log4j2
 
-Il logging è gestito da Log4j2 (`src/main/resources/log4j2-spring.xml`):
+Il logging è gestito da Log4j2 (`src/main/resources/log4j2-spring.xml`) con tre appender:
 
+| Appender | Destinazione | Livelli |
+|---|---|---|
+| `Console` | stdout | tutti i layer applicativi |
+| `File` (RollingFile) | `logs/app.log` — rolling giornaliero, max 10 MB, 30 file | tutti i layer applicativi |
+| `AsyncLogDB` (JDBC async) | PostgreSQL `tesi_logs.app_logs` — buffer 512 eventi | controller, service, security, scheduler, exception, audit |
+
+Livelli per layer:
 - `com.project.tesi.controller` — INFO
 - `com.project.tesi.service` — DEBUG
 - `com.project.tesi.security` — INFO
-- Hibernate / Spring Framework — WARN
-- File rolling giornaliero in `logs/app.log` (max 10 MB, 30 file)
+- `com.project.tesi.scheduler` — INFO
+- `com.project.tesi.exception` — WARN
+- Hibernate / Spring Framework — WARN (solo Console)
+
+#### Database di log (`tesi_logs`)
+
+Il database `tesi_logs` e la tabella `app_logs` vengono creati automaticamente all'avvio del profilo `dev` da `LogsDatabaseInitializer`. Il database usa la stessa istanza PostgreSQL locale del database principale ma in un catalog separato.
+
+Schema tabella:
+```sql
+CREATE TABLE app_logs (
+    id         BIGSERIAL    PRIMARY KEY,
+    event_date TIMESTAMPTZ  NOT NULL,
+    level      VARCHAR(10)  NOT NULL,
+    logger     VARCHAR(200),
+    message    TEXT,
+    thread     VARCHAR(100),
+    throwable  TEXT
+);
+```
 
 ### RabbitMQ
 
@@ -387,6 +394,7 @@ L'origin permessa è configurabile via `cors.allowed-origins` (default dev: `htt
 - **WebSocket JWT** — `WebSocketChannelInterceptor` valida il token JWT sul frame STOMP CONNECT prima di permettere qualsiasi subscription.
 - **Audit trail** — `AuditLog` + `AuditInterceptor` registrano tutte le azioni utente; le nuove operazioni auditable vanno aggiunte in `AuditInterceptor`.
 - **Dev DDL** — `spring.jpa.hibernate.ddl-auto: create` nel profilo dev significa che lo schema viene ricreato ad ogni avvio; `data.sql` lo ripopola ogni volta.
+- **Database di log separato** — `tesi_logs` è un catalog PostgreSQL distinto dal database principale; viene creato automaticamente da `LogsDatabaseInitializer` al primo avvio in profilo `dev`.
 
 ---
 

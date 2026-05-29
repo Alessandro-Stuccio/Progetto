@@ -9,8 +9,6 @@ import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.facade.InsuranceFacade;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -27,7 +25,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/insurance")
-@Tag(name = "Insurance", description = "API riservate all'Insurance Manager")
 public class InsuranceController {
 
     private final InsuranceFacade insuranceFacade;
@@ -41,7 +38,6 @@ public class InsuranceController {
      *
      * @return lista di {@link SubscriptionResponse}
      */
-    @Operation(summary = "Lista abbonamenti", description = "Restituisce tutti gli abbonamenti attivi e scaduti.")
     @GetMapping("/subscriptions")
     public ResponseEntity<List<SubscriptionResponse>> getSubscriptions() {
         return ResponseEntity.ok(insuranceFacade.getAllSubscriptions());
@@ -52,7 +48,6 @@ public class InsuranceController {
      *
      * @return lista di {@link UserResponse}
      */
-    @Operation(summary = "Contatti chat", description = "Restituisce admin e moderatori contattabili dall'insurance manager.")
     @GetMapping("/chat-contacts")
     public ResponseEntity<List<UserResponse>> getChatContacts() {
         return ResponseEntity.ok(insuranceFacade.getChatContacts());
@@ -63,7 +58,6 @@ public class InsuranceController {
      *
      * @return lista di {@link UserResponse}
      */
-    @Operation(summary = "Lista clienti", description = "Restituisce tutti i clienti registrati.")
     @GetMapping("/clients")
     public ResponseEntity<List<UserResponse>> getClients() {
         return ResponseEntity.ok(insuranceFacade.getAllClients());
@@ -77,7 +71,6 @@ public class InsuranceController {
      * @param caller   insurance manager autenticato che esegue il caricamento
      * @return {@link DocumentUploadResponse} con i metadati del documento salvato
      */
-    @Operation(summary = "Carica polizza assicurativa per un cliente")
     @PostMapping("/clients/{clientId}/policy")
     public ResponseEntity<DocumentUploadResponse> uploadPolicy(
             @PathVariable Long clientId,
@@ -92,7 +85,6 @@ public class InsuranceController {
      * @param clientId identificativo del cliente
      * @return lista di {@link DocumentResponse}
      */
-    @Operation(summary = "Lista polizze di un cliente")
     @GetMapping("/clients/{clientId}/policies")
     public ResponseEntity<List<DocumentResponse>> getClientPolicies(@PathVariable Long clientId) {
         return ResponseEntity.ok(insuranceFacade.getClientPolicies(clientId));
@@ -105,7 +97,6 @@ public class InsuranceController {
      * @param id identificativo della polizza da scaricare
      * @return byte[] del file con header HTTP corretti per il download inline
      */
-    @Operation(summary = "Scarica una polizza assicurativa")
     @GetMapping("/policies/{id}/download")
     public ResponseEntity<byte[]> downloadPolicy(@PathVariable Long id) {
         Document doc = insuranceFacade.getDocumentById(id);
@@ -123,7 +114,6 @@ public class InsuranceController {
      * @param id identificativo della polizza da eliminare
      * @return risposta HTTP 204 No Content
      */
-    @Operation(summary = "Elimina una polizza assicurativa")
     @DeleteMapping("/policies/{id}")
     public ResponseEntity<Void> deletePolicy(@PathVariable Long id) {
         insuranceFacade.deletePolicy(id);
@@ -137,7 +127,6 @@ public class InsuranceController {
      * @param body oggetto contenente il testo delle nuove note
      * @return {@link UpdatedNotesResponse} con le note aggiornate
      */
-    @Operation(summary = "Aggiorna le note di una polizza assicurativa")
     @PutMapping("/policies/{id}/notes")
     public ResponseEntity<UpdatedNotesResponse> updatePolicyNotes(
             @PathVariable Long id,

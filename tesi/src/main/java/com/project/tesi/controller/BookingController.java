@@ -3,10 +3,6 @@ package com.project.tesi.controller;
 import com.project.tesi.dto.request.BookingRequest;
 import com.project.tesi.dto.response.BookingResponse;
 import com.project.tesi.facade.BookingFacade;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import com.project.tesi.model.User;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -28,7 +24,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/bookings")
-@Tag(name = "Bookings", description = "Creazione e cancellazione prenotazioni")
 public class BookingController {
 
     private static final Logger log = LoggerFactory.getLogger(BookingController.class);
@@ -47,13 +42,6 @@ public class BookingController {
      * @param user    utente autenticato che effettua la prenotazione
      * @return {@link BookingResponse} con i dettagli della prenotazione confermata
      */
-    @Operation(summary = "Crea prenotazione", description = "Prenota uno slot. Deduce i crediti dall'abbonamento attivo. Usa locking per evitare double-booking.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Prenotazione confermata"),
-        @ApiResponse(responseCode = "400", description = "Slot non disponibile o crediti insufficienti"),
-        @ApiResponse(responseCode = "401", description = "Non autenticato"),
-        @ApiResponse(responseCode = "404", description = "Slot o utente non trovato")
-    })
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request,
                                                           @AuthenticationPrincipal User user) {
@@ -72,13 +60,6 @@ public class BookingController {
      * @param user utente autenticato proprietario della prenotazione
      * @return messaggio di conferma con indicazione del credito riaccreditato
      */
-    @Operation(summary = "Annulla prenotazione", description = "Annulla una prenotazione propria. Il credito viene restituito solo se mancano più di 24 ore.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Prenotazione annullata"),
-        @ApiResponse(responseCode = "400", description = "Annullamento non consentito (stato errato o meno di 24 ore)"),
-        @ApiResponse(responseCode = "401", description = "Non autenticato"),
-        @ApiResponse(responseCode = "403", description = "La prenotazione non appartiene all'utente")
-    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> cancelBooking(@PathVariable Long id,
                                                               @AuthenticationPrincipal User user) {

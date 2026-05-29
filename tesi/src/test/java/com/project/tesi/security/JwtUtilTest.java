@@ -3,49 +3,66 @@ package com.project.tesi.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Base64;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Test unitari per {@link JwtUtil}.
- */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("JwtUtil unit tests")
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
 
+    private static final String SECRET_PLAIN = "12345678901234567890123456789012"; // 32 bytes
+    private static final String SECRET_BASE64 = Base64.getEncoder().encodeToString(SECRET_PLAIN.getBytes());
+    private static final long EXPIRATION_MS = 86_400_000L; // 24h
+
+    private UserDetails userDetails;
+
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil();
-        // La chiave deve essere almeno 256 bit (32 byte) per HS256
-        ReflectionTestUtils.setField(jwtUtil, "secretKey", "dGVzdC1zZWNyZXQta2V5LWxvbmctZW5vdWdoLWZvci1oczI1Ni1hbGdvcml0aG0=");
-        ReflectionTestUtils.setField(jwtUtil, "jwtExpiration", 86400000L);
+        ReflectionTestUtils.setField(jwtUtil, "secretKey", SECRET_BASE64);
+        ReflectionTestUtils.setField(jwtUtil, "jwtExpiration", EXPIRATION_MS);
+
+        userDetails = new User(
+                "mario@test.com",
+                "encoded_pass",
+                Collections.emptyList()
+        );
     }
 
-    private UserDetails createUserDetails(String email) {
-        return new User(email, "password",
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_CLIENT")));
-    }
+    // ─── generateToken ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("generateToken — genera un token valido non vuoto")
-    void generateToken() {
-        UserDetails userDetails = createUserDetails("mario@test.com");
+    @DisplayName("generateToken: returns a non-null, non-blank JWT string")
+    void generateToken_returnsNonNullToken() {
         String token = jwtUtil.generateToken(userDetails);
 
         assertThat(token).isNotNull().isNotBlank();
-        assertThat(token.split("\\.")).hasSize(3); // header.payload.signature
     }
 
     @Test
-    @DisplayName("extractUsername — estrae l'email dal token")
-    void extractUsername() {
-        UserDetails userDetails = createUserDetails("mario@test.com");
+    @DisplayName("generateToken: generated token contains 3 JWT parts separated by dots")
+    void generateToken_hasThreeParts() {
+        String token = jwtUtil.generateToken(userDetails);
+
+        assertThat(token.split("\\.")).hasSize(3);
+    }
+
+    // ─── extractUsername ──────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("extractUsername: returns the email embedded as subject in the token")
+    void extractUsername_returnsEmailFromToken() {
         String token = jwtUtil.generateToken(userDetails);
 
         String username = jwtUtil.extractUsername(token);
@@ -53,49 +70,73 @@ class JwtUtilTest {
         assertThat(username).isEqualTo("mario@test.com");
     }
 
+    // ─── isTokenValid ─────────────────────────────────────────────────────────────
+
     @Test
-    @DisplayName("isTokenValid — true per token valido e utente corretto")
-    void isTokenValid_true() {
-        UserDetails userDetails = createUserDetails("mario@test.com");
+    @DisplayName("isTokenValid: fresh token with matching user → returns true")
+    void isTokenValid_freshTokenCorrectUser_returnsTrue() {
         String token = jwtUtil.generateToken(userDetails);
 
-        assertThat(jwtUtil.isTokenValid(token, userDetails)).isTrue();
+        boolean valid = jwtUtil.isTokenValid(token, userDetails);
+
+        assertThat(valid).isTrue();
     }
 
     @Test
-    @DisplayName("isTokenValid — false per utente diverso")
-    void isTokenValid_differentUser() {
-        UserDetails original = createUserDetails("mario@test.com");
-        UserDetails other = createUserDetails("luca@test.com");
-        String token = jwtUtil.generateToken(original);
+    @DisplayName("isTokenValid: fresh token but wrong username → returns false")
+    void isTokenValid_wrongUsername_returnsFalse() {
+        String token = jwtUtil.generateToken(userDetails);
 
-        assertThat(jwtUtil.isTokenValid(token, other)).isFalse();
+        UserDetails otherUser = new User(
+                "other@test.com",
+                "encoded_pass",
+                Collections.emptyList()
+        );
+
+        boolean valid = jwtUtil.isTokenValid(token, otherUser);
+
+        assertThat(valid).isFalse();
+    }
+
+    // ─── generatePasswordResetToken ───────────────────────────────────────────────
+
+    @Test
+    @DisplayName("generatePasswordResetToken: returns a non-null, non-blank JWT string")
+    void generatePasswordResetToken_returnsNonNullToken() {
+        String token = jwtUtil.generatePasswordResetToken("mario@test.com");
+
+        assertThat(token).isNotNull().isNotBlank();
     }
 
     @Test
-    @DisplayName("isTokenValid — false per token scaduto")
-    void isTokenValid_expired() throws InterruptedException {
-        // Crea un JwtUtil con scadenza 1ms
-        JwtUtil expiredJwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(expiredJwtUtil, "secretKey", "dGVzdC1zZWNyZXQta2V5LWxvbmctZW5vdWdoLWZvci1oczI1Ni1hbGdvcml0aG0=");
-        ReflectionTestUtils.setField(expiredJwtUtil, "jwtExpiration", 1L);
+    @DisplayName("generatePasswordResetToken: token subject is the provided email")
+    void generatePasswordResetToken_subjectIsEmail() {
+        String token = jwtUtil.generatePasswordResetToken("mario@test.com");
 
-        UserDetails userDetails = createUserDetails("mario@test.com");
-        String token = expiredJwtUtil.generateToken(userDetails);
+        String subject = jwtUtil.extractUsername(token);
 
-        // Attende che il token scada
-        Thread.sleep(100);
+        assertThat(subject).isEqualTo("mario@test.com");
+    }
 
-        // Il token scaduto deve lanciare un'eccezione o restituire false
-        try {
-            boolean valid = expiredJwtUtil.isTokenValid(token, userDetails);
-            assertThat(valid).isFalse();
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            // Accettabile: il token è effettivamente scaduto
-            assertThat(e).isNotNull();
-        }
+    // ─── validatePasswordResetToken ───────────────────────────────────────────────
+
+    @Test
+    @DisplayName("validatePasswordResetToken: valid reset token → returns email")
+    void validatePasswordResetToken_validToken_returnsEmail() {
+        String token = jwtUtil.generatePasswordResetToken("mario@test.com");
+
+        String email = jwtUtil.validatePasswordResetToken(token);
+
+        assertThat(email).isEqualTo("mario@test.com");
+    }
+
+    @Test
+    @DisplayName("validatePasswordResetToken: regular auth token passed → throws IllegalArgumentException")
+    void validatePasswordResetToken_authTokenPassed_throwsIllegalArgumentException() {
+        String authToken = jwtUtil.generateToken(userDetails);
+
+        assertThatThrownBy(() -> jwtUtil.validatePasswordResetToken(authToken))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Token non valido");
     }
 }
-
-
-

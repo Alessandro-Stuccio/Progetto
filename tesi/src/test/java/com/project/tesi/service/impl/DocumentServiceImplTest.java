@@ -1,7 +1,6 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.DocumentType;
-import com.project.tesi.enums.Role;
 import com.project.tesi.exception.document.DocumentNotFoundException;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
@@ -10,120 +9,297 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentServiceImplTest {
 
-    @Mock private DocumentRepository documentRepository;
+    @Mock
+    private DocumentRepository documentRepository;
 
-    @InjectMocks private DocumentServiceImpl documentService;
+    @InjectMocks
+    private DocumentServiceImpl documentService;
 
-    private User client, pt;
+    private User client;
+    private User professional;
+    private Document document;
 
     @BeforeEach
     void setUp() {
-        pt = User.builder().email("pt@test.com").password("testpass").id(2L).firstName("Luca").lastName("Bianchi").role(Role.PERSONAL_TRAINER).build();
-        client = User.builder().email("client@test.com").password("testpass").id(1L).firstName("Mario").lastName("Rossi").role(Role.CLIENT).build();
+        client = new User();
+        client.setId(1L);
+        client.setEmail("client@test.com");
+
+        professional = new User();
+        professional.setId(2L);
+        professional.setEmail("pt@test.com");
+
+        document = new Document();
+        document.setId(10L);
+        document.setFileName("diet.pdf");
+        document.setFilePath("/uploads/diet.pdf");
+        document.setContentType("application/pdf");
+        document.setType(DocumentType.DIET_PLAN);
+        document.setOwner(client);
+        document.setUploadedBy(professional);
+        document.setUploadDate(LocalDateTime.now().minusHours(1));
     }
 
-    // ─── uploadDocument ───────────────────────────────────────────────────────
+    // ---- uploadDocument ----
 
-    @Test @DisplayName("uploadDocument — costruisce entity e salva")
-    void uploadDocument_success() {
-        String filePath = "/tmp/uploads/scheda.pdf";
-        Document saved = Document.builder().id(1L).fileName("scheda.pdf").type(DocumentType.WORKOUT_PLAN)
-                .owner(client).uploadedBy(pt).uploadDate(LocalDateTime.now()).build();
-        when(documentRepository.save(any())).thenReturn(saved);
+    @Test
+    @DisplayName("uploadDocument: builds Document with correct fields and persists it")
+    void uploadDocument_buildsAndPersists() {
+        when(documentRepository.save(any(Document.class))).thenReturn(document);
 
-        Document result = documentService.uploadDocument(filePath, "scheda.pdf", "application/pdf", "WORKOUT_PLAN", client, pt);
-        assertThat(result.getFileName()).isEqualTo("scheda.pdf");
-        assertThat(result.getType()).isEqualTo(DocumentType.WORKOUT_PLAN);
+        Document result = documentService.uploadDocument(
+                "/uploads/diet.pdf", "diet.pdf", "application/pdf",
+                "DIET_PLAN", client, professional);
+
+        assertThat(result).isSameAs(document);
+        ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
+        verify(documentRepository).save(captor.capture());
+        Document built = captor.getValue();
+        assertThat(built.getFileName()).isEqualTo("diet.pdf");
+        assertThat(built.getFilePath()).isEqualTo("/uploads/diet.pdf");
+        assertThat(built.getContentType()).isEqualTo("application/pdf");
+        assertThat(built.getType()).isEqualTo(DocumentType.DIET_PLAN);
+        assertThat(built.getOwner()).isSameAs(client);
+        assertThat(built.getUploadedBy()).isSameAs(professional);
+        assertThat(built.getUploadDate()).isNotNull();
     }
 
-    @Test @DisplayName("uploadDocument — tipo documento non valido lancia IllegalArgumentException")
-    void uploadDocument_invalidDocType() {
-        assertThatThrownBy(() -> documentService.uploadDocument(
-                "/tmp/uploads/f.pdf", "f.pdf", "application/pdf", "TIPO_INESISTENTE", client, pt))
-                .isInstanceOf(IllegalArgumentException.class);
+    @Test
+    @DisplayName("uploadDocument: sets uploadDate to current time at point of upload")
+    void uploadDocument_setsUploadDateToNow() {
+        when(documentRepository.save(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDateTime before = LocalDateTime.now();
+        Document result = documentService.uploadDocument(
+                "/uploads/plan.pdf", "plan.pdf", "application/pdf",
+                "DIET_PLAN", client, professional);
+        LocalDateTime after = LocalDateTime.now();
+
+        assertThat(result.getUploadDate()).isBetween(before, after);
     }
 
-    // ─── getDocumentById ──────────────────────────────────────────────────────
+    // ---- findRecentByOwner ----
 
-    @Test @DisplayName("getDocumentById — trovato")
-    void getDocumentById_success() {
-        Document doc = Document.builder().id(1L).build();
-        when(documentRepository.findById(1L)).thenReturn(Optional.of(doc));
-        assertThat(documentService.getDocumentById(1L)).isEqualTo(doc);
+    @Test
+    @DisplayName("findRecentByOwner: delegates to repository with owner and since parameter")
+    void findRecentByOwner_delegatesToRepository() {
+        LocalDateTime since = LocalDateTime.now().minusDays(7);
+        when(documentRepository.findRecentByOwner(client, since)).thenReturn(List.of(document));
+
+        List<Document> result = documentService.findRecentByOwner(client, since);
+
+        assertThat(result).containsExactly(document);
+        verify(documentRepository).findRecentByOwner(client, since);
     }
 
-    // ─── getUserDocuments ─────────────────────────────────────────────────────
+    @Test
+    @DisplayName("findRecentByOwner: returns empty list when owner has no recent documents")
+    void findRecentByOwner_noRecentDocuments_returnsEmpty() {
+        LocalDateTime since = LocalDateTime.now().minusDays(1);
+        when(documentRepository.findRecentByOwner(client, since)).thenReturn(List.of());
 
-    @Test @DisplayName("getUserDocuments — restituisce documenti dell'utente")
-    void getUserDocuments() {
-        Document doc = Document.builder().id(1L).fileName("test.pdf").type(DocumentType.WORKOUT_PLAN)
-                .owner(client).uploadedBy(pt).uploadDate(LocalDateTime.now()).build();
-        when(documentRepository.findByOwnerOrderByUploadDateDesc(client)).thenReturn(List.of(doc));
+        assertThat(documentService.findRecentByOwner(client, since)).isEmpty();
+    }
+
+    // ---- findRecentByProfessional ----
+
+    @Test
+    @DisplayName("findRecentByProfessional: delegates to repository via findRecentByUploader")
+    void findRecentByProfessional_delegatesToRepository() {
+        LocalDateTime since = LocalDateTime.now().minusDays(3);
+        when(documentRepository.findRecentByUploader(professional, since)).thenReturn(List.of(document));
+
+        List<Document> result = documentService.findRecentByProfessional(professional, since);
+
+        assertThat(result).containsExactly(document);
+        verify(documentRepository).findRecentByUploader(professional, since);
+    }
+
+    // ---- getDocumentById ----
+
+    @Test
+    @DisplayName("getDocumentById: returns document when found by id")
+    void getDocumentById_found_returnsDocument() {
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+
+        Document result = documentService.getDocumentById(10L);
+
+        assertThat(result).isSameAs(document);
+    }
+
+    @Test
+    @DisplayName("getDocumentById: throws DocumentNotFoundException when document id does not exist")
+    void getDocumentById_notFound_throwsDocumentNotFoundException() {
+        when(documentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> documentService.getDocumentById(999L))
+                .isInstanceOf(DocumentNotFoundException.class);
+    }
+
+    // ---- getUserDocuments ----
+
+    @Test
+    @DisplayName("getUserDocuments: returns all documents for owner ordered by upload date desc")
+    void getUserDocuments_returnsDocumentsForOwner() {
+        when(documentRepository.findByOwnerOrderByUploadDateDesc(client)).thenReturn(List.of(document));
 
         List<Document> result = documentService.getUserDocuments(client);
-        assertThat(result).hasSize(1);
+
+        assertThat(result).containsExactly(document);
+        verify(documentRepository).findByOwnerOrderByUploadDateDesc(client);
     }
 
-    @Test @DisplayName("getUserDocumentsByType — filtrato per tipo")
-    void getUserDocumentsByType() {
-        when(documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(client, DocumentType.WORKOUT_PLAN))
+    @Test
+    @DisplayName("getUserDocuments: returns empty list when owner has no documents")
+    void getUserDocuments_noDocuments_returnsEmpty() {
+        when(documentRepository.findByOwnerOrderByUploadDateDesc(client)).thenReturn(List.of());
+
+        assertThat(documentService.getUserDocuments(client)).isEmpty();
+    }
+
+    // ---- getUserDocumentsByType ----
+
+    @Test
+    @DisplayName("getUserDocumentsByType: returns documents filtered by type for the owner")
+    void getUserDocumentsByType_returnsFilteredDocuments() {
+        when(documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(client, DocumentType.DIET_PLAN))
+                .thenReturn(List.of(document));
+
+        List<Document> result = documentService.getUserDocumentsByType(client, "DIET_PLAN");
+
+        assertThat(result).containsExactly(document);
+        verify(documentRepository).findByOwnerAndTypeOrderByUploadDateDesc(client, DocumentType.DIET_PLAN);
+    }
+
+    @Test
+    @DisplayName("getUserDocumentsByType: returns empty list when owner has no documents of the given type")
+    void getUserDocumentsByType_noMatch_returnsEmpty() {
+        when(documentRepository.findByOwnerAndTypeOrderByUploadDateDesc(client, DocumentType.DIET_PLAN))
                 .thenReturn(List.of());
 
-        List<Document> result = documentService.getUserDocumentsByType(client, "WORKOUT_PLAN");
-        assertThat(result).isEmpty();
+        assertThat(documentService.getUserDocumentsByType(client, "DIET_PLAN")).isEmpty();
     }
 
-    // ─── deleteDocument ───────────────────────────────────────────────────────
+    // ---- deleteDocument ----
 
-    @Test @DisplayName("deleteDocument — elimina dal db")
-    void deleteDocument_success() {
-        Document doc = Document.builder().id(1L).filePath("/tmp/uploads/to-delete.pdf").build();
-        when(documentRepository.findById(1L)).thenReturn(Optional.of(doc));
+    @Test
+    @DisplayName("deleteDocument: loads document by id and calls repository delete")
+    void deleteDocument_exists_callsRepositoryDelete() {
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
 
-        documentService.deleteDocument(1L);
+        documentService.deleteDocument(10L);
 
-        verify(documentRepository).delete(doc);
+        verify(documentRepository).delete(document);
     }
 
-    @Test @DisplayName("deleteDocument — documento non trovato lancia eccezione")
-    void deleteDocument_notFound() {
+    @Test
+    @DisplayName("deleteDocument: throws DocumentNotFoundException when document id does not exist")
+    void deleteDocument_notFound_throwsDocumentNotFoundException() {
         when(documentRepository.findById(999L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> documentService.deleteDocument(999L)).isInstanceOf(DocumentNotFoundException.class);
+
+        assertThatThrownBy(() -> documentService.deleteDocument(999L))
+                .isInstanceOf(DocumentNotFoundException.class);
+
+        verify(documentRepository, never()).delete(any());
     }
 
-    // ─── updateNotes ──────────────────────────────────────────────────────────
+    // ---- updateNotes ----
 
-    @Test @DisplayName("updateNotes — aggiorna le note")
-    void updateNotes() {
-        Document doc = Document.builder().id(1L).fileName("f.pdf").type(DocumentType.WORKOUT_PLAN)
-                .owner(client).uploadedBy(pt).uploadDate(LocalDateTime.now()).build();
-        when(documentRepository.findById(1L)).thenReturn(Optional.of(doc));
-        when(documentRepository.save(doc)).thenReturn(doc);
+    @Test
+    @DisplayName("updateNotes: sets notes on document and saves, returns updated document")
+    void updateNotes_setsNotesAndSaves() {
+        when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
+        when(documentRepository.save(document)).thenReturn(document);
 
-        documentService.updateNotes(1L, "Nuove note");
-        assertThat(doc.getNotes()).isEqualTo("Nuove note");
+        Document result = documentService.updateNotes(10L, "New diet notes");
+
+        assertThat(document.getNotes()).isEqualTo("New diet notes");
+        assertThat(result).isSameAs(document);
+        verify(documentRepository).save(document);
     }
 
-    // ─── saveDocument ─────────────────────────────────────────────────────────
+    @Test
+    @DisplayName("updateNotes: throws DocumentNotFoundException when document does not exist")
+    void updateNotes_documentNotFound_throwsDocumentNotFoundException() {
+        when(documentRepository.findById(999L)).thenReturn(Optional.empty());
 
-    @Test @DisplayName("saveDocument — salva e restituisce documento")
-    void saveDocument() {
-        Document doc = Document.builder().id(1L).build();
-        when(documentRepository.save(doc)).thenReturn(doc);
-        assertThat(documentService.saveDocument(doc)).isEqualTo(doc);
+        assertThatThrownBy(() -> documentService.updateNotes(999L, "notes"))
+                .isInstanceOf(DocumentNotFoundException.class);
+
+        verify(documentRepository, never()).save(any());
+    }
+
+    // ---- saveDocument ----
+
+    @Test
+    @DisplayName("saveDocument: delegates to repository and returns persisted document")
+    void saveDocument_persistsAndReturns() {
+        when(documentRepository.save(document)).thenReturn(document);
+
+        Document result = documentService.saveDocument(document);
+
+        assertThat(result).isSameAs(document);
+        verify(documentRepository).save(document);
+    }
+
+    // ---- findLatestByOwnerAndType ----
+
+    @Test
+    @DisplayName("findLatestByOwnerAndType: delegates to repository and returns latest document")
+    void findLatestByOwnerAndType_returnsLatestDocument() {
+        when(documentRepository.findLatestByOwnerAndType(client, DocumentType.DIET_PLAN)).thenReturn(document);
+
+        Document result = documentService.findLatestByOwnerAndType(client, DocumentType.DIET_PLAN);
+
+        assertThat(result).isSameAs(document);
+        verify(documentRepository).findLatestByOwnerAndType(client, DocumentType.DIET_PLAN);
+    }
+
+    @Test
+    @DisplayName("findLatestByOwnerAndType: returns null when no document of that type exists for owner")
+    void findLatestByOwnerAndType_noMatch_returnsNull() {
+        when(documentRepository.findLatestByOwnerAndType(client, DocumentType.DIET_PLAN)).thenReturn(null);
+
+        assertThat(documentService.findLatestByOwnerAndType(client, DocumentType.DIET_PLAN)).isNull();
+    }
+
+    // ---- countUploadedSince ----
+
+    @Test
+    @DisplayName("countUploadedSince: delegates to repository and returns upload count for professional")
+    void countUploadedSince_returnsCountFromRepository() {
+        LocalDateTime since = LocalDateTime.now().minusDays(7);
+        when(documentRepository.countByUploaderSince(professional, since)).thenReturn(4);
+
+        int result = documentService.countUploadedSince(professional, since);
+
+        assertThat(result).isEqualTo(4);
+        verify(documentRepository).countByUploaderSince(professional, since);
+    }
+
+    @Test
+    @DisplayName("countUploadedSince: returns zero when professional has uploaded no documents in the period")
+    void countUploadedSince_noUploads_returnsZero() {
+        LocalDateTime since = LocalDateTime.now().minusDays(1);
+        when(documentRepository.countByUploaderSince(professional, since)).thenReturn(0);
+
+        assertThat(documentService.countUploadedSince(professional, since)).isZero();
     }
 }

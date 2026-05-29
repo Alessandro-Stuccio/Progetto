@@ -6,8 +6,6 @@ import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ConversationPreviewResponse;
 import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.model.User;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +26,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/chat")
-@Tag(name = "Chat", description = "API per la messaggistica interna tra utenti")
 public class ChatController {
 
     private final ChatFacade chatFacade;
@@ -38,7 +35,6 @@ public class ChatController {
     }
 
     /** Crea una nuova chat tra l'utente autenticato e il destinatario, o recupera quella esistente. */
-    @Operation(summary = "Crea o recupera la chat tra l'utente autenticato e un altro utente")
     @PostMapping("/create/{receiverId}")
     public ResponseEntity<Long> createChat(@AuthenticationPrincipal User user,
                                             @PathVariable Long receiverId) {
@@ -46,7 +42,6 @@ public class ChatController {
     }
 
     /** Invia un nuovo messaggio da parte dell'utente autenticato. */
-    @Operation(summary = "Invia un messaggio")
     @PostMapping("/send")
     public ResponseEntity<ChatMessageResponse> sendMessage(@AuthenticationPrincipal User user,
                                                             @Valid @RequestBody SendMessageRequest request) {
@@ -54,7 +49,6 @@ public class ChatController {
     }
 
     /** Recupera la cronologia dei messaggi di una chat (paginata). */
-    @Operation(summary = "Recupera la cronologia messaggi di una chat")
     @GetMapping("/conversation/{chatId}")
     public ResponseEntity<List<ChatMessageResponse>> getConversation(
             @AuthenticationPrincipal User user,
@@ -65,14 +59,12 @@ public class ChatController {
     }
 
     /** Recupera la lista di tutte le conversazioni dell'utente autenticato con anteprima ultimo messaggio. */
-    @Operation(summary = "Recupera la lista di tutte le conversazioni dell'utente autenticato")
     @GetMapping("/conversations")
     public ResponseEntity<List<ConversationPreviewResponse>> getUserConversations(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatFacade.getUserConversations(user.getId()));
     }
 
     /** Segna come letti tutti i messaggi ricevuti in una chat. */
-    @Operation(summary = "Segna come letti tutti i messaggi ricevuti in una chat")
     @PutMapping("/read/{chatId}")
     public ResponseEntity<Void> markAsRead(@AuthenticationPrincipal User user,
                                             @PathVariable Long chatId) {
@@ -81,21 +73,18 @@ public class ChatController {
     }
 
     /** Restituisce il conteggio totale dei messaggi non letti per l'utente autenticato. */
-    @Operation(summary = "Conteggio totale messaggi non letti per l'utente autenticato")
     @GetMapping("/unread")
     public ResponseEntity<Integer> getTotalUnreadCount(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatFacade.getTotalUnreadCount(user.getId()));
     }
 
     /** Restituisce il moderatore di supporto assegnato all'utente (riusa la conversazione esistente o assegna il meno carico). */
-    @Operation(summary = "Moderatore di supporto", description = "Restituisce il moderatore con cui avviare la chat di supporto. Non disponibile per moderatori e admin.")
     @GetMapping("/moderator")
     public ResponseEntity<ClientBasicInfoResponse> getModerator(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatFacade.getModerator(user));
     }
 
     /** Chiude una chat (solo moderatore o admin). L'utente può riaprirla inviando un nuovo messaggio. */
-    @Operation(summary = "Chiude una chat", description = "Segna la chat come risolta. Solo moderatori o admin. L'utente può riaprirla inviando un nuovo messaggio.")
     @PostMapping("/{chatId}/close")
     public ResponseEntity<Void> closeChat(@PathVariable Long chatId,
                                            @AuthenticationPrincipal User user) {

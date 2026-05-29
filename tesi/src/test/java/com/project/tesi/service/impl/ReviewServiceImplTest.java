@@ -1,6 +1,5 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.enums.Role;
 import com.project.tesi.model.Review;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ReviewRepository;
@@ -12,80 +11,123 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceImplTest {
 
-    @Mock private ReviewRepository reviewRepository;
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
     private User client;
     private User professional;
+    private Review review;
 
     @BeforeEach
     void setUp() {
-        professional = User.builder().id(2L).firstName("Luca").lastName("Bianchi")
-                .email("pt@test.com").password("testpass").role(Role.PERSONAL_TRAINER).build();
-        client = User.builder().id(1L).firstName("Mario").lastName("Rossi")
-                .email("mario@test.com").password("testpass").role(Role.CLIENT)
-                .assignedPT(professional).createdAt(LocalDateTime.now().minusMonths(2)).build();
+        client = new User();
+        client.setId(1L);
+        client.setEmail("client@test.com");
+
+        professional = new User();
+        professional.setId(2L);
+        professional.setEmail("pt@test.com");
+
+        review = new Review();
+        review.setId(10L);
+        review.setClient(client);
+        review.setProfessional(professional);
+        review.setRating(5);
+        review.setComment("Excellent trainer!");
     }
 
+    // ---- save ----
+
     @Test
-    @DisplayName("save — delega al repository e restituisce la review")
-    void save_delegates() {
-        Review review = Review.builder().id(1L).client(client).professional(professional)
-                .rating(5).comment("Ottimo!").build();
+    @DisplayName("save: persists review and returns the saved entity")
+    void save_persistsAndReturnsReview() {
         when(reviewRepository.save(review)).thenReturn(review);
 
-        assertThat(reviewService.save(review)).isEqualTo(review);
+        Review result = reviewService.save(review);
+
+        assertThat(result).isSameAs(review);
         verify(reviewRepository).save(review);
     }
 
+    // ---- existsByClientAndProfessional ----
+
     @Test
-    @DisplayName("existsByClientAndProfessional — true quando esiste già")
-    void existsByClientAndProfessional_true() {
+    @DisplayName("existsByClientAndProfessional: returns true when review already exists for the pair")
+    void existsByClientAndProfessional_reviewExists_returnsTrue() {
         when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(true);
+
         assertThat(reviewService.existsByClientAndProfessional(1L, 2L)).isTrue();
+        verify(reviewRepository).existsByClientIdAndProfessionalId(1L, 2L);
     }
 
     @Test
-    @DisplayName("existsByClientAndProfessional — false quando non esiste")
-    void existsByClientAndProfessional_false() {
-        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 2L)).thenReturn(false);
-        assertThat(reviewService.existsByClientAndProfessional(1L, 2L)).isFalse();
+    @DisplayName("existsByClientAndProfessional: returns false when no review exists for the pair")
+    void existsByClientAndProfessional_noReview_returnsFalse() {
+        when(reviewRepository.existsByClientIdAndProfessionalId(1L, 99L)).thenReturn(false);
+
+        assertThat(reviewService.existsByClientAndProfessional(1L, 99L)).isFalse();
     }
 
+    // ---- findByProfessional ----
+
     @Test
-    @DisplayName("findByProfessional — delega al repository")
-    void findByProfessional_delegates() {
-        Review r = Review.builder().id(1L).client(client).professional(professional).rating(4).build();
-        when(reviewRepository.findByProfessional(professional)).thenReturn(List.of(r));
+    @DisplayName("findByProfessional: returns all reviews for the given professional")
+    void findByProfessional_returnsReviews() {
+        when(reviewRepository.findByProfessional(professional)).thenReturn(List.of(review));
 
         List<Review> result = reviewService.findByProfessional(professional);
-        assertThat(result).hasSize(1).containsExactly(r);
+
+        assertThat(result).containsExactly(review);
+        verify(reviewRepository).findByProfessional(professional);
     }
 
     @Test
-    @DisplayName("getAverageRating — restituisce valore medio dal repository")
-    void getAverageRating_returnsValue() {
+    @DisplayName("findByProfessional: returns empty list when professional has no reviews")
+    void findByProfessional_noReviews_returnsEmpty() {
+        when(reviewRepository.findByProfessional(professional)).thenReturn(List.of());
+
+        assertThat(reviewService.findByProfessional(professional)).isEmpty();
+    }
+
+    // ---- getAverageRating ----
+
+    @Test
+    @DisplayName("getAverageRating: returns average rating from repository when reviews exist")
+    void getAverageRating_reviewsExist_returnsAverage() {
         when(reviewRepository.getAverageRating(2L)).thenReturn(4.5);
-        assertThat(reviewService.getAverageRating(2L)).isEqualTo(4.5);
+
+        double result = reviewService.getAverageRating(2L);
+
+        assertThat(result).isEqualTo(4.5);
+        verify(reviewRepository).getAverageRating(2L);
     }
 
     @Test
-    @DisplayName("getAverageRating — null dal repository restituisce 0.0")
-    void getAverageRating_nullReturnsZero() {
+    @DisplayName("getAverageRating: returns 0.0 when repository returns null (no reviews yet)")
+    void getAverageRating_noReviews_returnsZero() {
         when(reviewRepository.getAverageRating(2L)).thenReturn(null);
-        assertThat(reviewService.getAverageRating(2L)).isEqualTo(0.0);
+
+        double result = reviewService.getAverageRating(2L);
+
+        assertThat(result).isEqualTo(0.0);
     }
 
+    @Test
+    @DisplayName("getAverageRating: returns exact value without rounding for non-integer averages")
+    void getAverageRating_nonIntegerAverage_returnsExactValue() {
+        when(reviewRepository.getAverageRating(2L)).thenReturn(3.75);
+
+        assertThat(reviewService.getAverageRating(2L)).isEqualTo(3.75);
+    }
 }

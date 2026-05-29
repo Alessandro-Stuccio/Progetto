@@ -51,14 +51,6 @@ public class SecurityConfig {
                             .requestMatchers("/api/professionals/**").permitAll()
                             .requestMatchers("/api/reviews/professional/**").permitAll()
                             .requestMatchers("/api/job-applications/**").permitAll()
-                            .requestMatchers(
-                                    "/swagger-ui.html",
-                                    "/swagger-ui/**",
-                                    "/v3/api-docs/**",
-                                    "/v3/api-docs",
-                                    "/swagger-resources/**",
-                                    "/webjars/**")
-                            .permitAll()
                             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/chat/*/close").hasAnyRole(Role.MODERATOR.name(), Role.ADMIN.name())
                             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews").hasRole(Role.CLIENT.name())
                             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/subscriptions/activate").hasRole(Role.CLIENT.name())

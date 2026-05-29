@@ -10,8 +10,6 @@ import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.facade.AdminFacade;
 import com.project.tesi.model.User;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,7 +24,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin")
-@Tag(name = "Admin", description = "API di amministrazione per utenti, abbonamenti e piani")
 public class AdminController {
 
     private final AdminFacade adminFacade;
@@ -41,7 +38,6 @@ public class AdminController {
      * @param user amministratore autenticato
      * @return lista di {@link UserResponse}
      */
-    @Operation(summary = "Recupera tutti gli utenti gestibili")
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getManageableUsers(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(adminFacade.getManageableUsers(user));
@@ -54,7 +50,6 @@ public class AdminController {
      * @param user amministratore autenticato che esegue l'operazione
      * @return {@link UserResponse} con i dati dell'utente creato
      */
-    @Operation(summary = "Crea un nuovo utente")
     @PostMapping("/users")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body,
             @AuthenticationPrincipal User user) {
@@ -69,7 +64,6 @@ public class AdminController {
      * @param user amministratore autenticato che esegue l'operazione
      * @return {@link UserResponse} con i dati aggiornati
      */
-    @Operation(summary = "Aggiorna un utente esistente")
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
             @Valid @RequestBody ModeratorUserUpdateRequest body,
@@ -84,7 +78,6 @@ public class AdminController {
      * @param user amministratore autenticato che esegue l'operazione
      * @return messaggio di conferma operazione
      */
-    @Operation(summary = "Disabilita un utente (soft delete)")
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id,
             @AuthenticationPrincipal User user) {
@@ -97,7 +90,6 @@ public class AdminController {
      *
      * @return lista di {@link UserResponse} contattabili
      */
-    @Operation(summary = "Recupera i contatti per la chat")
     @GetMapping("/chat-contacts")
     public ResponseEntity<List<UserResponse>> getChatContacts() {
         return ResponseEntity.ok(adminFacade.getChatContacts());
@@ -172,7 +164,6 @@ public class AdminController {
      *
      * @return {@link AdminStatsResponse} con i dati statistici
      */
-    @Operation(summary = "Statistiche aggregate per la dashboard admin")
     @GetMapping("/stats")
     public ResponseEntity<AdminStatsResponse> getStats() {
         return ResponseEntity.ok(adminFacade.getAdminStats());
