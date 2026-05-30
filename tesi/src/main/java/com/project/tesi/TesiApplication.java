@@ -28,12 +28,6 @@ public class TesiApplication {
         // per facilitare il run tramite VS Code/IDE.
 
 
-        ApplicationContext c= SpringApplication.run(TesiApplication.class, args);
-        RandomGenerationService randomGenerationService = c.getBean(RandomGenerationService.class);
-        String key=randomGenerationService.getTokenKey();
-        LogFactory.getLog(TesiApplication.class).warn("Token key: " + key);
-        if (System.getenv("JWT_SECRET") == null && System.getProperty("JWT_SECRET") == null) {
-            System.setProperty("JWT_SECRET", key);
-        }
+        SpringApplication.run(TesiApplication.class, args);
     }
 }

@@ -1,11 +1,13 @@
 package com.project.tesi.security;
 
+import com.project.tesi.service.RandomGenerationService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -29,8 +31,12 @@ public class JwtUtil {
     private static final String PURPOSE_PASSWORD_RESET = "PASSWORD_RESET";
     private static final long PASSWORD_RESET_EXPIRATION_MS = 30 * 60 * 1000L;
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    public JwtUtil(RandomGenerationService random) {
+        SECRET_KEY =random.getTokenKey();
+        LogManager.getLogger(this.getClass()).warn("SECRET_KEY => " + SECRET_KEY);
+    }
+
+    private final String SECRET_KEY;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
@@ -41,7 +47,7 @@ public class JwtUtil {
      */
     @PostConstruct
     public void validateSecret() {
-        if (secretKey == null || secretKey.isBlank()) {
+        if (SECRET_KEY == null || SECRET_KEY.isBlank()) {
             throw new IllegalStateException(
                 "JWT_SECRET non configurata. " +
                 "Imposta la variabile d'ambiente JWT_SECRET prima di avviare l'app."
@@ -143,7 +149,7 @@ public class JwtUtil {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

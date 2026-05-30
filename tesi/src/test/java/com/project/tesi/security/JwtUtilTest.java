@@ -1,5 +1,6 @@
 package com.project.tesi.security;
 
+import com.project.tesi.service.impl.RandomGenerationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
+        jwtUtil = new JwtUtil(new RandomGenerationServiceImpl());
         ReflectionTestUtils.setField(jwtUtil, "secretKey", SECRET_BASE64);
         ReflectionTestUtils.setField(jwtUtil, "jwtExpiration", EXPIRATION_MS);
 

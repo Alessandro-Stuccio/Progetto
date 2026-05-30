@@ -26,7 +26,7 @@ admin:
   email: koreadministration@gmail.com
 
 jwt:
-  secret: ${JWT_SECRET:QuestaEunaChiaveSegretaMoltoLungaPerIlMioProgettoTesi12345!}
+  length: 128
   expiration: 86400000
 
 cors:

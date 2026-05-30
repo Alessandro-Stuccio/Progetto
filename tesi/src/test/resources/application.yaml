@@ -27,7 +27,6 @@ file:
       max-request-size: 10MB
 
 jwt:
-  secret: QuestaEunaChiaveSegretaMoltoLungaPerIlMioProgettoTesi12345!
   expiration: 86400000
 
 resend:

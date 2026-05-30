@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Eccezione lanciata quando non viene trovato un abbonamento per l'utente (404 Not Found).
- * Diversa da {@link com.project.tesi.exception.booking.NoActiveSubscriptionException}
  * che è specifica per il flusso di prenotazione (422).
  */
 public class SubscriptionNotFoundException extends BaseException {

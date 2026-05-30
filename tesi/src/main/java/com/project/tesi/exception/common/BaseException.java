@@ -1,6 +1,7 @@
 package com.project.tesi.exception.common;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Classe astratta base per tutte le eccezioni personalizzate dell'applicazione.
