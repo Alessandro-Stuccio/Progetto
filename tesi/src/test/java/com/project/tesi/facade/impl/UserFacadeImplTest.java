@@ -10,7 +10,7 @@ import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.mapper.BookingMapper;
@@ -456,7 +456,7 @@ class UserFacadeImplTest {
         when(userService.findByRole(Role.ADMIN)).thenReturn(List.of());
 
         assertThatThrownBy(() -> userFacade.getAdmin())
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     // ─── activateSubscription ────────────────────────────────────────────────────

@@ -1,8 +1,13 @@
 package com.project.tesi;
 
+import com.project.tesi.service.RandomGenerationService;
+import org.apache.juli.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import javax.naming.Context;
 
 /**
  * Entry point dell'applicazione Spring Boot. Forza IPv4 per evitare timeout SMTP
@@ -21,10 +26,14 @@ public class TesiApplication {
         // Inserimento automatico della variabile JWT_SECRET qualora non venga definita
         // manualmente dall'ambiente
         // per facilitare il run tramite VS Code/IDE.
-        if (System.getenv("JWT_SECRET") == null && System.getProperty("JWT_SECRET") == null) {
-            System.setProperty("JWT_SECRET", "QuestaEunaChiaveSegretaMoltoLungaPerIlMioProgettoTesi12345!");
-        }
 
-        SpringApplication.run(TesiApplication.class, args);
+
+        ApplicationContext c= SpringApplication.run(TesiApplication.class, args);
+        RandomGenerationService randomGenerationService = c.getBean(RandomGenerationService.class);
+        String key=randomGenerationService.getTokenKey();
+        LogFactory.getLog(TesiApplication.class).warn("Token key: " + key);
+        if (System.getenv("JWT_SECRET") == null && System.getProperty("JWT_SECRET") == null) {
+            System.setProperty("JWT_SECRET", key);
+        }
     }
 }

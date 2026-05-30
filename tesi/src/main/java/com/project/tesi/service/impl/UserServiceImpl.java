@@ -1,7 +1,7 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.UserRepository;
 import com.project.tesi.service.UserService;
@@ -30,13 +30,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente", id));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Utente", id));
     }
 
     @Override
     public User getUserByEmail(String email) {
         return userRepository.findByEmailAndDeletedFalse(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente con email " + email + " non trovato."));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Utente con email " + email + " non trovato."));
     }
 
     @Override
@@ -99,12 +99,12 @@ public class UserServiceImpl implements UserService {
      * azzera il riferimento nei client ad esso assegnati.
      *
      * @param id id dell'utente da eliminare
-     * @throws com.project.tesi.exception.common.ResourceNotFoundException se l'utente non esiste
+     * @throws CustomResourceNotFoundException se l'utente non esiste
      */
     @Override
     public void deleteUser(Long id) {
         User target = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Utente", id));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Utente", id));
         target.setDeleted(true);
         userRepository.save(target);
 

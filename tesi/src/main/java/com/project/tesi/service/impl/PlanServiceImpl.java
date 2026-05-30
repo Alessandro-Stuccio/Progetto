@@ -1,6 +1,6 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Plan;
 import com.project.tesi.repository.PlanRepository;
 import com.project.tesi.service.PlanService;
@@ -28,7 +28,7 @@ public class PlanServiceImpl implements PlanService {
     @Override
     public Plan getPlanById(Long id) {
         return planRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Piano", id));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Piano", id));
     }
 
     @Override
@@ -38,12 +38,12 @@ public class PlanServiceImpl implements PlanService {
 
     /**
      * Verifica l'esistenza del piano prima di eliminarlo; lancia
-     * {@link com.project.tesi.exception.common.ResourceNotFoundException} se non trovato.
+     * {@link CustomResourceNotFoundException} se non trovato.
      */
     @Override
     public void deletePlan(Long id) {
         if (!planRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Piano", id);
+            throw new CustomResourceNotFoundException("Piano", id);
         }
         planRepository.deleteById(id);
     }

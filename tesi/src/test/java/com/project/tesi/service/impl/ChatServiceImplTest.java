@@ -1,7 +1,7 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.ChatStatus;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Chat;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ChatRepository;
@@ -196,7 +196,7 @@ class ChatServiceImplTest {
         when(chatRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> chatService.closeChat(999L, moderator))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
 
         verify(chatRepository, never()).save(any());
     }

@@ -1,7 +1,7 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +19,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -83,7 +82,7 @@ class UserServiceImplTest {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserById(99L))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("99");
     }
 
@@ -107,7 +106,7 @@ class UserServiceImplTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserByEmail("ghost@test.com"))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("ghost@test.com");
     }
 
@@ -313,7 +312,7 @@ class UserServiceImplTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.deleteUser(999L))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("999");
 
         verify(userRepository, never()).save(any());

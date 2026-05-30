@@ -1,6 +1,6 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
@@ -218,7 +218,7 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> subscriptionService.updateSubscriptionCredits(999L, 2, 2))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("999");
 
         verify(subscriptionRepository, never()).save(any());

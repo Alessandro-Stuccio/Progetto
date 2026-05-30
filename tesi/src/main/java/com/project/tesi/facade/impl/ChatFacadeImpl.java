@@ -7,7 +7,7 @@ import com.project.tesi.dto.response.ConversationPreviewResponse;
 import com.project.tesi.enums.ChatStatus;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.facade.ChatFacade;
@@ -67,7 +67,7 @@ public class ChatFacadeImpl implements ChatFacade {
     public ChatMessageResponse sendMessage(SendMessageRequest request, Long senderId) {
         Chat chat = chatService.getChatEntity(request.chatId());
         if (chat == null) {
-            throw new ResourceNotFoundException("Chat", request.chatId());
+            throw new CustomResourceNotFoundException("Chat", request.chatId());
         }
         if (chat.getStatus() == ChatStatus.CLOSED) {
             chat.setStatus(ChatStatus.OPEN);
@@ -86,7 +86,7 @@ public class ChatFacadeImpl implements ChatFacade {
     public List<ChatMessageResponse> getConversation(Long chatId, Long userId, int page, int size) {
         Chat chat = chatService.getChatEntity(chatId);
         if (chat == null) {
-            throw new ResourceNotFoundException("Chat", chatId);
+            throw new CustomResourceNotFoundException("Chat", chatId);
         }
         if (!chat.getUser1().getId().equals(userId) && !chat.getUser2().getId().equals(userId)) {
             throw new ChatNotAllowedException("Non sei parte di questa chat");
@@ -160,7 +160,7 @@ public class ChatFacadeImpl implements ChatFacade {
      * @param user utente che richiede il supporto (non MODERATOR né ADMIN)
      * @return {@link ClientBasicInfoResponse} del moderatore assegnato
      * @throws UnauthorizedAccessException se l'utente è un moderatore o admin
-     * @throws ResourceNotFoundException   se non esiste alcun moderatore nel sistema
+     * @throws CustomResourceNotFoundException   se non esiste alcun moderatore nel sistema
      */
     @Override
     @Transactional(readOnly = true)
@@ -170,7 +170,7 @@ public class ChatFacadeImpl implements ChatFacade {
         }
         List<User> moderators = userService.findByRole(Role.MODERATOR);
         if (moderators.isEmpty()) {
-            throw new ResourceNotFoundException("Nessun moderatore trovato nel sistema.");
+            throw new CustomResourceNotFoundException("Nessun moderatore trovato nel sistema.");
         }
         Optional<User> existing = findExistingModeratorConversation(user.getId(), moderators);
         User selected = existing.orElseGet(() ->

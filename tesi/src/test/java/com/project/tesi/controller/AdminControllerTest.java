@@ -2,17 +2,11 @@ package com.project.tesi.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
-import com.project.tesi.dto.request.SubscriptionCreditsUpdateDTO;
-import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
-import com.project.tesi.dto.response.SubscriptionResponse;
-import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.facade.AdminFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,12 +31,8 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,125 +75,6 @@ class AdminControllerTest {
     }
 
     // ------------------------------------------------------------------ GET /api/admin/users
-
-    @Test
-    @DisplayName("GET /api/admin/users — 200 con lista utenti")
-    void getManageableUsers_returns200() throws Exception {
-        UserResponse user = UserResponse.builder()
-                .id(2L).firstName("Luca").lastName("Rossi").email("luca@test.com").role(Role.CLIENT)
-                .build();
-        when(adminFacade.getManageableUsers(any(User.class))).thenReturn(List.of(user));
-
-        mockMvc.perform(get("/api/admin/users").with(withAdminUser))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(2))
-                .andExpect(jsonPath("$[0].email").value("luca@test.com"));
-    }
-
-    // ------------------------------------------------------------------ POST /api/admin/users
-
-    @Test
-    @DisplayName("POST /api/admin/users — 200 quando utente creato con successo")
-    void createUser_returns200() throws Exception {
-        UserResponse created = UserResponse.builder()
-                .id(10L).firstName("Mario").lastName("Bianchi").email("mario@test.com").role(Role.CLIENT)
-                .build();
-        when(adminFacade.createUser(any(UserCreateRequestDTO.class), any(User.class))).thenReturn(created);
-
-        UserCreateRequestDTO req = new UserCreateRequestDTO(
-                "mario@test.com", "Mario", "Bianchi", "password123", "CLIENT",
-                null, null, null, null);
-
-        mockMvc.perform(post("/api/admin/users")
-                        .with(withAdminUser)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.email").value("mario@test.com"));
-    }
-
-    // ------------------------------------------------------------------ PUT /api/admin/users/{id}
-
-    @Test
-    @DisplayName("PUT /api/admin/users/{id} — 200 quando aggiornamento ha successo")
-    void updateUser_returns200() throws Exception {
-        UserResponse updated = UserResponse.builder()
-                .id(2L).firstName("Luca").lastName("Verdi").email("luca@test.com").role(Role.CLIENT)
-                .build();
-        when(adminFacade.updateUser(anyLong(), any(ModeratorUserUpdateRequest.class), any(User.class)))
-                .thenReturn(updated);
-
-        ModeratorUserUpdateRequest req = new ModeratorUserUpdateRequest(
-                "luca@test.com", "Luca", "Verdi", null);
-
-        mockMvc.perform(put("/api/admin/users/2")
-                        .with(withAdminUser)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.lastName").value("Verdi"));
-    }
-
-    // ------------------------------------------------------------------ DELETE /api/admin/users/{id}
-
-    @Test
-    @DisplayName("DELETE /api/admin/users/{id} — 200 con messaggio di conferma")
-    void deleteUser_returns200() throws Exception {
-        doNothing().when(adminFacade).deleteUser(anyLong(), any(User.class));
-
-        mockMvc.perform(delete("/api/admin/users/2").with(withAdminUser))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Utente disabilitato"));
-    }
-
-    @Test
-    @DisplayName("DELETE /api/admin/users/{id} — 404 quando utente non trovato")
-    void deleteUser_notFound_returns404() throws Exception {
-        doThrow(new ResourceNotFoundException("Utente", 99L))
-                .when(adminFacade).deleteUser(anyLong(), any(User.class));
-
-        mockMvc.perform(delete("/api/admin/users/99").with(withAdminUser))
-                .andExpect(status().isNotFound());
-    }
-
-    // ------------------------------------------------------------------ GET /api/admin/subscriptions
-
-    @Test
-    @DisplayName("GET /api/admin/subscriptions — 200 con lista abbonamenti")
-    void getAllSubscriptions_returns200() throws Exception {
-        SubscriptionResponse sub = SubscriptionResponse.builder()
-                .id(1L).userId(2L).userName("Luca Rossi").planName("Premium").active(true)
-                .build();
-        when(adminFacade.getAllSubscriptions()).thenReturn(List.of(sub));
-
-        mockMvc.perform(get("/api/admin/subscriptions"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].planName").value("Premium"));
-    }
-
-    // ------------------------------------------------------------------ PUT /api/admin/subscriptions/{id}/credits
-
-    @Test
-    @DisplayName("PUT /api/admin/subscriptions/{id}/credits — 200 con crediti aggiornati")
-    void updateSubscriptionCredits_returns200() throws Exception {
-        SubscriptionResponse updated = SubscriptionResponse.builder()
-                .id(1L).currentCreditsPT(3).currentCreditsNutri(2).active(true)
-                .build();
-        when(adminFacade.updateSubscriptionCredits(anyLong(), any(int.class), any(int.class)))
-                .thenReturn(updated);
-
-        SubscriptionCreditsUpdateDTO req = new SubscriptionCreditsUpdateDTO(3, 2);
-
-        mockMvc.perform(put("/api/admin/subscriptions/1/credits")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentCreditsPT").value(3));
-    }
-
-    // ------------------------------------------------------------------ POST /api/admin/plans
 
     @Test
     @DisplayName("POST /api/admin/plans — 200 con piano creato")

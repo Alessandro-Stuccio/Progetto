@@ -6,7 +6,7 @@ import com.project.tesi.dto.response.ClientBasicInfoResponse;
 import com.project.tesi.dto.response.ClientDashboardResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,7 +96,7 @@ class UserControllerTest {
     @DisplayName("GET /api/users/dashboard — 404 quando l'utente non esiste")
     void getDashboard_userNotFound_returns404() throws Exception {
         when(userFacade.getClientDashboard(anyLong()))
-                .thenThrow(new ResourceNotFoundException("Utente", 10L));
+                .thenThrow(new CustomResourceNotFoundException("Utente", 10L));
 
         mockMvc.perform(get("/api/users/dashboard")
                         .with(withMockUser))

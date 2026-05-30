@@ -6,7 +6,7 @@ import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.facade.UserFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,7 +121,7 @@ class SubscriptionControllerTest {
     @DisplayName("POST /api/subscriptions/activate — 404 quando il piano non esiste")
     void activateSubscription_planNotFound_returns404() throws Exception {
         when(userFacade.activateSubscription(any(), anyLong()))
-                .thenThrow(new ResourceNotFoundException("Piano", 99L));
+                .thenThrow(new CustomResourceNotFoundException("Piano", 99L));
 
         PlanRequest req = new PlanRequest(99L, PaymentFrequency.RATE_MENSILI);
 
@@ -161,7 +161,7 @@ class SubscriptionControllerTest {
     @DisplayName("GET /api/subscriptions/status — 404 quando non c'è abbonamento attivo")
     void getSubscriptionStatus_noSubscription_returns404() throws Exception {
         when(userFacade.getSubscriptionStatus(anyLong()))
-                .thenThrow(new ResourceNotFoundException("Abbonamento attivo non trovato per utente 10"));
+                .thenThrow(new CustomResourceNotFoundException("Abbonamento attivo non trovato per utente 10"));
 
         mockMvc.perform(get("/api/subscriptions/status")
                         .with(withMockUser))

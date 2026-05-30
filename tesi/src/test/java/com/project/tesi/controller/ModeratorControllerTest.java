@@ -9,7 +9,7 @@ import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.facade.ModeratorFacade;
 import com.project.tesi.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -157,7 +157,7 @@ class ModeratorControllerTest {
     @Test
     @DisplayName("DELETE /api/moderator/users/{id} — 404 quando utente non trovato")
     void deleteUser_notFound_returns404() throws Exception {
-        doThrow(new ResourceNotFoundException("Utente", 99L))
+        doThrow(new CustomResourceNotFoundException("Utente", 99L))
                 .when(moderatorFacade).deleteUser(anyLong(), any(User.class));
 
         mockMvc.perform(delete("/api/moderator/users/99").with(withModeratorUser))

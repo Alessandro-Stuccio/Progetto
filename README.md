@@ -1,12 +1,21 @@
-# FitConnect — Piattaforma SaaS per il Wellness Integrato
+# Kore — Backend
 
-![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-6DB33F?logo=spring)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)
-![Tests](https://img.shields.io/badge/tests-234_passing-brightgreen)
+### Piattaforma SaaS per il Wellness Integrato · API & Servizi
+
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.5-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-async-FF6600?logo=rabbitmq&logoColor=white)
+![JWT](https://img.shields.io/badge/Auth-JWT_stateless-000000?logo=jsonwebtokens&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-JUnit_5_%2B_Mockito-25A162?logo=junit5&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-Backend RESTful per una piattaforma SaaS che connette clienti con Personal Trainer, Nutrizionisti e partner assicurativi in un unico abbonamento. Costruito come monolite modulare su Java 21 e Spring Boot 4 con un'architettura rigorosa a layer.
+Backend RESTful di **Kore**, la piattaforma SaaS che riunisce in un unico abbonamento Personal
+Trainer, Nutrizionisti e copertura assicurativa. È un **monolite modulare** su Java 21 e Spring
+Boot 4, con un'architettura rigorosa a layer, sicurezza JWT stateless, chat real-time su WebSocket
+e messaggistica asincrona su RabbitMQ.
+
+> L'applicazione vive sotto `tesi/`. Tutti i comandi Maven vanno eseguiti da quella directory.
 
 ---
 
@@ -14,14 +23,18 @@ Backend RESTful per una piattaforma SaaS che connette clienti con Personal Train
 
 1. [Tech Stack](#tech-stack)
 2. [Architettura](#architettura)
-3. [Pattern di Design](#pattern-di-design)
-4. [Domain Model](#domain-model)
-5. [Quick Start](#quick-start)
-6. [Credenziali di Test](#credenziali-di-test)
-7. [API Docs](#api-docs)
-8. [Configurazione](#configurazione)
-9. [Testing](#testing)
-10. [Changelog](#changelog)
+3. [Facade & Service](#facade--service)
+4. [Pattern di Design](#pattern-di-design)
+5. [Domain Model](#domain-model)
+6. [API REST](#api-rest)
+7. [Real-time & Messaggistica](#real-time--messaggistica)
+8. [Scheduler](#scheduler)
+9. [Gestione delle eccezioni](#gestione-delle-eccezioni)
+10. [Quick Start](#quick-start)
+11. [Credenziali di Test](#credenziali-di-test)
+12. [Configurazione](#configurazione)
+13. [Testing](#testing)
+14. [Licenza](#licenza)
 
 ---
 
@@ -30,74 +43,93 @@ Backend RESTful per una piattaforma SaaS che connette clienti con Personal Train
 | Categoria | Tecnologia |
 |---|---|
 | Runtime | Java 21 (LTS) |
-| Framework | Spring Boot 4 (Web, Data JPA, Security, WebSocket, Validation) |
-| Database | PostgreSQL 16 |
-| Sicurezza | Spring Security + JWT (stateless) |
-| Messaggistica real-time | STOMP / WebSocket |
-| Messaggistica asincrona | RabbitMQ (Dead Letter Queue inclusa) |
+| Framework | Spring Boot 4.0.5 — Web, Data JPA, Security, WebSocket, Validation, AMQP, Mail, Actuator |
+| Database | PostgreSQL 16 (H2 in-memory per i test) |
+| Sicurezza | Spring Security + JWT stateless (`jjwt` 0.11.5) |
+| Real-time | STOMP su WebSocket |
+| Messaggistica asincrona | RabbitMQ (con Dead Letter Queue) |
 | Logging | Log4j2 (via SLF4J) — Console + RollingFile + JDBC async su DB dedicato |
+| API Docs | springdoc-openapi (Swagger UI) |
+| Coverage | JaCoCo 0.8.12 |
+| Video consulti | Jitsi Meet (`JitsiVideoConferenceServiceImpl`) |
 | Build | Maven Wrapper (`mvnw`) |
-| Container | Docker Compose (PostgreSQL + pgAdmin + RabbitMQ) |
-| Testing | JUnit 5, Mockito, H2 (in-memory) |
+| Container | spring-boot-docker-compose (PostgreSQL + pgAdmin + RabbitMQ) |
+| Testing | JUnit 5, Mockito, Spring Security Test |
+
+Coordinate Maven: `com.project:tesi:0.0.1-SNAPSHOT`. Package base: `com.project.tesi`.
 
 ---
 
 ## Architettura
 
-Il flusso di ogni richiesta segue un percorso unidirezionale senza salti di layer:
+Ogni richiesta segue un percorso unidirezionale, senza salti di layer:
 
 ```
 Controllers → Facades → Services → Builders → Repositories → PostgreSQL
-                                 ↕ Mappers (entities ↔ DTOs)
+                                 ↕ Mappers (entità ↔ DTO)
 ```
 
-- **Controllers** (`controller/`) — REST endpoints; delegano interamente a facade o service, nessuna business logic.
-- **Facades** (`facade/` + `facade/impl/`) — Orchestrano più servizi per operazioni complesse. Le interfacce stanno in `facade/` (es. `AdminFacade`, `UserFacade`); le implementazioni in `facade/impl/`. `InsuranceController` è l'unico controller che inietta una facade direttamente senza interfaccia dedicata — riusa `AdminFacade`.
-- **Mappers** (`mapper/`) — Convertitori per-entità tra entità JPA e DTO (es. `BookingMapper`, `UserMapper`). `FacadeMapper` in `facade/` è deprecato; usare i mapper dedicati.
-- **Services** (`service/` + `service/impl/`) — Business logic. Interfacce in `service/`, implementazioni in `service/impl/`.
-- **Builders** (`builder/` + `builder/impl/`) — Costruzione entità tramite Builder pattern; tutte le entità sono assemblate attraverso i builder.
-- **Repositories** (`repository/`) — Spring Data JPA; nessun SQL custom eccetto JPQL in `@Query`.
+- **Controllers** (`controller/`) — espongono gli endpoint REST; delegano interamente a facade o service, senza business logic.
+- **Facades** (`facade/` + `facade/impl/`) — punti d'ingresso coarse-grained che orchestrano più servizi per le operazioni complesse.
+- **Services** (`service/` + `service/impl/`) — contengono la business logic; interfacce in `service/`, implementazioni in `service/impl/`.
+- **Builders** (`builder/` + `builder/impl/`) — costruiscono le entità del dominio tramite Builder pattern; tutte le entità passano da un builder dedicato.
+- **Mappers** (`mapper/`) — convertono entità JPA ↔ DTO, un mapper per entità.
+- **Repositories** (`repository/`) — Spring Data JPA; nessun SQL custom oltre alle JPQL nelle `@Query`.
 
-### Struttura dei package principali
+### Struttura dei package
 
 ```
 com.project.tesi/
-├── controller/          # REST endpoints
-├── facade/              # Interfacce facade
-│   └── impl/            # Implementazioni facade
-├── service/             # Interfacce service
-│   ├── impl/            # Implementazioni service
-│   └── strategy/        # Strategy pattern per le prenotazioni
-├── builder/             # Interfacce builder
-│   └── impl/            # Implementazioni builder
-├── mapper/              # Mapper entità ↔ DTO (per-entità, iniettati nei service)
-├── dto/
-│   ├── request/         # DTO di input
-│   ├── response/        # DTO di output
-│   └── response/stats/  # DTO statistiche dashboard
-├── model/               # Entità JPA
-├── repository/          # Spring Data JPA
-├── config/              # Async, RabbitMQ, WebSocket, CORS
-├── security/            # JWT filter, UserDetailsService, SecurityConfig
-├── scheduler/           # SubscriptionScheduler, BookingReminderScheduler
-├── messaging/           # RabbitMQ publisher/consumer
-├── exception/           # Gerarchia eccezioni per modulo + GlobalExceptionHandler
-└── enums/               # Role, SlotStatus, DocumentType, ecc.
+├── controller/           # 16 REST controller
+├── facade/               # 13 interfacce facade
+│   └── impl/             # implementazioni facade
+├── service/              # interfacce service
+│   ├── impl/             # implementazioni service
+│   └── strategy/         # Strategy pattern per le prenotazioni
+├── builder/              # 9 interfacce builder
+│   └── impl/             # implementazioni builder
+├── mapper/               # 9 mapper entità ↔ DTO
+├── dto/                  # request / response
+├── model/                # 10 entità JPA
+├── repository/           # Spring Data JPA
+├── config/               # CORS, WebSocket, RabbitMQ, Async, Audit, init di dev/log
+├── security/             # JWT filter, UserDetailsService, interceptor STOMP
+├── scheduler/            # job pianificati
+├── messaging/            # publisher / consumer RabbitMQ
+├── exception/            # gerarchia per modulo + GlobalExceptionHandler
+├── enums/                # Role, BookingStatus, ...
+└── util/                 # BusinessConstants
 ```
 
-### Facade: interfacce e responsabilità
+---
 
-| Facade | Controller che la usa | Responsabilità |
-|---|---|---|
-| `AdminFacade` | `AdminController`, `AdminStatsController`, `InsuranceController` | Gestione utenti, statistiche admin, view assicuratore |
-| `UserFacade` | `UserController`, `ProfessionalController`, `ProfessionalStatsController` | Profilo utente, slot professionisti, statistiche professionisti |
-| `ModeratorFacade` | `ModeratorController` | Gestione utenti moderabili, abbonamenti, chat moderazione |
-| `ChatFacade` | `ChatController` | Conversazioni, messaggi, permessi chat, chiusura chat |
-| `DocumentFacade` | `DocumentController` | Upload/download/elimina documenti per ruolo |
-| `PlanFacade` | `PlanController` | CRUD piani di abbonamento |
-| `ActivityFeedFacade` | `ActivityFeedController` | Feed attività recenti (prenotazioni + documenti) |
+## Facade & Service
 
-> **Nota**: Le interfacce `I<Name>Facade` (es. `IAdminFacade`) sono alias `@Deprecated` mantenuti per retrocompatibilità. Non usarle nel nuovo codice.
+### Facade (13)
+
+| Facade | Responsabilità |
+|---|---|
+| `AuthFacade` | Registrazione, login, reset password |
+| `UserFacade` | Profilo utente, dashboard cliente |
+| `AdminFacade` | Gestione utenti, piani e statistiche admin |
+| `ModeratorFacade` | Gestione anagrafiche moderabili, abbonamenti, contatti chat |
+| `InsuranceFacade` | View assicuratore: clienti, abbonamenti, polizze |
+| `ProfessionalFacade` | Lista professionisti, gestione slot e disponibilità |
+| `BookingFacade` | Prenotazione e cancellazione slot |
+| `SubscriptionFacade` | Attivazione abbonamenti e gestione crediti |
+| `PlanFacade` | CRUD piani di abbonamento |
+| `ChatFacade` | Conversazioni, messaggi, permessi, chiusura chat |
+| `DocumentFacade` | Upload/download/eliminazione documenti per ruolo |
+| `ReviewFacade` | Creazione e lettura recensioni |
+| `ActivityFeedFacade` | Feed attività recenti (prenotazioni + documenti) |
+
+Ogni interfaccia in `facade/` ha la sua implementazione `…Impl` in `facade/impl/`.
+
+### Service principali
+
+`SlotService`, `SubscriptionService`, `UserService`, `ChatService`, `ChatAsyncService`,
+`MessageService`, `DocumentService`, `FileStorageService`, `ReviewService`, `PlanService`,
+`WeeklyScheduleService`, `EmailService`, `VideoConferenceService` (impl. Jitsi).
 
 ---
 
@@ -107,33 +139,39 @@ com.project.tesi/
 
 | Pattern | Dove | Descrizione |
 |---|---|---|
-| **Strategy** | `service/strategy/` | `BookingStrategy` con `PersonalTrainerBookingStrategy` e `NutritionistBookingStrategy`; selezionato a runtime in `SlotServiceImpl` in base al ruolo del professionista |
-| **Builder** | `builder/` + `builder/impl/` | Ogni entità del dominio è costruita tramite un builder dedicato (`SlotBuilder`, `UserBuilder`, `SubscriptionBuilder`, ecc.). Il campo `bookedAt` e l'intero ciclo di vita dello slot passano da `SlotBuilderImpl`. |
-| **Facade** | `facade/` + `facade/impl/` | Punti di ingresso coarse-grained che orchestrano più servizi. Interfaccia naming: `<Name>Facade`. |
+| **Strategy** | `service/strategy/` | `BookingStrategy` con `PersonalTrainerBookingStrategy` e `NutritionistBookingStrategy`; `SlotServiceImpl` seleziona la strategia a runtime in base al ruolo del professionista (dispatch dinamico) |
+| **Builder** | `builder/` + `builder/impl/` | Ogni entità è assemblata da un builder dedicato; `SlotBuilder` copre l'intero ciclo di vita dello slot, incluso `bookedAt` |
+| **Facade** | `facade/` + `facade/impl/` | Punti d'ingresso che orchestrano più servizi; naming `<Name>Facade` |
 
-### Mapper dedicati (9 totali)
+### Builder (9)
 
-Ogni entità ha il proprio mapper iniettato nei servizi che ne hanno bisogno. `FacadeMapper` è stato deprecato e svuotato.
+`UserBuilder`, `SubscriptionBuilder`, `SlotBuilder`, `WeeklyScheduleBuilder`, `PlanBuilder`,
+`ReviewBuilder`, `ChatBuilder`, `MessageBuilder`, `DocumentBuilder` — ciascuno con la propria
+implementazione in `builder/impl/`.
+
+### Mapper dedicati (9)
 
 | Mapper | Converte |
 |---|---|
-| `UserMapper` | `User` ↔ `UserResponse`, `toAdminResponse()` |
-| `BookingMapper` | `Slot` (stato prenotazione) ↔ `BookingResponse` |
-| `SubscriptionMapper` | `Subscription` ↔ `SubscriptionResponse`, `toSubscriptionFromAdmin()` |
+| `UserMapper` | `User` ↔ `UserResponse` |
+| `BookingMapper` | `Slot` (contesto prenotazione) ↔ `BookingResponse` |
+| `SubscriptionMapper` | `Subscription` ↔ `SubscriptionResponse` |
 | `SlotMapper` | `Slot` ↔ `SlotDTO` |
 | `ReviewMapper` | `Review` ↔ `ReviewResponse` |
 | `DocumentMapper` | `Document` ↔ `DocumentResponse` |
-| `ChatMapper` | `Chat`/`Message` ↔ `ChatMessageResponse`/`ConversationPreviewResponse` |
+| `ChatMapper` | `Chat`/`Message` ↔ DTO chat |
 | `PlanMapper` | `Plan` ↔ `PlanResponseDTO` |
 | `ActivityFeedMapper` | `Slot`/`Document` → `ActivityFeedItemResponse` |
 
-### Concorrenza (requisito per voti ≥ 27)
+### Concorrenza
+
+Per prevenire overbooking e aggiornamenti concorrenti sulle risorse "calde":
 
 | Meccanismo | Dove | Scopo |
 |---|---|---|
 | **Optimistic locking** | `@Version` su `Slot`, `Subscription`, `User` | Gestione conflitti senza lock espliciti; `ObjectOptimisticLockingFailureException` → `ConcurrentUpdateException` |
-| **Pessimistic locking** | `@Lock(PESSIMISTIC_WRITE)` su `SlotRepository.findByIdWithLock()` e `SubscriptionRepository.findByUserAndActiveTrueWithLock()` | Lock a DB sulle righe calde |
-| **Fine-grained in-process locking** | `ConcurrentHashMap<Long, LockReference>` in `SlotServiceImpl` | Lock per-slot via `ReentrantLock` con `synchronized` sull'accesso alla mappa — risorsa condivisa + lock richiesti dal syllabus |
+| **Pessimistic locking** | `@Lock(PESSIMISTIC_WRITE)` su `SlotRepository.findByIdWithLock()` e `SubscriptionRepository.findByUserAndActiveTrueWithLock()` | Lock a DB sulle righe contese |
+| **Lock in-process fine-grained** | `ConcurrentHashMap<Long, LockReference>` di `ReentrantLock` per-slot in `SlotServiceImpl`, con `synchronized` sull'accesso alla mappa | Serializzazione delle prenotazioni sullo stesso slot all'interno della JVM |
 
 ---
 
@@ -144,84 +182,141 @@ Ogni entità ha il proprio mapper iniettato nei servizi che ne hanno bisogno. `F
 | Ruolo | Descrizione |
 |---|---|
 | `CLIENT` | Acquista piani, prenota slot, scarica documenti, lascia recensioni |
-| `PERSONAL_TRAINER` | Definisce disponibilità, gestisce fino a 50 clienti, carica schede allenamento |
-| `NUTRITIONIST` | Definisce disponibilità, gestisce fino a 50 clienti, carica piani alimentari |
-| `INSURANCE_MANAGER` | Gestisce le polizze infortuni legate ai piani (vede clienti e abbonamenti via Admin Facade) |
+| `PERSONAL_TRAINER` | Definisce la disponibilità, gestisce i propri clienti, carica schede di allenamento |
+| `NUTRITIONIST` | Definisce la disponibilità, gestisce i propri clienti, carica piani alimentari |
+| `INSURANCE_MANAGER` | Gestisce le polizze infortuni; consulta clienti e abbonamenti |
 | `MODERATOR` | Moderazione contenuti, supporto clienti, gestione anagrafiche CLIENT/PT/NUTRITIONIST |
-| `ADMIN` | Supervisione globale, creazione piani, gestione MODERATOR e INSURANCE_MANAGER |
+| `ADMIN` | Supervisione globale, creazione piani, gestione di MODERATOR e INSURANCE_MANAGER |
+
+### Entità (10)
+
+Tutte in `model/`. Lo **stato di prenotazione vive interamente nell'entità `Slot`** — non esiste
+un'entità `Booking` separata.
+
+| Entità | Campi chiave | Note |
+|---|---|---|
+| `User` | email, password, firstName, lastName, role, assignedPtId, assignedNutritionistId, `@Version` | L'email funge da username |
+| `Subscription` | planId, paymentFrequency, startDate, endDate, active, crediti PT/Nutri correnti, rate pagate/totali, nextPaymentDate, `@Version` | Semestrale/Annuale, unica soluzione o rate |
+| `Slot` | professionalId, startTime, endTime, bookedById, status, meetingLink, bookedAt, reminderSent, `@Version` | Finestre da 30 minuti |
+| `WeeklySchedule` | professionalId, dayOfWeek, startTime, endTime | Pattern di disponibilità del professionista |
+| `Plan` | name, duration, crediti mensili PT/Nutri, fullPrice, monthlyInstallmentPrice | Basic/Premium × Semestrale/Annuale |
+| `Review` | clientId, professionalId, rating, comment, createdAt | Una recensione per coppia cliente–professionista |
+| `Chat` | participantA, participantB, status, createdAt | Conversazione a due |
+| `Message` | chatId, senderId, content, status, createdAt | Real-time via WebSocket/RabbitMQ |
+| `Document` | fileName, filePath, contentType, type, ownerId, uploadedById, notes | File su filesystem, metadati su DB |
+| `AuditLog` | userId, action, entityType, entityId, timestamp | Tracciamento azioni utente |
+
+### Enum chiave
+
+| Enum | Valori |
+|---|---|
+| `Role` | `CLIENT`, `PERSONAL_TRAINER`, `NUTRITIONIST`, `MODERATOR`, `INSURANCE_MANAGER`, `ADMIN` |
+| `BookingStatus` | `CONFIRMED`, `CANCELED`, `COMPLETED` |
+| `ChatStatus` | `OPEN`, `CLOSED` |
+| `MessageStatus` | `SENT`, `DELIVERED`, `READ` |
+| `DocumentType` | `INSURANCE_POLICE`, `DIET_PLAN`, `WORKOUT_PLAN` |
+| `PaymentFrequency` | `UNICA_SOLUZIONE`, `RATE_MENSILI` |
+| `PlanDuration` | `SEMESTRALE` (6 mesi), `ANNUALE` (12 mesi) |
 
 ### Piani e Crediti
 
-| Piano | Durata | Crediti PT/mese | Crediti Nutri/mese | Prezzo intero | Rata mensile |
-|---|---|---|---|---|---|
-| Basic Pack | Semestrale | 1 | 1 | € 960 | € 160 |
-| Basic Pack | Annuale | 1 | 1 | € 1.800 | € 150 |
-| Premium Pack | Semestrale | 2 | 2 | € 1.620 | € 270 |
-| Premium Pack | Annuale | 2 | 2 | € 3.000 | € 250 |
+| Piano | Durata | Crediti PT/mese | Crediti Nutri/mese |
+|---|---|---|---|
+| Basic | Semestrale | 1 | 1 |
+| Basic | Annuale | 1 | 1 |
+| Premium | Semestrale | 2 | 2 |
+| Premium | Annuale | 2 | 2 |
 
-I crediti si azzerano mensilmente (non sono cumulabili). Lo `SubscriptionScheduler` gira ogni notte a mezzanotte per il rinnovo crediti e la gestione delle rate.
+I crediti si azzerano mensilmente (non cumulabili). Lo `SubscriptionScheduler` gira ogni notte a
+mezzanotte per rinnovare i crediti e gestire le rate.
 
-### Prenotazioni e Slot
+### Regole di dominio
 
-Lo stato di prenotazione vive **interamente in `Slot`** (campi: `bookedBy`, `status`, `meetingLink`, `bookedAt`, `reminderSent`). L'entità `Booking` è stata rimossa; il `BookingBuilder`/`BookingDirector` non sono più presenti.
+- **Prenotazioni** — slot da 30 minuti generati dai `WeeklySchedule` dei professionisti. Locking a doppio livello (`ReentrantLock` JVM + `PESSIMISTIC_WRITE` DB) contro l'overbooking. Cancellazione gratuita con credito rimborsato se richiesta con almeno 24 ore di anticipo. Alla prenotazione viene generato automaticamente un link **Jitsi** e inviata una email post-commit. Il `BookingReminderScheduler` invia i promemoria, impostando `reminderSent` per evitare duplicati.
+- **Recensioni** — un cliente può recensire un professionista solo se esiste almeno una prenotazione confermata tra i due (o è attualmente assegnato) e non ha già recensito quella coppia (unicità garantita a DB).
+- **Chat** — real-time via STOMP/WebSocket con autenticazione JWT sul frame CONNECT; fallback REST per lo storico. I permessi (`validateChatPermission()`) seguono l'ordine di guardie ADMIN → INSURANCE_MANAGER → MODERATOR → controllo assegnazione. Il pulsante "Contatta Amministrazione" apre una chat con un **moderatore** casuale; il moderatore può chiudere la conversazione.
+- **Documenti** — storage su filesystem (`uploads/`) con metadati a DB: schede di allenamento (PT), piani alimentari (Nutrizionista), polizze (Insurance Manager).
+- **Activity Feed** — `GET /api/activity` restituisce prenotazioni e documenti recenti, ordinati cronologicamente.
+- **Candidature** — `POST /api/job-applications` riceve un CV in PDF e lo inoltra via email.
+- **Statistiche dashboard** — KPI per ADMIN (utenti per ruolo, crescita mensile, popolarità piani, ricavi, prenotazioni, carico professionisti) e per PT/Nutrizionista (prenotazioni odierne, clienti da seguire, documenti caricati nella settimana).
+- **Audit trail** — `AuditLog` + `AuditInterceptor` registrano tutte le azioni utente.
 
-- Slot da 30 minuti generati da `WeeklySchedule` settimanali dei professionisti
-- Locking a doppio livello (JVM `ReentrantLock` + DB `PESSIMISTIC_WRITE`) per prevenire overbooking concorrente
-- Cancellazione gratuita (credito rimborsato) se richiesta con almeno 24 ore di anticipo
-- Link Jitsi generato automaticamente alla prenotazione (`JitsiVideoConferenceServiceImpl`)
-- Notifiche email post-commit tramite `@TransactionalEventListener`
-- `BookingReminderScheduler` — ogni 5 minuti invia promemoria e imposta `reminderSent` per evitare duplicati
+---
 
-### Recensioni
+## API REST
 
-Un cliente può recensire un professionista solo se:
-- esiste almeno una prenotazione confermata tra la coppia **oppure** il cliente è attualmente assegnato al professionista
-- non ha ancora lasciato una recensione per quella coppia (unicità garantita a DB)
+I 16 controller espongono la superficie API sotto `/api`. Documentazione interattiva su
+**`/swagger-ui.html`** ad applicazione avviata.
 
-### Chat
-
-- Real-time via STOMP/WebSocket con autenticazione JWT sul frame STOMP CONNECT (`WebSocketChannelInterceptor`)
-- Fallback REST per lo storico (`/api/chat`)
-- Messaggistica asincrona via RabbitMQ: `ChatMessagePublisher` → `ChatMessageConsumer` → DLQ per messaggi non recuperabili
-
-#### Permessi di conversazione
-
-| Ruolo | Può avviare chat con | Contatta Amministrazione |
+| Controller | Base path | Accesso |
 |---|---|---|
-| CLIENT | PT assegnato, Nutrizionista assegnato | Moderatore (casuale) |
-| PT / NUTRITIONIST | Propri clienti assegnati | Moderatore |
-| MODERATOR | CLIENT, PT, NUTRITIONIST, ADMIN, altri MODERATOR | — |
-| ADMIN | Tutti (incluso INSURANCE_MANAGER) | — |
-| INSURANCE_MANAGER | Solo ADMIN | — |
+| `AuthController` | `/api/auth` | Pubblico (login, register, reset password) |
+| `BookingController` | `/api/bookings` | Autenticato (CLIENT) |
+| `ProfessionalController` | `/api/professionals` | CLIENT (ricerca), PT/NUTRITIONIST (slot) |
+| `ProfessionalStatsController` | `/api/professional` | PT, NUTRITIONIST |
+| `ReviewController` | `/api/reviews` | Autenticato |
+| `SubscriptionController` | `/api/subscriptions` | Autenticato |
+| `UserController` | `/api/users` | Autenticato |
+| `DocumentController` | `/api/documents` | CLIENT (lettura), PT/NUTRITIONIST/INSURANCE (upload) |
+| `ChatController` | `/api/chat` + WebSocket `/ws` | Autenticato |
+| `ActivityFeedController` | `/api/activity` | Autenticato |
+| `PlanController` | `/api/plans` | Pubblico (lettura) |
+| `AdminController` | `/api/admin` | ADMIN |
+| `ModeratorController` | `/api/moderator` | MODERATOR |
+| `InsuranceController` | `/api/insurance` | INSURANCE_MANAGER |
+| `JobApplicationController` | `/api/job-applications` | Pubblico |
+| `ChatWebSocketController` | STOMP `/app/chat.*` | Autenticato (JWT su CONNECT) |
 
-- Il pulsante "Termina chat" consente al Moderatore di chiudere una conversazione di supporto
-- `validateChatPermission()` nel backend impone le regole con ordine di guardie: ADMIN → INSURANCE_MANAGER → MODERATOR → check assegnazione
+---
 
-### Documenti
+## Real-time & Messaggistica
 
-File system storage (`uploads/`) con metadati in DB. Tipologie per ruolo:
-- Personal Trainer → schede allenamento
-- Nutrizionista → piani alimentari
-- Insurance Manager → polizze
+### WebSocket / STOMP
 
-### Activity Feed
+- Endpoint di connessione: **`/ws`**. Il `WebSocketChannelInterceptor` valida il token JWT sul frame STOMP **CONNECT** prima di permettere qualsiasi subscription.
+- Canali principali:
+  - `/topic/chat/{roomId}` — messaggi della stanza (broadcast)
+  - `/user/queue/notifications` — notifiche private (nuovo messaggio, conteggio non letti, delivered/read)
+  - `/app/chat.join`, `/app/chat.leave`, `/app/chat.send`, `/app/chat.typing`, `/app/chat.read` — comandi client → server
 
-`GET /api/activity?days=N` restituisce prenotazioni e documenti degli ultimi N giorni, ordinati cronologicamente.
+### RabbitMQ
 
-### Job Applications
+La consegna asincrona dei messaggi di chat passa da `ChatMessagePublisher` →
+`ChatMessageConsumer`. I messaggi non recuperabili vengono instradati alla **Dead Letter Queue**
+`chat.messages.dlq` (`default-requeue-rejected: false`, `max-attempts: 3`,
+`AmqpRejectAndDontRequeueException` per gli errori permanenti). I thread pool sono configurati in
+`AsyncConfig`.
 
-`POST /api/job-applications` — riceve il CV in PDF e lo invia via email all'azienda.
+---
 
-### Statistiche Dashboard
+## Scheduler
 
-| Endpoint | Ruolo | Dati restituiti |
+| Scheduler | Cron | Scopo |
 |---|---|---|
-| `GET /api/admin/stats` | ADMIN | Utenti per ruolo, crescita mensile, popolarità piani, ricavi, prenotazioni, carico professionisti |
-| `GET /api/professional/stats` | PT / NUTRITIONIST | Prenotazioni oggi, clienti da seguire, documenti caricati questa settimana, totale clienti |
+| `SubscriptionScheduler` | `0 0 0 * * ?` (ogni notte a mezzanotte) | Rinnovo crediti mensili e gestione delle rate |
+| `BookingReminderScheduler` | `0 */5 * * * ?` (ogni 5 minuti) | Invio promemoria e set di `reminderSent` per evitare duplicati |
+| `SlotGenerationScheduler` | all'avvio / pianificato | Generazione degli slot da 30 minuti dai `WeeklySchedule` |
 
-### Audit Trail
+Gli scheduler vengono disabilitati automaticamente durante i test.
 
-`AuditLog` + `AuditInterceptor` registrano tutte le azioni utente. Le nuove operazioni auditable vanno aggiunte in `AuditInterceptor`.
+---
+
+## Gestione delle eccezioni
+
+Tutte le eccezioni di dominio estendono `BaseException` (che trasporta lo status HTTP) e sono
+organizzate per modulo. `GlobalExceptionHandler` (`@RestControllerAdvice`) le mappa centralmente
+sulle risposte HTTP.
+
+| Modulo | Esempi |
+|---|---|
+| `exception/common/` | `BaseException`, `BusinessLogicException`, `ConcurrentUpdateException`, `ResourceNotFoundException`, `ResourceAlreadyExistsException`, `UnauthorizedAccessException` |
+| `exception/auth/` | eccezioni di autenticazione |
+| `exception/booking/` | `SlotAlreadyBookedException`, `InsufficientCreditsException`, `BookingCancellationException`, `ProfessionalNotAssignedException`, `ProfessionalSoldOutException`, `SubscriptionExpiredException` |
+| `exception/chat/` | `ChatNotAllowedException` |
+| `exception/document/` | `DocumentNotFoundException`, `DocumentStorageException`, `InvalidFileException` |
+| `exception/email/` | `EmailDeliveryException` |
+| `exception/review/` | `ReviewNotAllowedException` |
+| `exception/subscription/` | `SubscriptionNotFoundException` |
 
 ---
 
@@ -230,93 +325,70 @@ File system storage (`uploads/`) con metadati in DB. Tipologie per ruolo:
 ### Prerequisiti
 
 - **Java 21** — [Adoptium Temurin](https://adoptium.net/temurin/releases/?version=21)
-- **Docker Desktop** — richiesto per il profilo `dev`
+- **Docker Desktop** in esecuzione (richiesto dal profilo `dev`)
 
 > Maven è incluso nel wrapper (`mvnw`), non serve installarlo.
 
-### Profilo dev (database locale)
+### Avvio (profilo dev)
 
-```bash
-git clone <url-repository>
-cd Progetto/tesi
-
-# macOS / Linux
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```powershell
+cd tesi
 
 # Windows PowerShell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+
+# macOS / Linux
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Docker Compose avvia automaticamente:
-- PostgreSQL su `localhost:5432` (con healthcheck `pg_isready`)
-- pgAdmin su `localhost:5050` (credenziali: `a@a.a` / `root`)
-- RabbitMQ su `localhost:5672`; management UI su `localhost:15672` (guest/guest)
+All'avvio del profilo `dev`, Docker Compose lancia automaticamente:
 
-Il database viene ricreato e popolato con dati di test ad ogni avvio (`create` DDL + `data.sql`).
+- **PostgreSQL** su `localhost:5432`
+- **pgAdmin** su `localhost:5050` (`a@a.a` / `root`)
+- **RabbitMQ** su `localhost:5672`; management UI su `localhost:15672` (`guest` / `guest`)
+
+Lo schema del database viene **ricreato** (`ddl-auto: create`) e ripopolato da `data.sql` ad ogni
+avvio. Il backend risponde su `http://localhost:8080`.
 
 ### Comandi utili
 
-```bash
+```powershell
 # Eseguire i test
-./mvnw test
+.\mvnw.cmd test
 
 # Singola classe di test
-./mvnw test -Dtest=SlotServiceImplTest
+.\mvnw.cmd test "-Dtest=SlotServiceImplTest"
 
 # Build JAR (senza test)
-./mvnw clean package -DskipTests
+.\mvnw.cmd clean package "-DskipTests"
 
-# Report coverage JaCoCo (generato in target/site/jacoco/)
-./mvnw verify
+# Report coverage JaCoCo (in target/site/jacoco/)
+.\mvnw.cmd verify
 ```
 
 ---
 
 ## Credenziali di Test
 
-Disponibili solo con il profilo `dev`. Password comune: `password`.
+Disponibili con il profilo `dev` (seed da `data.sql`). **Password comune: `password`.**
 
 | Email | Ruolo | Note |
 |---|---|---|
-| `pt1@test.com` | Personal Trainer | Disponibile lun/mer/ven |
-| `pt2@test.com` | Personal Trainer | Disponibile mar/gio/sab |
-| `nutri1@test.com` | Nutrizionista | Disponibile lun/mer/ven |
-| `nutri2@test.com` | Nutrizionista | Disponibile mar/gio/sab |
-| `luca@test.com` | Cliente | Assegnato a pt1 + nutri1, Basic Pack Semestrale |
-| `sofia@test.com` | Cliente | Assegnato a pt1 + nutri2, Basic Pack Annuale |
-| `matteo@test.com` | Cliente | Assegnato a pt2 + nutri1, Premium Pack Semestrale |
-| `chiara@test.com` | Cliente | Assegnato a pt2 + nutri2, Premium Pack Annuale |
-| `testreview@test.com` | Cliente | Utente dedicato al test delle recensioni |
 | `admin@test.com` | Admin | Accesso completo |
+| `moderator1@test.com` | Moderatore | (anche `moderator2`, `moderator3`) |
 | `insurance@test.com` | Insurance Manager | Gestione polizze |
-| `moderator1@test.com` | Moderatore | Moderazione contenuti |
+| `pt1@test.com` | Personal Trainer | Marco Rossi |
+| `pt2@test.com` | Personal Trainer | Giulia Bianchi |
+| `nutri1@test.com` | Nutrizionista | Laura Verdi |
+| `nutri2@test.com` | Nutrizionista | Andrea Esposito |
+| `luca@test.com` | Cliente | Assegnato a pt1 + nutri1 |
+| `sofia@test.com` | Cliente | Assegnato a pt1 + nutri2 |
+| `matteo@test.com` | Cliente | Assegnato a pt2 + nutri1 |
+| `chiara@test.com` | Cliente | Assegnato a pt2 + nutri2 |
+| `testreview@test.com` | Cliente | Dedicato al test delle recensioni |
 
-> Il seed `data.sql` include anche 15+ clienti aggiuntivi, 40+ slot, 20+ prenotazioni, 12+ recensioni e 14+ documenti per testare le statistiche dashboard.
-
----
-
-## API Docs
-
-### Endpoint principali
-
-| Gruppo | Base path | Ruoli |
-|---|---|---|
-| Autenticazione | `/api/auth` | Pubblico |
-| Prenotazioni / Slot | `/api/bookings`, `/api/slots` | CLIENT, PT, NUTRITIONIST |
-| Professionisti | `/api/professionals` | CLIENT (ricerca), PT/NUTRITIONIST (gestione slot) |
-| Recensioni | `/api/reviews` | CLIENT |
-| Abbonamenti | `/api/subscriptions` | CLIENT, ADMIN, MODERATOR |
-| Profilo utente | `/api/users` | Autenticato |
-| Documenti | `/api/documents` | CLIENT (lettura), PT/NUTRITIONIST/INSURANCE (upload) |
-| Chat | `/api/chat` (REST) + WebSocket `/ws` | Autenticato |
-| Activity Feed | `/api/activity` | Autenticato |
-| Statistiche professionista | `/api/professional/stats` | PT, NUTRITIONIST |
-| Statistiche admin | `/api/admin/stats` | ADMIN |
-| Pannello admin | `/api/admin` | ADMIN |
-| Pannello moderatore | `/api/moderator` | MODERATOR |
-| Pannello assicuratore | `/api/insurance` | INSURANCE_MANAGER |
-| Piani | `/api/plans` | ADMIN (CRUD), Autenticato (lettura) |
-| Candidature | `/api/job-applications` | Pubblico |
+> Il seed include una ventina di clienti, oltre 300 slot, prenotazioni passate/confermate,
+> recensioni e documenti, così da popolare realisticamente le statistiche delle dashboard.
 
 ---
 
@@ -326,169 +398,73 @@ Disponibili solo con il profilo `dev`. Password comune: `password`.
 
 | Variabile | Default dev | Descrizione |
 |---|---|---|
-| `JWT_SECRET` | valore di fallback in `TesiApplication` | Chiave segreta JWT (min. 32 caratteri, obbligatoria in prod) |
-| `MAIL_FROM` | `koreadministration@gmail.com` | Indirizzo mittente email transazionali |
-| `SMTP_HOST` | `smtp.gmail.com` | SMTP host |
-| `SMTP_PORT` | `587` | SMTP port |
-| `SMTP_USERNAME` | `koreadministration@gmail.com` | Credenziale SMTP — username |
-| `SMTP_PASSWORD` | *(app password configurata)* | Credenziale SMTP — password o app password |
-
-In sviluppo, i valori di default sono definiti in `application-dev.yaml`.
+| `JWT_SECRET` | fallback in `application.yaml` | Chiave segreta JWT (min. 32 caratteri; obbligatoria in produzione) |
+| `MAIL_FROM` | `koreadministration@gmail.com` | Mittente delle email transazionali |
+| `SMTP_HOST` | `smtp.gmail.com` | Host SMTP |
+| `SMTP_PORT` | `587` | Porta SMTP |
+| `SMTP_USERNAME` | `koreadministration@gmail.com` | Username SMTP |
+| `SMTP_PASSWORD` | *(app password)* | Password / app password SMTP |
+| `cors.allowed-origins` | `http://localhost:4200` | Origin consentita per CORS |
 
 ### Profili
 
-| Profilo | DB | Docker Compose | DDL |
+| Profilo | Database | Docker Compose | DDL |
 |---|---|---|---|
 | `dev` (default) | PostgreSQL locale (`localhost:5432`) | Auto-avviato | `create` (schema ricreato ad ogni restart) |
+| `prod` | DB remoto | Disabilitato | `validate` |
+| `test` | H2 in-memory | Disabilitato | `create-drop` |
 
-### Log4j2
+### Logging (Log4j2)
 
-Il logging è gestito da Log4j2 (`src/main/resources/log4j2-spring.xml`) con tre appender:
+Configurazione in `src/main/resources/log4j2-spring.xml`, con tre appender:
 
-| Appender | Destinazione | Livelli |
+| Appender | Destinazione | Note |
 |---|---|---|
-| `Console` | stdout | tutti i layer applicativi |
-| `File` (RollingFile) | `logs/app.log` — rolling giornaliero, max 10 MB, 30 file | tutti i layer applicativi |
-| `AsyncLogDB` (JDBC async) | PostgreSQL `tesi_logs.app_logs` — buffer 512 eventi | controller, service, security, scheduler, exception, audit |
-
-Livelli per layer:
-- `com.project.tesi.controller` — INFO
-- `com.project.tesi.service` — DEBUG
-- `com.project.tesi.security` — INFO
-- `com.project.tesi.scheduler` — INFO
-- `com.project.tesi.exception` — WARN
-- Hibernate / Spring Framework — WARN (solo Console)
-
-#### Database di log (`tesi_logs`)
-
-Il database `tesi_logs` e la tabella `app_logs` vengono creati automaticamente all'avvio del profilo `dev` da `LogsDatabaseInitializer`. Il database usa la stessa istanza PostgreSQL locale del database principale ma in un catalog separato.
-
-Schema tabella:
-```sql
-CREATE TABLE app_logs (
-    id         BIGSERIAL    PRIMARY KEY,
-    event_date TIMESTAMPTZ  NOT NULL,
-    level      VARCHAR(10)  NOT NULL,
-    logger     VARCHAR(200),
-    message    TEXT,
-    thread     VARCHAR(100),
-    throwable  TEXT
-);
-```
-
-### RabbitMQ
-
-- `default-requeue-rejected: false` e `max-attempts: 3` in entrambi i profili
-- I messaggi non recuperabili (`DataIntegrityViolationException`) vengono instradati alla Dead Letter Queue `chat.messages.dlq` tramite `AmqpRejectAndDontRequeueException`
-- Thread pool configurati in `AsyncConfig`
-
-### CORS
-
-L'origin permessa è configurabile via `cors.allowed-origins` (default dev: `http://localhost:4200`).
+| `Console` | stdout | Tutti i layer applicativi |
+| `File` (RollingFile) | `logs/app.log` | Rolling giornaliero, max 10 MB, 30 file |
+| `AsyncLogDB` (JDBC async) | catalog PostgreSQL `tesi_logs` (tabella `app_logs`) | Buffer di eventi; DB creato all'avvio da `LogsDatabaseInitializer` |
 
 ### Note non ovvie
 
 - **Email come username** — `UserDetails.getUsername()` restituisce l'email; non esiste un campo username separato.
-- **Doppia durata JWT** — token di autenticazione: 24 h; token reset password: 30 min (entrambi in `JwtUtil`).
-- **IPv4 per SMTP** — `TesiApplication` imposta `java.net.preferIPv4Stack=true` all'avvio per prevenire hang SMTP su IPv6.
-- **WebSocket JWT** — `WebSocketChannelInterceptor` valida il token JWT sul frame STOMP CONNECT prima di permettere qualsiasi subscription.
-- **Audit trail** — `AuditLog` + `AuditInterceptor` registrano tutte le azioni utente; le nuove operazioni auditable vanno aggiunte in `AuditInterceptor`.
-- **Dev DDL** — `spring.jpa.hibernate.ddl-auto: create` nel profilo dev significa che lo schema viene ricreato ad ogni avvio; `data.sql` lo ripopola ogni volta.
-- **Database di log separato** — `tesi_logs` è un catalog PostgreSQL distinto dal database principale; viene creato automaticamente da `LogsDatabaseInitializer` al primo avvio in profilo `dev`.
+- **Doppia durata JWT** — token di autenticazione 24 h, token di reset password 30 min (entrambi in `JwtUtil`).
+- **IPv4 per SMTP** — `TesiApplication` imposta `java.net.preferIPv4Stack=true` per evitare hang SMTP su IPv6.
+- **WebSocket JWT** — il token è validato sul frame STOMP CONNECT prima di ogni subscription.
+- **DDL dev** — `ddl-auto: create` ricrea lo schema ad ogni avvio; `data.sql` lo ripopola.
+- **Jitsi** — il base URL delle stanze è configurabile (`https://meet.jit.si/Kore_Consulto_...` di default).
+- **DB di log separato** — `tesi_logs` è un catalog PostgreSQL distinto dal database principale.
 
 ---
 
 ## Testing
 
-```bash
-# Suite completa (234 test, 32 classi)
-./mvnw test
+```powershell
+# Suite completa (~64 classi di test)
+.\mvnw.cmd test
 
 # Singola classe
-./mvnw test -Dtest=SlotServiceImplTest
+.\mvnw.cmd test "-Dtest=SlotServiceImplTest"
 
-# Report coverage JaCoCo (generato in target/site/jacoco/)
-./mvnw verify
+# Report coverage JaCoCo (in target/site/jacoco/)
+.\mvnw.cmd verify
 ```
 
-I test usano H2 in-memory con profilo `test` (`create-drop`). Scheduler e Docker Compose sono disabilitati automaticamente durante i test.
+I test usano **H2 in-memory** con profilo `test` (`create-drop`). Scheduler e Docker Compose sono
+disabilitati automaticamente.
 
 ### Pattern adottati
 
-- `@ExtendWith(MockitoExtension.class)` + `@Mock` / `@InjectMocks` per unit test puri
+- `@ExtendWith(MockitoExtension.class)` + `@Mock`/`@InjectMocks` per gli unit test puri
 - `@WebMvcTest` + `MockMvc` per i controller
 - `@DisplayName` su ogni metodo per output leggibile
 
-### Classi di test
+### Copertura per layer
 
-| Layer | Classi |
-|---|---|
-| Controller | `AuthControllerTest`, `BookingControllerTest`, `PlanControllerTest`, `ReviewControllerTest`, `AllControllersTest` |
-| Facade | `AdminFacadeTest`, `UserFacadeTest` |
-| Service | `SlotServiceImplTest`, `SubscriptionServiceImplTest`, `ReviewServiceImplTest`, `UserServiceImplTest`, `AdminServiceImplTest`, `AdminStatsServiceImplTest`, `ProfessionalStatsServiceImplTest`, `AuthServiceImplTest`, `DocumentServiceImplTest`, `PlanServiceImplTest`, `ActivityFeedServiceImplTest` |
-| Strategy | `PersonalTrainerBookingStrategyTest`, `NutritionistBookingStrategyTest` |
-| Mapper | `BookingMapperTest`, `SubscriptionMapperTest`, `UserMapperTest` |
-| Security | `JwtUtilTest`, `JwtAuthenticationFilterTest`, `CustomUserDetailsServiceTest` |
-| Scheduler | `SubscriptionSchedulerTest`, `BookingReminderSchedulerTest` |
-| Exception | `CustomExceptionsTest`, `GlobalExceptionHandlerTest` |
-| Config | `WebSocketEventListenerTest` |
+Controller, facade, service, strategy, mapper, builder, security (JWT, filter, interceptor STOMP),
+scheduler, messaging (publisher/consumer) ed exception handling.
 
 ---
 
-## Changelog
+## Licenza
 
-### Refactoring architetturale (Facade/Service/Mapper/DTO)
-
-- **Nuove interfacce Facade** — `AdminFacade`, `UserFacade`, `ModeratorFacade`, `ChatFacade`, `DocumentFacade`, `PlanFacade`, `ActivityFeedFacade` con implementazioni in `facade/impl/`. Le interfacce `I<Name>Facade` sono ora alias `@Deprecated`.
-- **Mapper dedicati** — `FacadeMapper` deprecato e svuotato; 9 mapper per-entità iniettati direttamente nei servizi.
-- **Rimozione BookingBuilder/BookingDirector** — la prenotazione non è più un'entità separata; lo stato vive interamente in `Slot`. `SlotBuilder` copre l'intero ciclo di vita dello slot incluso `bookedAt`.
-- **DTO unificati** — `UserResponse` e `SubscriptionResponse` sostituiscono i DTO precedenti frammentati.
-- **`User.getFullName()`** — aggiunto metodo di convenienza; rimosso `profilePictureUrl`.
-
-### Nuovi Controller e Feature
-
-- **Activity Feed** (`GET /api/activity?days=N`) — prenotazioni e documenti recenti, ordinati cronologicamente.
-- **Job Applications** (`POST /api/job-applications`) — candidature lavorative con CV allegato, inviate via email.
-- **Professional Stats** (`GET /api/professional/stats`) — prenotazioni oggi, clienti da seguire, documenti caricati questa settimana.
-- **Admin Stats** (`GET /api/admin/stats`) — utenti per ruolo, crescita mensile, popolarità piani, ricavi (mensili/annuali), prenotazioni, carico per professionista.
-- **Moderator Controller** (`/api/moderator`) — CRUD utenti moderabili, abbonamenti, contatti chat, chiusura chat.
-- **Professional Controller** (`/api/professionals`) — lista professionisti per ruolo, slot disponibili.
-
-### Chat — Permessi e Bug Fix
-
-- **Ridefinizione permessi** — nuova logica `validateChatPermission()` con ordine di guardie: ADMIN → INSURANCE_MANAGER (blocca se l'altra parte non è ADMIN) → MODERATOR → check assegnazione.
-- **Pulsante "Termina chat"** — il Moderatore può chiudere una conversazione di supporto.
-- **Fix message overlap** — `chatMessages` e `messagesSubject` vengono svuotati prima di caricare i messaggi di una nuova conversazione; guard su `chatId` nelle subscription per scartare messaggi di chat diverse durante la transizione.
-- **Fix double checkmark** — SVG ridisegnato (stile WhatsApp): spunta singola bianca per messaggi inviati, doppia spunta blu per messaggi letti (`status === 'READ'`).
-
-### Infrastruttura & Messaggistica
-
-- **Fix RabbitMQ infinite redelivery loop** — `default-requeue-rejected: false`, `max-attempts: 3`, `AmqpRejectAndDontRequeueException` per errori permanenti, Dead Letter Queue `chat.messages.dlq`.
-- **Fix deprecation RabbitMQConfig** — `JacksonJsonMessageConverter` sostituito con `Jackson2JsonMessageConverter`.
-- **Fix Docker Compose auto-discovery** — rimosso path esplicito `file: docker-compose.yml`; auto-discovery attivo. Healthcheck su `pg_isready` (PostgreSQL) e `rabbitmq-diagnostics check_port_connectivity` (RabbitMQ).
-- **Dipendenza `spring-boot-docker-compose`** — aggiunta in `pom.xml` (scope `runtime`, `optional: true`).
-
-### Endpoint Insurance Manager
-
-Nuovi endpoint `GET /api/insurance/subscriptions` e `GET /api/insurance/users` riservati al ruolo `INSURANCE_MANAGER`. Le KPI e la lista clienti nella dashboard dell'assicuratore ora si popolano correttamente (prima chiamavano `/api/admin/*` restituendo 403).
-
-### Abbonamento alla creazione utente
-
-- **`UserCreateRequestDTO`** — aggiunti campi `planId` e `paymentFrequency`.
-- **`AdminServiceImpl.createUserInternal()`** — se il nuovo utente è CLIENT e `planId` è presente, viene creata e salvata la `Subscription` tramite `SubscriptionMapper.toSubscriptionFromAdmin()`.
-- **Frontend** — form creazione utente (step 2) include selezione frequenza di pagamento (Unica soluzione / Rate mensili).
-
-### Restrizione modifica profili
-
-Solo il **MODERATORE** può modificare CLIENT, PERSONAL_TRAINER e NUTRITIONIST. L'ADMIN gestisce solo MODERATOR e INSURANCE_MANAGER.
-
-- **`validateUpdatePermissions()`** — se l'actor è `null` (ADMIN) e il target non è in `ADMIN_MANAGEABLE_ROLES` viene sollevata `UnauthorizedAccessException`.
-- **Frontend `admin-users-tab`** — pulsante "Modifica" visibile solo per i ruoli che il ruolo corrente può gestire.
-
-### Contatta Amministrazione
-
-Il pulsante "Contatta Amministrazione" (CLIENT, PT, NUTRITIONIST) apre una chat con il **MODERATORE** (non più con l'Admin). Nuovo endpoint `GET /api/users/moderator` restituisce un moderatore casuale.
-
-### Seed dati di test espanso
-
-`data.sql` aggiornato con: 15+ clienti, 40+ slot, 20+ prenotazioni, 12+ recensioni, 14+ documenti — necessario per popolare le statistiche della dashboard.
+Distribuito con licenza **MIT**.

@@ -38,19 +38,16 @@ public class EmailServiceImpl implements EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
-    private final String mailFrom;
-    private final String adminEmail;
+    @Value("${spring.mail.username}")
+    private String mailFrom;
+    private final String adminEmail="admin@example.com";
     private final EmailService self;
     private final JavaMailSender javaMailSender;
 
     @Autowired
     public EmailServiceImpl(
-            @Value("${mail.from:${spring.mail.username:}}") String mailFrom,
-            @Value("${admin.email:admin@example.com}") String adminEmail,
             Optional<JavaMailSender> javaMailSenderOptional,
             @Lazy EmailService self) {
-        this.mailFrom = mailFrom;
-        this.adminEmail = adminEmail;
         this.javaMailSender = javaMailSenderOptional.orElse(null);
         this.self = self;
     }

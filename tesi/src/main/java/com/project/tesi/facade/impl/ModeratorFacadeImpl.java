@@ -1,7 +1,6 @@
 package com.project.tesi.facade.impl;
 
 import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
-import com.project.tesi.dto.request.PlanRequest;
 import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
@@ -15,7 +14,6 @@ import com.project.tesi.mapper.SubscriptionMapper;
 import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.User;
-import com.project.tesi.service.ChatService;
 import com.project.tesi.service.PlanService;
 import com.project.tesi.service.SubscriptionService;
 import com.project.tesi.service.UserService;
@@ -23,9 +21,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Implementazione di {@link com.project.tesi.facade.ModeratorFacade}.
@@ -38,7 +34,6 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
 
 
 
-    protected final ChatService chatService;
     protected final SubscriptionMapper subscriptionMapper;
     protected final UserMapper userMapper;
     protected final UserService userService;
@@ -46,8 +41,7 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
     protected final PlanService planService;
     protected final SubscriptionFacade subscriptionFacade;
 
-    public ModeratorFacadeImpl(ChatService chatService,
-                               UserService userService,
+    public ModeratorFacadeImpl(UserService userService,
                                SubscriptionService subscriptionService,
                                UserMapper userMapper,
                                SubscriptionMapper subscriptionMapper,
@@ -56,7 +50,6 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
         this.userService = userService;
         this.subscriptionService = subscriptionService;
         this.userMapper = userMapper;
-        this.chatService = chatService;
         this.subscriptionMapper = subscriptionMapper;
         this.planService = planService;
         this.subscriptionFacade = subscriptionFacade;

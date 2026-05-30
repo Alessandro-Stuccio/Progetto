@@ -7,7 +7,7 @@ import com.project.tesi.dto.response.ConversationPreviewResponse;
 import com.project.tesi.enums.ChatStatus;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.mapper.ChatMapper;
 import com.project.tesi.mapper.UserMapper;
@@ -239,7 +239,7 @@ class ChatFacadeImplTest {
         when(chatService.getChatEntity(99L)).thenReturn(null);
 
         assertThatThrownBy(() -> chatFacade.sendMessage(request, 1L))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     @Test
@@ -338,7 +338,7 @@ class ChatFacadeImplTest {
         when(chatService.getChatEntity(99L)).thenReturn(null);
 
         assertThatThrownBy(() -> chatFacade.getConversation(99L, 1L, 0, 20))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     @Test
@@ -569,7 +569,7 @@ class ChatFacadeImplTest {
         when(userService.findByRole(Role.MODERATOR)).thenReturn(List.of());
 
         assertThatThrownBy(() -> chatFacade.getModerator(clientUser))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     @Test

@@ -5,7 +5,7 @@ import com.project.tesi.dto.request.ProfileUpdateRequest;
 import com.project.tesi.dto.response.*;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.exception.common.UnauthorizedAccessException;
 import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.facade.UserFacade;
@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +39,6 @@ public class UserFacadeImpl implements UserFacade {
     private final SlotService slotService;
     private final ReviewService reviewService;
     private final SubscriptionService subscriptionService;
-    private final DocumentService documentService;
     private final UserMapper userMapper;
     private final SubscriptionMapper subscriptionMapper;
     private final BookingMapper bookingMapper;
@@ -52,7 +50,6 @@ public class UserFacadeImpl implements UserFacade {
                           SlotService slotService,
                           ReviewService reviewService,
                           SubscriptionService subscriptionService,
-                          DocumentService documentService,
                           UserMapper userMapper,
                           SubscriptionMapper subscriptionMapper,
                           BookingMapper bookingMapper,
@@ -63,7 +60,6 @@ public class UserFacadeImpl implements UserFacade {
         this.slotService = slotService;
         this.reviewService = reviewService;
         this.subscriptionService = subscriptionService;
-        this.documentService = documentService;
         this.userMapper = userMapper;
         this.subscriptionMapper = subscriptionMapper;
         this.bookingMapper = bookingMapper;
@@ -189,7 +185,7 @@ public class UserFacadeImpl implements UserFacade {
     public ClientBasicInfoResponse getAdmin() {
         return userService.findByRole(Role.ADMIN).stream().findFirst()
                 .map(userMapper::toBasicInfoResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Amministratore non trovato nel sistema."));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Amministratore non trovato nel sistema."));
     }
 
     /**

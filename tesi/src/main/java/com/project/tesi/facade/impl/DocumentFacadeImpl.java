@@ -29,17 +29,15 @@ public class DocumentFacadeImpl implements DocumentFacade {
     private final FileStorageService fileStorageService;
     private final UserService userService;
     private final DocumentMapper documentMapper;
-    private final SlotService slotService;
 
     public DocumentFacadeImpl(DocumentService documentService,
                               FileStorageService fileStorageService,
                               UserService userService,
-                              DocumentMapper documentMapper, SlotService slotService) {
+                              DocumentMapper documentMapper) {
         this.documentService = documentService;
         this.fileStorageService = fileStorageService;
         this.userService = userService;
         this.documentMapper = documentMapper;
-        this.slotService = slotService;
     }
 
     /**

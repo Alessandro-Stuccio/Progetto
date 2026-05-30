@@ -8,7 +8,6 @@ import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.common.ResourceNotFoundException;
 import com.project.tesi.exception.document.DocumentNotFoundException;
 import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.model.Document;

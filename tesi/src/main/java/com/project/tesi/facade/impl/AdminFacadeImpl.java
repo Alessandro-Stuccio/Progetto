@@ -2,21 +2,15 @@ package com.project.tesi.facade.impl;
 
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
-import com.project.tesi.dto.response.SubscriptionResponse;
-import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.facade.AdminFacade;
-import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.mapper.PlanMapper;
-import com.project.tesi.mapper.SubscriptionMapper;
-import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.model.Plan;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
-import com.project.tesi.service.ChatService;
 import com.project.tesi.service.PlanService;
 import com.project.tesi.service.SlotService;
 import com.project.tesi.service.SubscriptionService;
@@ -39,25 +33,24 @@ import java.util.stream.Collectors;
  * e aggregazione delle statistiche globali della piattaforma.
  */
 @Component
-public class AdminFacadeImpl extends ModeratorFacadeImpl implements AdminFacade {
+public class AdminFacadeImpl implements AdminFacade {
 
     private final PlanService planService;
     private final SlotService slotService;
     private final PlanMapper planMapper;
+    private final SubscriptionService subscriptionService;
+    private final UserService userService;
 
-    public AdminFacadeImpl(ChatService chatService,
-                           UserService userService,
-                           SubscriptionService subscriptionService,
-                           UserMapper userMapper,
-                           SubscriptionMapper subscriptionMapper,
+    public AdminFacadeImpl(UserService userService,
                            PlanService planService,
                            SlotService slotService,
                            PlanMapper planMapper,
-                           SubscriptionFacade subscriptionFacade) {
-        super(chatService, userService, subscriptionService, userMapper, subscriptionMapper, planService, subscriptionFacade);
+                           SubscriptionService subscriptionService) {
         this.planService = planService;
         this.slotService = slotService;
         this.planMapper = planMapper;
+        this.subscriptionService = subscriptionService;
+        this.userService=userService;
     }
 
     /**

@@ -2,7 +2,7 @@ package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.exception.booking.SlotAlreadyBookedException;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SlotRepository;
@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,7 +21,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -134,7 +132,7 @@ class SlotServiceImplTest {
         when(slotRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> slotService.getSlot(99L))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("99");
     }
 
@@ -174,7 +172,7 @@ class SlotServiceImplTest {
         when(slotRepository.findByIdWithLock(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> slotService.saveBooking(999L, client, "https://meet.jit.si/room"))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("999");
     }
 
@@ -196,7 +194,7 @@ class SlotServiceImplTest {
         when(slotRepository.existsById(99L)).thenReturn(false);
 
         assertThatThrownBy(() -> slotService.deleteSlot(99L))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("99");
 
         verify(slotRepository, never()).deleteById(any());
@@ -225,7 +223,7 @@ class SlotServiceImplTest {
         when(slotRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> slotService.cancelBooking(999L, 1L))
-                .isInstanceOf(ResourceNotFoundException.class)
+                .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("999");
 
         verify(slotRepository, never()).save(any());

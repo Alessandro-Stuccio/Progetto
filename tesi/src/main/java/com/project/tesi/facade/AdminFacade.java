@@ -8,7 +8,7 @@ import com.project.tesi.dto.response.stats.AdminStatsResponse;
  * Facade per le operazioni amministrative.
  * Estende {@link ModeratorFacade} aggiungendo gestione piani e statistiche globali.
  */
-public interface AdminFacade extends ModeratorFacade {
+public interface AdminFacade {
 
     /**
      * Crea un nuovo piano di abbonamento.

@@ -1,6 +1,6 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Plan;
 import com.project.tesi.repository.PlanRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,7 +88,7 @@ class PlanServiceImplTest {
         when(planRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> planService.getPlanById(99L))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     // ---- createPlan ----
@@ -122,7 +122,7 @@ class PlanServiceImplTest {
         when(planRepository.existsById(99L)).thenReturn(false);
 
         assertThatThrownBy(() -> planService.deletePlan(99L))
-                .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
 
         verify(planRepository, never()).deleteById(any());
     }

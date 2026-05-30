@@ -2,14 +2,13 @@ package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.exception.booking.SlotAlreadyBookedException;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SlotRepository;
 import com.project.tesi.service.SlotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -46,7 +45,7 @@ public class SlotServiceImpl implements SlotService {
     @Override
     public Slot getSlot(Long slotId) {
         return slotRepository.findById(slotId)
-                .orElseThrow(() -> new ResourceNotFoundException("Slot", slotId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Slot", slotId));
     }
 
     /**
@@ -65,7 +64,7 @@ public class SlotServiceImpl implements SlotService {
     @Override
     public Slot saveBooking(Long slotId, User user, String meetingLink) {
         Slot slot = slotRepository.findByIdWithLock(slotId)
-                .orElseThrow(() -> new ResourceNotFoundException("Slot", slotId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Slot", slotId));
 
         if (slot.getBookedBy() != null) {
             throw new SlotAlreadyBookedException("Slot non più disponibile");
@@ -81,7 +80,7 @@ public class SlotServiceImpl implements SlotService {
     @Override
     public void deleteSlot(Long slotId) {
         if (!slotRepository.existsById(slotId)) {
-            throw new ResourceNotFoundException("Slot", slotId);
+            throw new CustomResourceNotFoundException("Slot", slotId);
         }
         slotRepository.deleteById(slotId);
     }
@@ -97,7 +96,7 @@ public class SlotServiceImpl implements SlotService {
     @Override
     public void cancelBooking(Long slotId, Long userId) {
         Slot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new ResourceNotFoundException("Prenotazione", slotId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Prenotazione", slotId));
         slot.setBookedBy(null);
         slot.setStatus(BookingStatus.CANCELED);
         slot.setMeetingLink(null);

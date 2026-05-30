@@ -1,6 +1,6 @@
 package com.project.tesi.service.impl;
 
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
@@ -61,12 +61,12 @@ public Subscription getSubscriptionStatus(User user) {
      * @param creditsPT      nuovi crediti per personal trainer
      * @param creditsNutri   nuovi crediti per nutrizionista
      * @return l'abbonamento aggiornato
-     * @throws com.project.tesi.exception.common.ResourceNotFoundException se l'abbonamento non esiste
+     * @throws CustomResourceNotFoundException se l'abbonamento non esiste
      */
     @Override
     public Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri) {
         Subscription sub = subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Abbonamento", subscriptionId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Abbonamento", subscriptionId));
 
         sub.setCurrentCreditsPT(creditsPT);
         sub.setCurrentCreditsNutri(creditsNutri);

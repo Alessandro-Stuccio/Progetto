@@ -1,21 +1,13 @@
 package com.project.tesi.controller;
 
-import com.project.tesi.dto.request.ModeratorUserUpdateRequest;
 import com.project.tesi.dto.request.PlanCreateRequestDTO;
-import com.project.tesi.dto.request.SubscriptionCreditsUpdateDTO;
-import com.project.tesi.dto.request.UserCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
-import com.project.tesi.dto.response.SubscriptionResponse;
-import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 import com.project.tesi.facade.AdminFacade;
-import com.project.tesi.model.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,95 +24,6 @@ public class AdminController {
         this.adminFacade = adminFacade;
     }
 
-    /**
-     * Recupera tutti gli utenti gestibili dall'amministratore corrente.
-     *
-     * @param user amministratore autenticato
-     * @return lista di {@link UserResponse}
-     */
-    @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getManageableUsers(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(adminFacade.getManageableUsers(user));
-    }
-
-    /**
-     * Crea un nuovo utente nel sistema.
-     *
-     * @param body dati del nuovo utente
-     * @param user amministratore autenticato che esegue l'operazione
-     * @return {@link UserResponse} con i dati dell'utente creato
-     */
-    @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body,
-            @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(adminFacade.createUser(body, user));
-    }
-
-    /**
-     * Aggiorna i dati di un utente esistente.
-     *
-     * @param id   identificativo dell'utente da aggiornare
-     * @param body nuovi dati dell'utente
-     * @param user amministratore autenticato che esegue l'operazione
-     * @return {@link UserResponse} con i dati aggiornati
-     */
-    @PutMapping("/users/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
-            @Valid @RequestBody ModeratorUserUpdateRequest body,
-            @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(adminFacade.updateUser(id, body, user));
-    }
-
-    /**
-     * Disabilita un utente tramite soft delete (non viene rimosso dal database).
-     *
-     * @param id   identificativo dell'utente da disabilitare
-     * @param user amministratore autenticato che esegue l'operazione
-     * @return messaggio di conferma operazione
-     */
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id,
-            @AuthenticationPrincipal User user) {
-        adminFacade.deleteUser(id, user);
-        return ResponseEntity.ok(Map.of("message", "Utente disabilitato"));
-    }
-
-    /**
-     * Recupera i contatti disponibili per la chat dell'amministratore.
-     *
-     * @return lista di {@link UserResponse} contattabili
-     */
-    @GetMapping("/chat-contacts")
-    public ResponseEntity<List<UserResponse>> getChatContacts() {
-        return ResponseEntity.ok(adminFacade.getChatContacts());
-    }
-
-    /**
-     * Recupera tutti gli abbonamenti presenti nel sistema.
-     *
-     * @return lista di {@link SubscriptionResponse}
-     */
-    @GetMapping("/subscriptions")
-    public ResponseEntity<List<SubscriptionResponse>> getAllSubscriptions() {
-        return ResponseEntity.ok(adminFacade.getAllSubscriptions());
-    }
-
-    /**
-     * Aggiorna manualmente i crediti di un abbonamento.
-     *
-     * @param id      identificativo dell'abbonamento
-     * @param request nuovi valori dei crediti PT e nutrizionista
-     * @return {@link SubscriptionResponse} aggiornato
-     */
-    @PutMapping("/subscriptions/{id}/credits")
-    public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id,
-            @Valid @RequestBody SubscriptionCreditsUpdateDTO request) {
-        return ResponseEntity.ok(adminFacade.updateSubscriptionCredits(
-                id,
-                request.creditsPT() != null ? request.creditsPT() : 0,
-                request.creditsNutri() != null ? request.creditsNutri() : 0
-        ));
-    }
 
     /**
      * Crea un nuovo piano di abbonamento.

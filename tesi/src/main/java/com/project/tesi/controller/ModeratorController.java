@@ -20,7 +20,7 @@ import java.util.Map;
  * Espone /api/moderator. Richiede ruolo MODERATOR.
  */
 @RestController
-@RequestMapping("/api/moderator")
+@RequestMapping(value = {"/api/moderator", "/api/admin"})
 public class ModeratorController {
 
     private final ModeratorFacade moderatorFacade;

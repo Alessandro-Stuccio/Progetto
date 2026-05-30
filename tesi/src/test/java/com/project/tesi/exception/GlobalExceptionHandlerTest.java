@@ -1,6 +1,6 @@
 package com.project.tesi.exception;
 
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -54,7 +54,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("handleBaseException — ResourceNotFoundException (404) restituisce 404")
     void handleBaseException_resourceNotFoundException_returns404() {
-        ResourceNotFoundException ex = new ResourceNotFoundException("Risorsa non trovata");
+        CustomResourceNotFoundException ex = new CustomResourceNotFoundException("Risorsa non trovata");
         ResponseEntity<ErrorResponse> response = handler.handleBaseException(ex, request);
         assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
@@ -62,7 +62,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("handleBaseException — messaggio nell'ErrorResponse corrisponde")
     void handleBaseException_errorResponseContainsMessage() {
-        ResourceNotFoundException ex = new ResourceNotFoundException("Utente non trovato");
+        CustomResourceNotFoundException ex = new CustomResourceNotFoundException("Utente non trovato");
         ResponseEntity<ErrorResponse> response = handler.handleBaseException(ex, request);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getMessage()).isEqualTo("Utente non trovato");

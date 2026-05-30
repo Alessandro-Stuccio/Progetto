@@ -1,7 +1,7 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.ChatStatus;
-import com.project.tesi.exception.common.ResourceNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Chat;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.ChatRepository;
@@ -65,7 +65,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public void closeChat(Long chatId, User moderator) {
         Chat chat = chatRepository.findById(chatId)
-                .orElseThrow(() -> new ResourceNotFoundException("Chat", chatId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Chat", chatId));
         chat.setStatus(ChatStatus.CLOSED);
         chat.setClosedAt(LocalDateTime.now());
         chat.setClosedBy(moderator);
