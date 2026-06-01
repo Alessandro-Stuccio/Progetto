@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * Controller REST per la gestione degli slot e la ricerca dei professionisti.
- * Espone /api/professionals.
- */
+/** Ricerca dei professionisti e gestione dei loro slot. /api/professionals. */
 @RestController
 @RequestMapping("/api/professionals")
 public class ProfessionalController {
@@ -35,48 +32,26 @@ public class ProfessionalController {
         this.professionalFacade = professionalFacade;
     }
 
-    /**
-     * Restituisce la lista dei professionisti disponibili filtrata per ruolo.
-     *
-     * @param role ruolo richiesto (PERSONAL_TRAINER o NUTRITIONIST)
-     * @return lista di {@link ProfessionalSummaryDTO}
-     */
+    /** Professionisti disponibili filtrati per ruolo (PERSONAL_TRAINER o NUTRITIONIST). */
     @GetMapping
     public ResponseEntity<List<ProfessionalSummaryDTO>> getProfessionals(@RequestParam Role role) {
         return ResponseEntity.ok(userFacade.findAvailableProfessionals(role));
     }
 
-    /**
-     * Restituisce gli slot disponibili di un professionista per il calendario di prenotazione.
-     *
-     * @param id ID del professionista
-     * @return lista di {@link SlotDTO} con gli slot liberi
-     */
+    /** Slot liberi di un professionista, per il calendario di prenotazione. */
     @GetMapping("/{id}/slots")
     public ResponseEntity<List<SlotDTO>> getProfessionalSlots(@PathVariable Long id) {
         return ResponseEntity.ok(professionalFacade.getAvailableSlots(id));
     }
 
-    /**
-     * Aggiunge nuovi slot disponibili al calendario del professionista autenticato.
-     *
-     * @param user  professionista autenticato
-     * @param slots lista degli slot da creare
-     * @return lista di {@link SlotDTO} degli slot creati
-     */
+    /** Aggiunge slot al calendario del professionista autenticato. */
     @PostMapping("/slots")
     public ResponseEntity<List<SlotDTO>> createSlots(@AuthenticationPrincipal User user,
                                                       @RequestBody List<SlotDTO> slots) {
         return ResponseEntity.ok(professionalFacade.createSlots(user.getId(), slots));
     }
 
-    /**
-     * Rimuove uno slot dal calendario del professionista autenticato.
-     *
-     * @param slotId ID dello slot da eliminare
-     * @param user   professionista autenticato proprietario dello slot
-     * @return risposta 204 No Content in caso di successo
-     */
+    /** Rimuove uno slot del professionista autenticato (deve esserne il proprietario). */
     @DeleteMapping("/slots/{slotId}")
     public ResponseEntity<Void> deleteSlot(@PathVariable Long slotId,
                                             @AuthenticationPrincipal User user) {

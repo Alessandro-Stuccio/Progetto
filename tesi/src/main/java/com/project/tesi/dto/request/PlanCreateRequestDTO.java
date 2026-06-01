@@ -3,7 +3,7 @@ package com.project.tesi.dto.request;
 import jakarta.validation.constraints.*;
 
 /**
- * DTO per la creazione o aggiornamento di un piano di abbonamento.
+ * Crea o aggiorna un piano di abbonamento: nome, durata, prezzi (pieno e a rata mensile) e crediti mensili per PT e nutrizionista.
  */
 public record PlanCreateRequestDTO(
         @NotBlank @Size(min = 2, max = 100) String name,

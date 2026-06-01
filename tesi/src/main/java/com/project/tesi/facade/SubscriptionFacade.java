@@ -6,17 +6,12 @@ import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 
 /**
- * Facade per l'attivazione di abbonamenti.
+ * Attivazione degli abbonamenti.
  */
 public interface SubscriptionFacade {
 
     /**
-     * Attiva un abbonamento per l'utente con il piano e la frequenza di pagamento specificati.
-     *
-     * @param user             utente per cui attivare l'abbonamento
-     * @param plan             piano di abbonamento da attivare
-     * @param paymentFrequency frequenza di pagamento scelta (mensile, semestrale, annuale, ecc.)
-     * @return abbonamento attivato
+     * Attiva per l'utente un abbonamento al piano indicato con la frequenza di pagamento scelta.
      */
     Subscription activateSubscription(User user, Plan plan, PaymentFrequency paymentFrequency);
 }

@@ -7,7 +7,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Builder per l'entità Chat. Fluent interface per la costruzione della conversazione tra due utenti.
+ * Costruisce una Chat, cioè la conversazione tra due utenti, con interfaccia fluente.
  */
 public interface ChatBuilder {
     ChatBuilder id(Long id);

@@ -10,23 +10,16 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import javax.naming.Context;
 
 /**
- * Entry point dell'applicazione Spring Boot. Forza IPv4 per evitare timeout SMTP
- * su IPv6. In assenza di {@code JWT_SECRET} nell'ambiente imposta un valore di
- * default per semplificare il run in IDE.
+ * Entry point dell'applicazione Spring Boot. All'avvio forza IPv4 per evitare i
+ * timeout SMTP che capitano su IPv6.
  */
 @SpringBootApplication
 @EnableScheduling
 public class TesiApplication {
 
     public static void main(String[] args) {
-        // Forza l'utilizzo di IPv4 per risolvere problemi di timeout (es. verso
-        // smtp.gmail.com su IPv6)
+        // IPv4 obbligatorio: su IPv6 le connessioni a smtp.gmail.com vanno in timeout.
         System.setProperty("java.net.preferIPv4Stack", "true");
-
-        // Inserimento automatico della variabile JWT_SECRET qualora non venga definita
-        // manualmente dall'ambiente
-        // per facilitare il run tramite VS Code/IDE.
-
 
         SpringApplication.run(TesiApplication.class, args);
     }

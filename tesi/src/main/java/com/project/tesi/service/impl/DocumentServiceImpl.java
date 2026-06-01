@@ -1,7 +1,7 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.DocumentType;
-import com.project.tesi.exception.document.DocumentNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.DocumentRepository;
@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Implementazione di DocumentService. Gestisce CRUD documenti tramite DocumentRepository
- * e costruisce entità Document tramite DocumentBuilder.
- */
+/** CRUD dei documenti caricati dagli utenti. */
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
@@ -52,7 +49,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Document getDocumentById(Long documentId) {
         return documentRepository.findById(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException(documentId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Documento", documentId));
     }
 
     @Override
@@ -68,7 +65,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void deleteDocument(Long documentId) {
         Document doc = documentRepository.findById(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException(documentId));
+                .orElseThrow(() -> new CustomResourceNotFoundException("Documento", documentId));
         documentRepository.delete(doc);
     }
 

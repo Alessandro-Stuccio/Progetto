@@ -4,17 +4,15 @@ import com.project.tesi.exception.common.BaseException;
 import org.springframework.http.HttpStatus;
 
 /**
- * Eccezione lanciata quando uno slot è già stato prenotato da un altro utente
- * o non è più disponibile per Optimistic Locking (409 Conflict).
+ * La si lancia quando lo slot è stato preso da un altro utente nel frattempo, o non è più
+ * disponibile a causa dell'optimistic locking. Risponde con 409.
  */
 public class SlotAlreadyBookedException extends BaseException {
 
-    /** Costruttore con messaggio predefinito. */
     public SlotAlreadyBookedException() {
         super("Lo slot selezionato non è più disponibile.", HttpStatus.CONFLICT);
     }
 
-    /** @param message messaggio personalizzato */
     public SlotAlreadyBookedException(String message) {
         super(message, HttpStatus.CONFLICT);
     }

@@ -303,20 +303,28 @@ Gli scheduler vengono disabilitati automaticamente durante i test.
 
 ## Gestione delle eccezioni
 
-Tutte le eccezioni di dominio estendono `BaseException` (che trasporta lo status HTTP) e sono
+Le eccezioni **di dominio** estendono `BaseException` (che trasporta lo status HTTP) e sono
 organizzate per modulo. `GlobalExceptionHandler` (`@RestControllerAdvice`) le mappa centralmente
-sulle risposte HTTP.
+sulle risposte HTTP. Le situazioni **già coperte da Spring** riusano le eccezioni standard del
+framework invece di duplicarle in classi custom:
+
+| Caso | Eccezione usata | Status |
+|---|---|---|
+| Accesso negato per ruolo | `org.springframework.security.access.AccessDeniedException` (Spring) | 403 |
+| Conflitto optimistic locking | `org.springframework.orm.ObjectOptimisticLockingFailureException` (Spring) | 409 |
+| Credenziali errate | `BadCredentialsException` (Spring) | 401 |
+| Risorsa non trovata (entità) | `CustomResourceNotFoundException` | 404 |
+
+Eccezioni di dominio per modulo:
 
 | Modulo | Esempi |
 |---|---|
-| `exception/common/` | `BaseException`, `BusinessLogicException`, `ConcurrentUpdateException`, `ResourceNotFoundException`, `ResourceAlreadyExistsException`, `UnauthorizedAccessException` |
-| `exception/auth/` | eccezioni di autenticazione |
+| `exception/common/` | `BaseException`, `BusinessLogicException`, `CustomResourceNotFoundException`, `ResourceAlreadyExistsException` |
 | `exception/booking/` | `SlotAlreadyBookedException`, `InsufficientCreditsException`, `BookingCancellationException`, `ProfessionalNotAssignedException`, `ProfessionalSoldOutException`, `SubscriptionExpiredException` |
 | `exception/chat/` | `ChatNotAllowedException` |
-| `exception/document/` | `DocumentNotFoundException`, `DocumentStorageException`, `InvalidFileException` |
+| `exception/document/` | `DocumentStorageException`, `InvalidFileException` |
 | `exception/email/` | `EmailDeliveryException` |
 | `exception/review/` | `ReviewNotAllowedException` |
-| `exception/subscription/` | `SubscriptionNotFoundException` |
 
 ---
 
@@ -398,13 +406,16 @@ Disponibili con il profilo `dev` (seed da `data.sql`). **Password comune: `passw
 
 | Variabile | Default dev | Descrizione |
 |---|---|---|
-| `JWT_SECRET` | fallback in `application.yaml` | Chiave segreta JWT (min. 32 caratteri; obbligatoria in produzione) |
 | `MAIL_FROM` | `koreadministration@gmail.com` | Mittente delle email transazionali |
 | `SMTP_HOST` | `smtp.gmail.com` | Host SMTP |
 | `SMTP_PORT` | `587` | Porta SMTP |
 | `SMTP_USERNAME` | `koreadministration@gmail.com` | Username SMTP |
 | `SMTP_PASSWORD` | *(app password)* | Password / app password SMTP |
 | `cors.allowed-origins` | `http://localhost:4200` | Origin consentita per CORS |
+
+> **Chiave di firma JWT** — viene **generata casualmente all'avvio** (`RandomGenerationServiceImpl`,
+> `jwt.length: 128`, algoritmo HS256): non richiede variabili d'ambiente. Conseguenza: i token
+> emessi diventano invalidi a ogni riavvio dell'applicazione.
 
 ### Profili
 

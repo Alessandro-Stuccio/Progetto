@@ -12,41 +12,20 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Repository per l'accesso ai dati dell'entità {@link Message}.
+ * Gestisce i messaggi delle chat: lettura paginata, conteggio non letti e cambi di stato in bulk.
  */
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
-    /**
-     * Recupera i messaggi di una chat con paginazione, ordinati per timestamp
-     * decrescente (i più recenti prima).
-     *
-     * @param chatId   ID della chat
-     * @param pageable parametri di paginazione
-     * @return lista paginata di messaggi
-     */
+    // Messaggi di una chat, paginati e dal più recente.
     @Query("SELECT m FROM Message m WHERE m.chat.id = :chatId ORDER BY m.timeStamp DESC")
     List<Message> findMessagesByChatId(@Param("chatId") Long chatId, Pageable pageable);
 
-    /**
-     * Recupera l'ultimo messaggio inviato in una chat.
-     *
-     * @param chatId ID della chat
-     * @return il messaggio più recente, o {@code null} se la chat è vuota
-     */
+    // Ultimo messaggio della chat (null se vuota).
     @Query("SELECT m FROM Message m WHERE m.chat.id = :chatId ORDER BY m.timeStamp DESC LIMIT 1")
     Message findLastMessageByChatId(@Param("chatId") Long chatId);
 
-    /**
-     * Conta i messaggi non letti da un utente in una chat specifica.
-     * Sono considerati non letti i messaggi ricevuti (non inviati) dall'utente
-     * con stato diverso da {@code readStatus}.
-     *
-     * @param chatId     ID della chat
-     * @param userId     ID dell'utente destinatario
-     * @param readStatus stato corrispondente a "letto"
-     * @return numero di messaggi non letti
-     */
+    // Messaggi non letti di un utente in una chat: quelli ricevuti (non inviati da lui) con stato diverso da "letto".
     @Query("SELECT COUNT(m) FROM Message m WHERE m.chat.id = :chatId AND m.status != :readStatus " +
             "AND ((m.chat.user1.id = :userId AND m.sentByUser1 = false) " +
             "OR (m.chat.user2.id = :userId AND m.sentByUser1 = true))")
@@ -54,13 +33,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
                                              @Param("userId") Long userId,
                                              @Param("readStatus") MessageStatus readStatus);
 
-    /**
-     * Conta i messaggi non letti totali di un utente su tutte le sue chat.
-     *
-     * @param userId     ID dell'utente
-     * @param readStatus stato corrispondente a "letto"
-     * @return totale messaggi non letti dell'utente
-     */
+    // Totale messaggi non letti dell'utente su tutte le sue chat.
     @Query("SELECT COUNT(m) FROM Message m WHERE m.status != :readStatus " +
             "AND m.chat.id IN (SELECT c.id FROM Chat c WHERE c.user1.id = :userId OR c.user2.id = :userId) " +
             "AND ((m.chat.user1.id = :userId AND m.sentByUser1 = false) " +
@@ -68,15 +41,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     int countTotalUnreadMessagesByUserId(@Param("userId") Long userId,
                                          @Param("readStatus") MessageStatus readStatus);
 
-    /**
-     * Aggiorna in bulk lo stato dei messaggi da {@code SENT} a {@code DELIVERED}
-     * per i soli messaggi ricevuti (non inviati) dall'utente nella chat indicata.
-     *
-     * @param chatId    ID della chat
-     * @param userId    ID dell'utente destinatario
-     * @param sent      stato {@code SENT} da cui partire
-     * @param delivered stato {@code DELIVERED} da impostare
-     */
+    // Update in bulk: porta da SENT a DELIVERED i soli messaggi ricevuti dall'utente nella chat.
     @Modifying
     @Query("UPDATE Message m SET m.status = :delivered " +
            "WHERE m.chat.id = :chatId AND m.status = :sent " +
@@ -87,14 +52,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
                                   @Param("sent") MessageStatus sent,
                                   @Param("delivered") MessageStatus delivered);
 
-    /**
-     * Aggiorna in bulk tutti i messaggi non ancora in stato {@code READ}
-     * a {@code READ} per i messaggi ricevuti dall'utente nella chat indicata.
-     *
-     * @param chatId ID della chat
-     * @param userId ID dell'utente destinatario
-     * @param read   stato {@code READ} da impostare
-     */
+    // Update in bulk: segna come READ tutti i messaggi ricevuti dall'utente nella chat non ancora letti.
     @Modifying
     @Query("UPDATE Message m SET m.status = :read " +
            "WHERE m.chat.id = :chatId AND m.status != :read " +

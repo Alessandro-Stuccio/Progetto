@@ -1,7 +1,7 @@
 package com.project.tesi.dto.response;
 
 /**
- * DTO di risposta per un piano di abbonamento con prezzi e crediti mensili.
+ * Un piano di abbonamento offerto, con prezzi (intero o rateizzato) e crediti mensili inclusi.
  */
 public class PlanResponseDTO {
 
@@ -12,6 +12,7 @@ public class PlanResponseDTO {
     private Double monthlyInstallmentPrice;
     private Integer monthlyCreditsPT;
     private Integer monthlyCreditsNutri;
+    private Boolean active;
 
 
     private PlanResponseDTO(Builder b) {
@@ -22,6 +23,7 @@ public class PlanResponseDTO {
         this.monthlyInstallmentPrice = b.monthlyInstallmentPrice;
         this.monthlyCreditsPT = b.monthlyCreditsPT;
         this.monthlyCreditsNutri = b.monthlyCreditsNutri;
+        this.active = b.active;
     }
 
     public static Builder builder() { return new Builder(); }
@@ -33,6 +35,7 @@ public class PlanResponseDTO {
     public Double getMonthlyInstallmentPrice() { return monthlyInstallmentPrice; }
     public Integer getMonthlyCreditsPT() { return monthlyCreditsPT; }
     public Integer getMonthlyCreditsNutri() { return monthlyCreditsNutri; }
+    public Boolean getActive() { return active; }
 
     public static class Builder {
         private Long id;
@@ -42,6 +45,7 @@ public class PlanResponseDTO {
         private Double monthlyInstallmentPrice;
         private Integer monthlyCreditsPT;
         private Integer monthlyCreditsNutri;
+        private Boolean active;
 
         public Builder id(Long id) { this.id = id; return this; }
         public Builder name(String name) { this.name = name; return this; }
@@ -50,6 +54,7 @@ public class PlanResponseDTO {
         public Builder monthlyInstallmentPrice(Double v) { this.monthlyInstallmentPrice = v; return this; }
         public Builder monthlyCreditsPT(Integer v) { this.monthlyCreditsPT = v; return this; }
         public Builder monthlyCreditsNutri(Integer v) { this.monthlyCreditsNutri = v; return this; }
+        public Builder active(Boolean active) { this.active = active; return this; }
 
         public PlanResponseDTO build() { return new PlanResponseDTO(this); }
     }

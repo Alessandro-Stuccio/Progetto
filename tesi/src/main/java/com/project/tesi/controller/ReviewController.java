@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controller REST per le recensioni dei professionisti.
- * Espone /api/reviews.
- */
+/** Recensioni dei professionisti. /api/reviews. */
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
@@ -36,13 +33,8 @@ public class ReviewController {
     }
 
     /**
-     * Aggiunge una recensione (1-5 stelle) di un cliente verso un professionista.
-     * L'operazione è consentita solo ai clienti che hanno effettuato almeno una prenotazione
-     * con il professionista e non hanno ancora lasciato una recensione.
-     *
-     * @param request contiene ID professionista, voto e testo della recensione
-     * @param user    cliente autenticato che lascia la recensione
-     * @return il {@link ReviewResponse} della recensione creata
+     * Recensione (1-5 stelle) di un cliente verso un professionista. Solo chi ha già prenotato
+     * con quel professionista e non l'ha ancora recensito può farlo.
      */
     @PostMapping
     public ResponseEntity<ReviewResponse> addReview(@Valid @RequestBody ReviewRequest request,
@@ -51,24 +43,15 @@ public class ReviewController {
         return ResponseEntity.ok(reviewFacade.addReview(request, user.getId()));
     }
 
-    /**
-     * Restituisce tutte le recensioni ricevute dal professionista specificato.
-     *
-     * @param professionalId ID del professionista di cui recuperare le recensioni
-     * @return lista di {@link ReviewResponse}
-     */
+    /** Tutte le recensioni ricevute dal professionista indicato. */
     @GetMapping("/professional/{professionalId}")
     public ResponseEntity<List<ReviewResponse>> getReviewsForProfessional(@PathVariable Long professionalId) {
         return ResponseEntity.ok(reviewFacade.getReviewsForProfessional(professionalId));
     }
 
     /**
-     * Verifica se il cliente autenticato può recensire un professionista e se lo ha già fatto.
-     * Restituisce una mappa con i flag {@code canReview} e {@code hasReviewed}.
-     *
-     * @param user           cliente autenticato
-     * @param professionalId ID del professionista da verificare
-     * @return mappa con {@code canReview} (boolean) e {@code hasReviewed} (boolean)
+     * Dice al frontend se l'utente può recensire il professionista e se lo ha già fatto.
+     * Restituisce i due flag canReview e hasReviewed.
      */
     @GetMapping("/can-review")
     public ResponseEntity<Map<String, Object>> canReview(@AuthenticationPrincipal User user,

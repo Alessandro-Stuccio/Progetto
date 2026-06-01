@@ -1,7 +1,7 @@
 package com.project.tesi.dto.response;
 
 /**
- * DTO di risposta per i metadati di un documento caricato (senza dati binari).
+ * Metadati di un documento, senza i dati binari del file.
  */
 public class DocumentResponse {
 

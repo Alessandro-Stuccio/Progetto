@@ -3,6 +3,6 @@ package com.project.tesi.dto.request;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per l'aggiornamento delle note testuali di un documento.
+ * Aggiorna le note testuali di un documento (max 1000 caratteri).
  */
 public record UpdateNotesRequest(@Size(max = 1000) String notes) {}

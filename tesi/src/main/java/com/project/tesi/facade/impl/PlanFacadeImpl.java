@@ -11,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Implementazione di {@link PlanFacade}.
- * Delega a {@code PlanService} e usa {@code PlanMapper} per la conversione entità↔DTO.
+ * Gestione dei piani di abbonamento.
  */
 @Component
 public class PlanFacadeImpl implements PlanFacade {
@@ -28,7 +27,7 @@ public class PlanFacadeImpl implements PlanFacade {
     @Override
     @Transactional(readOnly = true)
     public List<PlanResponseDTO> getAllPlans() {
-        return planMapper.toResponseList(planService.getAllPlans());
+        return planMapper.toResponseList(planService.getActivePlans());
     }
 
     @Override
@@ -54,11 +53,5 @@ public class PlanFacadeImpl implements PlanFacade {
         existing.setMonthlyCreditsPT(updated.getMonthlyCreditsPT());
         existing.setMonthlyCreditsNutri(updated.getMonthlyCreditsNutri());
         return planMapper.toResponse(planService.createPlan(existing));
-    }
-
-    @Override
-    @Transactional
-    public void deletePlan(Long id) {
-        planService.deletePlan(id);
     }
 }

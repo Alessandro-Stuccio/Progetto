@@ -6,7 +6,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Builder per l'entità Subscription. Fluent interface per la costruzione di un abbonamento utente.
+ * Costruisce una Subscription, cioè l'abbonamento di un utente, con interfaccia fluente.
  */
 public interface SubscriptionBuilder {
     SubscriptionBuilder id(Long id);

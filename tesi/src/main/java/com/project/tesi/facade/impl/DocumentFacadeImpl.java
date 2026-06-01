@@ -4,7 +4,7 @@ import com.project.tesi.dto.response.DocumentResponse;
 import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.exception.document.InvalidFileException;
 import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.service.*;
@@ -18,9 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * Implementazione di {@link com.project.tesi.facade.DocumentFacade}.
- * Gestisce upload, download e accesso sicuro ai documenti verificando
- * i permessi del chiamante prima di ogni operazione su file o record DB.
+ * Upload, download e accesso ai documenti, con controllo dei permessi prima di ogni operazione.
  */
 @Component
 public class DocumentFacadeImpl implements DocumentFacade {
@@ -41,16 +39,9 @@ public class DocumentFacadeImpl implements DocumentFacade {
     }
 
     /**
-     * Carica un documento dopo averne validato il tipo in base al ruolo dell'uploader.
-     * Salva il file su filesystem tramite {@link com.project.tesi.service.FileStorageService};
-     * se la creazione del record DB fallisce, il file viene rimosso per evitare orfani.
-     *
-     * @param file       file da caricare
-     * @param clientId   ID dell'utente a cui appartiene il documento
-     * @param uploaderId ID dell'utente che esegue l'upload
-     * @param type       tipo documento (es. {@code WORKOUT_PLAN}, {@code DIET_PLAN}, {@code INSURANCE_POLICE})
-     * @return DTO con i metadati del documento caricato
-     * @throws com.project.tesi.exception.document.InvalidFileException se il tipo non corrisponde al ruolo dell'uploader
+     * Carica un documento dopo aver verificato che il tipo sia coerente col ruolo di chi lo carica
+     * (un PT carica solo schede, un nutrizionista solo diete, ecc.). Se la scrittura del record
+     * fallisce il file viene cancellato, così da non lasciare orfani.
      */
     @Override
     @Transactional
@@ -94,15 +85,7 @@ public class DocumentFacadeImpl implements DocumentFacade {
     }
 
     /**
-     * Elimina un documento verificando i permessi del chiamante.
-     * Solo l'uploader originale, un {@code ADMIN} o un {@code MODERATOR}
-     * possono procedere; altrimenti viene lanciata
-     * {@link com.project.tesi.exception.common.UnauthorizedAccessException}.
-     * Rimuove prima il record DB e poi il file da filesystem.
-     *
-     * @param id       ID del documento da eliminare
-     * @param callerId ID dell'utente che richiede l'eliminazione
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il chiamante non è autorizzato
+     * Elimina un documento (record e file): possono farlo solo chi l'ha caricato, un admin o un moderatore.
      */
     @Override
     @Transactional
@@ -112,7 +95,7 @@ public class DocumentFacadeImpl implements DocumentFacade {
         boolean isUploader = doc.getUploadedBy() != null && doc.getUploadedBy().getId().equals(callerId);
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
         if (!isUploader && !isPrivileged) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a eliminare questo documento");
+            throw new AccessDeniedException("Non sei autorizzato a eliminare questo documento");
         }
         String filePath = doc.getFilePath();
         documentService.deleteDocument(id);
@@ -120,14 +103,8 @@ public class DocumentFacadeImpl implements DocumentFacade {
     }
 
     /**
-     * Scarica i byte di un documento verificando i permessi del chiamante.
-     * Accesso consentito a: owner del documento, uploader, professionista assegnato
-     * al client owner (PT o Nutrizionista), {@code ADMIN} e {@code MODERATOR}.
-     *
-     * @param id       ID del documento da scaricare
-     * @param callerId ID dell'utente che richiede il download
-     * @return array di byte del file
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il chiamante non è autorizzato
+     * Scarica un documento. Possono accedervi il proprietario, chi l'ha caricato, il professionista
+     * assegnato al proprietario (PT o nutrizionista), gli admin e i moderatori.
      */
     @Override
     @Transactional(readOnly = true)
@@ -147,20 +124,14 @@ public class DocumentFacadeImpl implements DocumentFacade {
         boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
         if (!isOwner && !isUploader && !isAssignedProfessional && !isPrivileged) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a scaricare questo documento");
+            throw new AccessDeniedException("Non sei autorizzato a scaricare questo documento");
         }
         return fileStorageService.load(doc.getFilePath());
     }
 
     /**
-     * Restituisce tutti i documenti di un utente target previa verifica dei permessi.
-     * Accesso consentito a: l'utente stesso, il professionista assegnato,
-     * {@code ADMIN} e {@code MODERATOR}.
-     *
-     * @param targetUserId ID dell'utente di cui recuperare i documenti
-     * @param callerId     ID dell'utente che effettua la richiesta
-     * @return lista di DTO dei documenti
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il chiamante non è autorizzato
+     * Documenti di un utente, accessibili all'utente stesso, al suo professionista assegnato,
+     * agli admin e ai moderatori.
      */
     @Override
     @Transactional(readOnly = true)
@@ -177,21 +148,12 @@ public class DocumentFacadeImpl implements DocumentFacade {
                 && target.getAssignedNutritionist().getId().equals(callerId);
         boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
         if (!isSelf && !isAssignedProfessional && !isPrivileged) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a visualizzare questi documenti");
+            throw new AccessDeniedException("Non sei autorizzato a visualizzare questi documenti");
         }
         return documentMapper.toResponseList(documentService.getUserDocuments(target));
     }
 
-    /**
-     * Restituisce i documenti di un tipo specifico di un utente target previa verifica dei permessi.
-     * Stessa politica di accesso di {@link #getUserDocumentsDtoSecure}.
-     *
-     * @param targetUserId ID dell'utente di cui recuperare i documenti
-     * @param type         tipo documento da filtrare
-     * @param callerId     ID dell'utente che effettua la richiesta
-     * @return lista di DTO dei documenti del tipo richiesto
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il chiamante non è autorizzato
-     */
+    // Come getUserDocumentsDtoSecure, ma filtrando per tipo di documento (stessa politica di accesso).
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponse> getUserDocumentsByTypeDtoSecure(Long targetUserId, String type, Long callerId) {
@@ -207,7 +169,7 @@ public class DocumentFacadeImpl implements DocumentFacade {
                 && target.getAssignedNutritionist().getId().equals(callerId);
         boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
         if (!isSelf && !isAssignedProfessional && !isPrivileged) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a visualizzare questi documenti");
+            throw new AccessDeniedException("Non sei autorizzato a visualizzare questi documenti");
         }
         return documentMapper.toResponseList(documentService.getUserDocumentsByType(target, type));
     }
@@ -221,7 +183,7 @@ public class DocumentFacadeImpl implements DocumentFacade {
         boolean isUploader = doc.getUploadedBy() != null && doc.getUploadedBy().getId().equals(callerId);
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
         if (!isOwner && !isUploader && !isPrivileged) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a modificare le note di questo documento");
+            throw new AccessDeniedException("Non sei autorizzato a modificare le note di questo documento");
         }
         return documentMapper.toUpdatedNotesResponse(documentService.updateNotes(id, notes));
     }

@@ -6,7 +6,7 @@ import com.project.tesi.dto.response.*;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.facade.UserFacade;
 import com.project.tesi.util.BusinessConstants;
@@ -25,9 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Implementazione di {@link UserFacade}.
- * Aggrega dati da {@code UserService}, {@code SubscriptionService}, {@code SlotService}
- * e altri servizi per costruire la dashboard e gestire il profilo utente.
+ * Mette insieme i dati di più servizi per la dashboard del cliente e gestisce profilo e abbonamenti.
  */
 @Component
 public class UserFacadeImpl implements UserFacade {
@@ -68,12 +66,8 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     /**
-     * Aggiorna nome, cognome e immagine profilo dell'utente se i relativi campi
-     * della richiesta sono non nulli e non vuoti. Se viene fornita una nuova password,
-     * la codifica e invia un'email di notifica avvenuta modifica (errori SMTP non bloccanti).
-     *
-     * @param userId  identificatore dell'utente da aggiornare
-     * @param request dati di aggiornamento del profilo
+     * Aggiorna solo i campi valorizzati nella richiesta. Se arriva una nuova password la cifra
+     * e notifica l'utente via email (l'invio è best-effort e non blocca l'aggiornamento).
      */
     @Override
     @Transactional
@@ -99,20 +93,15 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     /**
-     * Aggrega in {@link ClientDashboardResponse} il profilo utente, l'abbonamento attivo
-     * (se presente), i professionisti assegnati (PT e/o nutrizionista) e la lista degli
-     * appuntamenti futuri. Accessibile solo agli utenti con ruolo {@code CLIENT}.
-     *
-     * @param userId identificatore del cliente
-     * @return {@link ClientDashboardResponse} con tutti i dati aggregati della dashboard
-     * @throws UnauthorizedAccessException se l'utente non ha ruolo CLIENT
+     * Compone la dashboard del cliente: profilo, abbonamento attivo, professionisti assegnati
+     * e prossimi appuntamenti. Riservata agli utenti con ruolo CLIENT.
      */
     @Override
     @Transactional(readOnly = true)
     public ClientDashboardResponse getClientDashboard(Long userId) {
         User user = userService.getUserById(userId);
         if (user.getRole() != Role.CLIENT) {
-            throw new UnauthorizedAccessException("La dashboard cliente è accessibile solo ai clienti.");
+            throw new AccessDeniedException("La dashboard cliente è accessibile solo ai clienti.");
         }
 
         List<ProfessionalSummaryDTO> followingProfessionals = new ArrayList<>();
@@ -189,22 +178,15 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     /**
-     * Risolve piano e frequenza di pagamento dalla {@link PlanRequest}, verifica che
-     * l'utente sia un CLIENT senza abbonamento attivo, poi delega l'attivazione
-     * a {@code SubscriptionFacade} e restituisce la risposta mappata.
-     *
-     * @param request dati del piano (planId, paymentFrequency)
-     * @param userId  identificatore del cliente che attiva l'abbonamento
-     * @return {@link SubscriptionResponse} con i dati dell'abbonamento attivato
-     * @throws UnauthorizedAccessException    se l'utente non è un CLIENT
-     * @throws ResourceAlreadyExistsException se il cliente ha già un abbonamento attivo
+     * Attiva un abbonamento per il cliente. Solo i CLIENT possono farlo e non devono già averne
+     * uno attivo; l'attivazione vera e propria è delegata a SubscriptionFacade.
      */
     @Override
     @Transactional
     public SubscriptionResponse activateSubscription(PlanRequest request, Long userId) {
         User user = userService.getUserById(userId);
         if (user.getRole() != Role.CLIENT) {
-            throw new UnauthorizedAccessException("Solo i clienti possono attivare un abbonamento.");
+            throw new AccessDeniedException("Solo i clienti possono attivare un abbonamento.");
         }
         if (subscriptionService.findActiveByUser(user).isPresent()) {
             throw new ResourceAlreadyExistsException("L'utente ha già un abbonamento attivo. Contattare l'amministrazione per cambiare piano.");

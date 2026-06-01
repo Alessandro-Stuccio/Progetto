@@ -1,9 +1,7 @@
 package com.project.tesi.util;
 
 /**
- * Costanti di business condivise tra i layer applicativi.
- * {@code MAX_CLIENTS_PER_PROFESSIONAL=50}, {@code MAX_MESSAGE_LENGTH=2000},
- * {@code MIN_PASSWORD_LENGTH=8}.
+ * Costanti di business condivise tra i vari layer.
  */
 public final class BusinessConstants {
 

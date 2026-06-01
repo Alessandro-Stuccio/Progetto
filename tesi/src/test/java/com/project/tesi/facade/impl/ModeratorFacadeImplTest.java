@@ -6,7 +6,7 @@ import com.project.tesi.dto.response.SubscriptionResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.mapper.SubscriptionMapper;
 import com.project.tesi.mapper.UserMapper;
@@ -178,14 +178,14 @@ class ModeratorFacadeImplTest {
     }
 
     @Test
-    @DisplayName("createUser MODERATOR: throws UnauthorizedAccessException when role is ADMIN")
+    @DisplayName("createUser MODERATOR: throws AccessDeniedException when role is ADMIN")
     void createUser_moderatorCreatesAdmin_throwsUnauthorized() {
         UserCreateRequestDTO request = new UserCreateRequestDTO(
                 "admin2@test.com", "Admin", "New", "password123", "ADMIN",
                 null, null, null, null);
 
         assertThatThrownBy(() -> facade.createUser(request, moderator))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(userService, never()).save(any());
     }
@@ -234,7 +234,7 @@ class ModeratorFacadeImplTest {
     }
 
     @Test
-    @DisplayName("createUser CLIENT with assignedPT: throws UnauthorizedAccessException when assigned user is not PT")
+    @DisplayName("createUser CLIENT with assignedPT: throws AccessDeniedException when assigned user is not PT")
     void createUser_withAssignedPT_notPT_throwsUnauthorized() {
         UserCreateRequestDTO request = new UserCreateRequestDTO(
                 "new@test.com", "Luca", "Bianchi", "password123", "CLIENT",
@@ -249,7 +249,7 @@ class ModeratorFacadeImplTest {
         when(userService.getUserById(1L)).thenReturn(notPT);
 
         assertThatThrownBy(() -> facade.createUser(request, moderator))
-                .isInstanceOf(UnauthorizedAccessException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("PERSONAL_TRAINER");
     }
 
@@ -274,7 +274,7 @@ class ModeratorFacadeImplTest {
     }
 
     @Test
-    @DisplayName("updateUser: throws UnauthorizedAccessException when target role is not manageable")
+    @DisplayName("updateUser: throws AccessDeniedException when target role is not manageable")
     void updateUser_targetRoleNotManageable_throwsUnauthorized() {
         User insuranceTarget = new User();
         insuranceTarget.setId(5L);
@@ -285,7 +285,7 @@ class ModeratorFacadeImplTest {
         when(userService.getUserById(5L)).thenReturn(insuranceTarget);
 
         assertThatThrownBy(() -> facade.updateUser(5L, request, moderator))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -329,7 +329,7 @@ class ModeratorFacadeImplTest {
     }
 
     @Test
-    @DisplayName("deleteUser MODERATOR: throws UnauthorizedAccessException for unmanageable role")
+    @DisplayName("deleteUser MODERATOR: throws AccessDeniedException for unmanageable role")
     void deleteUser_unmanageableRole_throwsUnauthorized() {
         User adminTarget = new User();
         adminTarget.setId(99L);
@@ -338,7 +338,7 @@ class ModeratorFacadeImplTest {
         when(userService.getUserById(99L)).thenReturn(adminTarget);
 
         assertThatThrownBy(() -> facade.deleteUser(99L, moderator))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(userService, never()).deleteUser(anyLong());
     }

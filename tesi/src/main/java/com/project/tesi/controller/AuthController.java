@@ -21,10 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * Controller REST per autenticazione e gestione credenziali.
- * Espone /api/auth. Endpoint pubblici (no JWT richiesto).
- */
+/** Autenticazione e gestione credenziali. Endpoint pubblici sotto /api/auth, senza JWT. */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -36,12 +33,7 @@ public class AuthController {
         this.authFacade = authFacade;
     }
 
-    /**
-     * Registra un nuovo utente con ruolo CLIENT.
-     *
-     * @param request dati di registrazione (nome, cognome, email, password)
-     * @return {@link UserResponse} con il profilo appena creato
-     */
+    /** Registra un nuovo utente; nasce sempre con ruolo CLIENT. */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.info("Registrazione nuovo utente: {}", request.email());
@@ -50,12 +42,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Autentica un utente tramite email e password.
-     *
-     * @param request credenziali di accesso (email, password)
-     * @return {@link AuthResponse} contenente il token JWT e i dati del profilo
-     */
+    /** Login con email e password; restituisce token JWT e dati del profilo. */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("Tentativo di login: {}", request.email());
@@ -72,36 +59,21 @@ public class AuthController {
                 .build());
     }
 
-    /**
-     * Invia un'email con link di reset password all'indirizzo indicato.
-     * Il link è valido per 30 minuti.
-     *
-     * @param request oggetto contenente l'email dell'account
-     * @return messaggio di conferma invio email
-     */
+    /** Manda via email il link di reset password. Il link scade dopo 30 minuti. */
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authFacade.forgotPassword(request.email());
         return ResponseEntity.ok(Map.of("message", "Link di reset inviato. Controlla la tua casella di posta."));
     }
 
-    /**
-     * Reimposta la password utilizzando il token ricevuto via email.
-     *
-     * @param request oggetto contenente il token di reset e la nuova password
-     * @return messaggio di conferma reset
-     */
+    /** Reimposta la password usando il token ricevuto via email. */
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authFacade.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok(Map.of("message", "Password reimpostata con successo."));
     }
 
-    /**
-     * Health check: verifica che il backend sia raggiungibile e operativo.
-     *
-     * @return mappa con stato "UP" e messaggio di conferma
-     */
+    /** Health check: serve al frontend per capire se il backend è raggiungibile. */
     @GetMapping("/ping")
     public ResponseEntity<Map<String, String>> ping() {
         return ResponseEntity.ok(Map.of("status", "UP", "message", "Il Backend è online e funziona correttamente"));

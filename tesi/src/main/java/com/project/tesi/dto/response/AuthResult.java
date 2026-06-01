@@ -3,7 +3,7 @@ package com.project.tesi.dto.response;
 import com.project.tesi.model.User;
 
 /**
- * DTO intermedio che raggruppa il token JWT e l'entità User dopo l'autenticazione.
+ * Risultato interno dell'autenticazione: tiene insieme il token JWT e l'utente, prima di costruire la risposta esposta.
  */
 public class AuthResult {
 

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * DTO per uno slot di disponibilità di un professionista (usato sia come request che come response).
+ * Uno slot di disponibilità di un professionista. Serve sia in ingresso che in uscita.
  */
 public class SlotDTO {
 

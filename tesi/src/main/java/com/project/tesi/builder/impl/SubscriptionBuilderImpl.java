@@ -8,7 +8,8 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità Subscription.
+ * Builder concreto per Subscription. In build valida date coerenti, rate pagate entro il totale e crediti
+ * non negativi.
  */
 public class SubscriptionBuilderImpl implements SubscriptionBuilder {
     private Long id;

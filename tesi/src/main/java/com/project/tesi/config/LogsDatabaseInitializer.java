@@ -13,9 +13,9 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 /**
- * Inizializzatore del database di log Log4j2. Attivo solo nel profilo {@code dev}:
- * crea il database {@code tesi_logs} e la tabella {@code app_logs} se non esistono,
- * usando JDBC diretto prima che Spring sia completamente avviato.
+ * Prepara il database dei log di Log4j2. Solo in profilo dev: crea {@code tesi_logs}
+ * e la tabella {@code app_logs} se mancano, via JDBC diretto perché serve prima che
+ * Spring abbia finito di avviarsi.
  */
 @Component
 @Profile("dev")
@@ -28,12 +28,7 @@ public class LogsDatabaseInitializer implements ApplicationRunner {
     private static final String USER = "postgres";
     private static final String PASS = "secret";
 
-    /**
-     * Verifica l'esistenza del database {@code tesi_logs} e lo crea se assente,
-     * quindi crea la tabella {@code app_logs} con {@code IF NOT EXISTS}.
-     *
-     * @param args argomenti di avvio (non utilizzati)
-     */
+    // Crea il database tesi_logs se non c'è, poi la tabella app_logs.
     @Override
     public void run(ApplicationArguments args) {
         try {

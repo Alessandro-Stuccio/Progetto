@@ -8,7 +8,7 @@ import com.project.tesi.enums.ChatStatus;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.mapper.ChatMapper;
 import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.model.Chat;
@@ -537,12 +537,12 @@ class ChatFacadeImplTest {
     }
 
     @Test
-    @DisplayName("closeChat: client role → throws UnauthorizedAccessException")
-    void closeChat_client_throwsUnauthorizedAccessException() {
+    @DisplayName("closeChat: client role → throws AccessDeniedException")
+    void closeChat_client_throwsAccessDeniedException() {
         when(userService.getUserById(1L)).thenReturn(clientUser);
 
         assertThatThrownBy(() -> chatFacade.closeChat(10L, 1L))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(chatService, never()).closeChat(any(), any());
     }
@@ -550,17 +550,17 @@ class ChatFacadeImplTest {
     // ─── getModerator ─────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("getModerator: moderator user → throws UnauthorizedAccessException")
-    void getModerator_moderator_throwsUnauthorizedAccessException() {
+    @DisplayName("getModerator: moderator user → throws AccessDeniedException")
+    void getModerator_moderator_throwsAccessDeniedException() {
         assertThatThrownBy(() -> chatFacade.getModerator(moderatorUser))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
-    @DisplayName("getModerator: admin user → throws UnauthorizedAccessException")
-    void getModerator_admin_throwsUnauthorizedAccessException() {
+    @DisplayName("getModerator: admin user → throws AccessDeniedException")
+    void getModerator_admin_throwsAccessDeniedException() {
         assertThatThrownBy(() -> chatFacade.getModerator(adminUser))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

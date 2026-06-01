@@ -4,30 +4,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Classe astratta base per tutte le eccezioni personalizzate dell'applicazione.
- * Ogni sottoclasse definisce il proprio codice HTTP tramite {@link HttpStatus},
- * che viene poi usato dal {@link com.project.tesi.exception.GlobalExceptionHandler}
- * per costruire la risposta di errore.
+ * Radice di tutte le eccezioni custom dell'app. L'idea è che ogni eccezione si porta dietro
+ * il proprio {@link HttpStatus}, così il GlobalExceptionHandler sa subito con che codice
+ * rispondere senza doverlo dedurre.
  */
 public abstract class BaseException extends RuntimeException {
 
-    /** Codice di stato HTTP associato all'eccezione (es. 404, 409, 422). */
+    // Lo status HTTP che il client riceverà (404, 409, 422, ...).
     private final HttpStatus status;
 
-    /**
-     * @param message messaggio di errore leggibile
-     * @param status  codice HTTP da restituire al client
-     */
     protected BaseException(String message, HttpStatus status) {
         super(message);
         this.status = status;
     }
 
-    /**
-     * @param message messaggio di errore leggibile
-     * @param status  codice HTTP da restituire al client
-     * @param cause   eccezione originale (per il logging)
-     */
+    // Variante che conserva la causa originale, utile per il logging.
     protected BaseException(String message, HttpStatus status, Throwable cause) {
         super(message, cause);
         this.status = status;

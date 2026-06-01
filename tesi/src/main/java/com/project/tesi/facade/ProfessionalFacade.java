@@ -9,58 +9,37 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Facade per le operazioni del professionista: slot, prenotazioni e statistiche.
+ * Operazioni del professionista: slot, prenotazioni e statistiche.
  */
 public interface ProfessionalFacade {
 
     /**
-     * Restituisce gli slot disponibili per un professionista.
-     *
-     * @param professionalId identificativo del professionista
-     * @return lista degli slot disponibili
+     * Gli slot ancora disponibili del professionista.
      */
     List<SlotDTO> getAvailableSlots(Long professionalId);
 
     /**
-     * Crea nuovi slot per un professionista.
-     *
-     * @param professionalId identificativo del professionista
-     * @param slots          lista di slot da creare
-     * @return lista degli slot creati
+     * Crea i nuovi slot indicati per il professionista.
      */
     List<SlotDTO> createSlots(Long professionalId, List<SlotDTO> slots);
 
     /**
-     * Elimina uno slot esistente verificando che il richiedente ne sia il proprietario.
-     *
-     * @param slotId      identificativo dello slot da eliminare
-     * @param requesterId identificativo del professionista che richiede l'eliminazione
+     * Elimina lo slot solo se il richiedente ne è il proprietario.
      */
     void deleteSlot(Long slotId, Long requesterId);
 
     /**
-     * Genera automaticamente gli slot a partire dal calendario settimanale del professionista
-     * per un dato intervallo di date.
-     *
-     * @param professional entità del professionista per cui generare gli slot
-     * @param startDate    data di inizio dell'intervallo
-     * @param endDate      data di fine dell'intervallo
+     * Genera gli slot dell'intervallo a partire dal calendario settimanale del professionista.
      */
     void generateSlotsFromSchedule(User professional, LocalDate startDate, LocalDate endDate);
 
     /**
-     * Restituisce le prossime prenotazioni di un professionista.
-     *
-     * @param professionalId identificativo del professionista
-     * @return lista delle prenotazioni future
+     * Le prossime prenotazioni del professionista.
      */
     List<BookingResponse> getUpcomingBookings(Long professionalId);
 
     /**
-     * Restituisce le statistiche del professionista (prenotazioni, recensioni, crediti, ecc.).
-     *
-     * @param professionalId identificativo del professionista
-     * @return riepilogo statistiche del professionista
+     * Statistiche del professionista: prenotazioni, recensioni, crediti e simili.
      */
     ProfessionalStatsResponse getProfessionalStats(Long professionalId);
 }

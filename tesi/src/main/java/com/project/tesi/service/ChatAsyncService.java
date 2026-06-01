@@ -1,33 +1,17 @@
 package com.project.tesi.service;
 
 /**
- * Servizio per operazioni asincrone sulla chat.
- * Gestisce salvataggio messaggi e aggiornamento stato consegna/lettura in modo non bloccante.
+ * Operazioni sulla chat eseguite in modo asincrono, così da non bloccare
+ * il thread che gestisce la richiesta o il messaggio in arrivo.
  */
 public interface ChatAsyncService {
 
-    /**
-     * Salva in modo asincrono un messaggio all'interno di una chat.
-     *
-     * @param chatId   identificativo della chat
-     * @param senderId identificativo del mittente
-     * @param content  contenuto testuale del messaggio
-     */
+    /** Salva un messaggio nella chat fuori dal thread chiamante. */
     void saveChatMessage(Long chatId, Long senderId, String content);
 
-    /**
-     * Marca in modo asincrono i messaggi di una chat come consegnati per un utente.
-     *
-     * @param chatId identificativo della chat
-     * @param userId identificativo dell'utente destinatario
-     */
+    /** Segna come consegnati i messaggi della chat per il destinatario. */
     void markAsDeliveredAsync(Long chatId, Long userId);
 
-    /**
-     * Marca in modo asincrono i messaggi di una chat come letti da un utente.
-     *
-     * @param chatId identificativo della chat
-     * @param userId identificativo dell'utente lettore
-     */
+    /** Segna come letti i messaggi della chat per l'utente. */
     void markAsReadAsync(Long chatId, Long userId);
 }

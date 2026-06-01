@@ -14,15 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Mapper per la conversione bidirezionale tra l'entità {@link User} e i suoi DTO.
- *
- * <ul>
- *   <li>{@code toUserResponse} — User → UserResponse (con dati aggiuntivi dal DB)</li>
- *   <li>{@code toUser} — RegisterRequest → User (per la registrazione)</li>
- * </ul>
- *
- * Per i professionisti, arricchisce la risposta con la media voti (dal {@link ReviewRepository})
- * e il conteggio clienti attivi (dal {@link UserRepository}).
+ * Converte gli utenti tra entità e DTO. Per i professionisti aggiunge alla risposta
+ * la media voti e il numero di clienti attivi, leggendoli dai repository.
  */
 @Component
 public class UserMapper {
@@ -35,21 +28,13 @@ public class UserMapper {
         this.reviewRepository = reviewRepository;
     }
 
-    /**
-     * Converte un'entità User nel DTO di risposta, arricchendo i dati:
-     * <ul>
-     *   <li>Per i clienti: nome del PT e Nutrizionista assegnati</li>
-     *   <li>Per i professionisti: media voti e numero clienti attivi</li>
-     * </ul>
-     *
-     * @param user l'entità utente
-     * @return il DTO di risposta con i dati completi
-     */
+    // Risposta completa: ai clienti aggiunge i nomi di PT e nutrizionista assegnati,
+    // ai professionisti la media voti e il conteggio dei clienti attivi.
     public UserResponse toUserResponse(User user) {
         Double avgRating = null;
         Integer clientsCount = null;
 
-        // Arricchimento dati per i professionisti
+        // Solo i professionisti hanno rating e clienti da calcolare.
         if (user.getRole() == Role.PERSONAL_TRAINER || user.getRole() == Role.NUTRITIONIST) {
             avgRating = reviewRepository.getAverageRating(user.getId());
             if (avgRating == null) avgRating = 0.0;
@@ -76,10 +61,8 @@ public class UserMapper {
                 .build();
     }
 
-    /**
-     * Versione leggera senza enrichment da DB; usata nei contesti admin/moderator
-     * dove il rating e il conteggio clienti vengono omessi per semplicità.
-     */
+    // Versione leggera senza accessi al DB: per le viste admin/moderator
+    // rating e conteggio clienti non servono.
     public UserResponse toAdminResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

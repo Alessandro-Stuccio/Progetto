@@ -4,40 +4,33 @@ import com.project.tesi.dto.request.PlanCreateRequestDTO;
 import com.project.tesi.dto.response.PlanResponseDTO;
 import com.project.tesi.dto.response.stats.AdminStatsResponse;
 
+import java.util.List;
+
 /**
- * Facade per le operazioni amministrative.
- * Estende {@link ModeratorFacade} aggiungendo gestione piani e statistiche globali.
+ * Operazioni amministrative: oltre a quanto offerto da ModeratorFacade, aggiunge
+ * la gestione dei piani e le statistiche globali.
  */
 public interface AdminFacade {
 
-    /**
-     * Crea un nuovo piano di abbonamento.
-     *
-     * @param request dati del piano da creare
-     * @return il piano creato
-     */
     PlanResponseDTO createPlan(PlanCreateRequestDTO request);
 
-    /**
-     * Aggiorna un piano di abbonamento esistente.
-     *
-     * @param id      identificativo del piano da aggiornare
-     * @param request nuovi dati del piano
-     * @return il piano aggiornato
-     */
     PlanResponseDTO updatePlan(Long id, PlanCreateRequestDTO request);
 
     /**
-     * Elimina un piano di abbonamento.
-     *
-     * @param id identificativo del piano da eliminare
+     * Tutti i piani, compresi quelli disabilitati, per la gestione amministrativa.
      */
-    void deletePlan(Long id);
+    List<PlanResponseDTO> getAllPlansForAdmin();
 
     /**
-     * Restituisce le statistiche globali della piattaforma per l'amministratore.
+     * Abilita o disabilita un piano (soft-disable: il record resta in DB). Disabilitare
+     * è permesso solo se al piano non sono collegati abbonamenti.
      *
-     * @return riepilogo delle statistiche amministrative
+     * @throws IllegalStateException se il piano ha abbonamenti collegati
+     */
+    PlanResponseDTO setPlanStatus(Long id, boolean active);
+
+    /**
+     * Statistiche globali della piattaforma.
      */
     AdminStatsResponse getAdminStats();
 }

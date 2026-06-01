@@ -8,7 +8,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità WeeklySchedule.
+ * Builder concreto per WeeklySchedule. In build pretende i campi obbligatori e che startTime preceda endTime.
  */
 public class WeeklyScheduleBuilderImpl implements WeeklyScheduleBuilder {
     private Long id;

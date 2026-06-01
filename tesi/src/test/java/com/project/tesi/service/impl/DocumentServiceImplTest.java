@@ -1,7 +1,7 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.enums.DocumentType;
-import com.project.tesi.exception.document.DocumentNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.DocumentRepository;
@@ -145,12 +145,12 @@ class DocumentServiceImplTest {
     }
 
     @Test
-    @DisplayName("getDocumentById: throws DocumentNotFoundException when document id does not exist")
-    void getDocumentById_notFound_throwsDocumentNotFoundException() {
+    @DisplayName("getDocumentById: throws CustomResourceNotFoundException when document id does not exist")
+    void getDocumentById_notFound_throwsCustomResourceNotFoundException() {
         when(documentRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> documentService.getDocumentById(999L))
-                .isInstanceOf(DocumentNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     // ---- getUserDocuments ----
@@ -210,12 +210,12 @@ class DocumentServiceImplTest {
     }
 
     @Test
-    @DisplayName("deleteDocument: throws DocumentNotFoundException when document id does not exist")
-    void deleteDocument_notFound_throwsDocumentNotFoundException() {
+    @DisplayName("deleteDocument: throws CustomResourceNotFoundException when document id does not exist")
+    void deleteDocument_notFound_throwsCustomResourceNotFoundException() {
         when(documentRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> documentService.deleteDocument(999L))
-                .isInstanceOf(DocumentNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
 
         verify(documentRepository, never()).delete(any());
     }
@@ -236,12 +236,12 @@ class DocumentServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateNotes: throws DocumentNotFoundException when document does not exist")
-    void updateNotes_documentNotFound_throwsDocumentNotFoundException() {
+    @DisplayName("updateNotes: throws CustomResourceNotFoundException when document does not exist")
+    void updateNotes_documentNotFound_throwsCustomResourceNotFoundException() {
         when(documentRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> documentService.updateNotes(999L, "notes"))
-                .isInstanceOf(DocumentNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
 
         verify(documentRepository, never()).save(any());
     }

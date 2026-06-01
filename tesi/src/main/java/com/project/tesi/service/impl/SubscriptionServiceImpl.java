@@ -1,7 +1,6 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
-import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SubscriptionRepository;
@@ -12,10 +11,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Implementazione di {@link SubscriptionService}.
- * Gestisce gli abbonamenti tramite {@link com.project.tesi.repository.SubscriptionRepository}.
- * {@code findActiveByUserWithLock} usa pessimistic write lock per operazioni
- * concorrenti sui crediti, garantendo isolamento in scenari di prenotazione simultanea.
+ * Gestione degli abbonamenti. findActiveByUserWithLock prende un pessimistic write lock
+ * sulla riga: serve quando si scalano i crediti durante prenotazioni simultanee, per evitare
+ * che due booking concorrenti scendano sotto zero.
  */
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
@@ -29,7 +27,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
 public Subscription getSubscriptionStatus(User user) {
         return subscriptionRepository.findByUserAndActiveTrue(user)
-                .orElseThrow(SubscriptionNotFoundException::new);
+                .orElseThrow(() -> new CustomResourceNotFoundException("Nessun abbonamento attivo trovato."));
     }
 
     @Override
@@ -52,17 +50,6 @@ public Subscription getSubscriptionStatus(User user) {
         return subscriptionRepository.findAll();
     }
 
-    /**
-     * Aggiorna i crediti dell'abbonamento identificato dall'id.
-     * Carica l'entità dal repository, sovrascrive i crediti PT e Nutrizionista
-     * con i valori forniti e persiste le modifiche.
-     *
-     * @param subscriptionId id dell'abbonamento da aggiornare
-     * @param creditsPT      nuovi crediti per personal trainer
-     * @param creditsNutri   nuovi crediti per nutrizionista
-     * @return l'abbonamento aggiornato
-     * @throws CustomResourceNotFoundException se l'abbonamento non esiste
-     */
     @Override
     public Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri) {
         Subscription sub = subscriptionRepository.findById(subscriptionId)

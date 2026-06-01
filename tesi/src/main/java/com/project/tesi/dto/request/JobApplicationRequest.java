@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per l'invio di una candidatura lavorativa con dati anagrafici e messaggio motivazionale.
+ * Candidatura per una posizione lavorativa: dati anagrafici, ruolo desiderato e messaggio motivazionale (max 2000 caratteri).
  */
 public record JobApplicationRequest(
         @NotBlank(message = "Il nome è obbligatorio") String firstName,

@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * DTO di risposta per un messaggio di chat con stato di lettura (SENT/DELIVERED/READ).
+ * Un messaggio di chat restituito via REST, con il relativo stato di lettura (SENT, DELIVERED, READ).
  */
 public class ChatMessageResponse {
 

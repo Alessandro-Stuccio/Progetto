@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Endpoint REST per la chat. Recupera lo storico dei messaggi e lo stato delle conversazioni,
- * usato al caricamento iniziale prima del WebSocket.
+ * REST della chat: storico messaggi e stato delle conversazioni. Serve al caricamento
+ * iniziale, prima che subentri il WebSocket per il tempo reale.
  */
 @RestController
 @RequestMapping("/api/chat")
@@ -58,7 +58,7 @@ public class ChatController {
         return ResponseEntity.ok(chatFacade.getConversation(chatId, user.getId(), page, size));
     }
 
-    /** Recupera la lista di tutte le conversazioni dell'utente autenticato con anteprima ultimo messaggio. */
+    /** Tutte le conversazioni dell'utente, con anteprima dell'ultimo messaggio. */
     @GetMapping("/conversations")
     public ResponseEntity<List<ConversationPreviewResponse>> getUserConversations(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatFacade.getUserConversations(user.getId()));
@@ -78,7 +78,7 @@ public class ChatController {
         return ResponseEntity.ok(chatFacade.getTotalUnreadCount(user.getId()));
     }
 
-    /** Restituisce il moderatore di supporto assegnato all'utente (riusa la conversazione esistente o assegna il meno carico). */
+    /** Moderatore di supporto dell'utente: riusa quello già assegnato o sceglie il meno carico. */
     @GetMapping("/moderator")
     public ResponseEntity<ClientBasicInfoResponse> getModerator(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(chatFacade.getModerator(user));

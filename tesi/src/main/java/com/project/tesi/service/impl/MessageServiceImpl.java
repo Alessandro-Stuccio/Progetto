@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Implementazione di MessageService. Gestisce la persistenza e il recupero dei messaggi
- * tramite MessageRepository.
- */
+/** Persistenza e lettura dei messaggi di chat. */
 @Service
 public class MessageServiceImpl implements MessageService {
 
@@ -25,10 +22,7 @@ public class MessageServiceImpl implements MessageService {
         this.messageRepository = messageRepository;
     }
 
-    /**
-     * Determina se il mittente corrisponde a user1 della chat (flag {@code sentByUser1}),
-     * costruisce l'entità Message e la persiste tramite repository.
-     */
+    // Il mittente non si memorizza direttamente: si tiene solo il flag sentByUser1, ricavato qui.
     @Override
     public Message saveMessage(Chat chat, User sender, String content) {
         boolean sentByUser1 = chat.getUser1().getId().equals(sender.getId());
@@ -46,19 +40,13 @@ public class MessageServiceImpl implements MessageService {
         return messageRepository.findMessagesByChatId(chatId, PageRequest.of(page, size));
     }
 
-    /**
-     * Esegue aggiornamento bulk tramite query repository: porta da SENT a DELIVERED
-     * tutti i messaggi della chat non ancora recapitati all'utente indicato.
-     */
+    // Update bulk: porta da SENT a DELIVERED i messaggi non ancora recapitati all'utente.
     @Override
     public void markAsDelivered(Long chatId, Long userId) {
         messageRepository.markMessagesAsDelivered(chatId, userId, MessageStatus.SENT, MessageStatus.DELIVERED);
     }
 
-    /**
-     * Esegue aggiornamento bulk tramite query repository: porta a READ tutti i messaggi
-     * della chat non ancora letti dall'utente indicato.
-     */
+    // Update bulk: porta a READ i messaggi della chat non ancora letti dall'utente.
     @Override
     public void markAsRead(Long chatId, Long userId) {
         messageRepository.markMessagesAsRead(chatId, userId, MessageStatus.READ);

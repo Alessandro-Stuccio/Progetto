@@ -28,9 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Implementazione di {@link com.project.tesi.facade.AdminFacade}.
- * Estende {@link ModeratorFacadeImpl} aggiungendo gestione dei piani di abbonamento
- * e aggregazione delle statistiche globali della piattaforma.
+ * Operazioni amministrative: gestione dei piani di abbonamento e statistiche globali della piattaforma.
  */
 @Component
 public class AdminFacadeImpl implements AdminFacade {
@@ -54,14 +52,7 @@ public class AdminFacadeImpl implements AdminFacade {
     }
 
     /**
-     * Crea un nuovo piano di abbonamento.
-     * Valida la presenza di tutti i campi obbligatori e l'unicità del nome
-     * prima di persistere il piano tramite {@link com.project.tesi.service.PlanService}.
-     *
-     * @param request dati del piano da creare
-     * @return DTO del piano creato
-     * @throws ResourceAlreadyExistsException se esiste già un piano con lo stesso nome
-     * @throws IllegalArgumentException se campi obbligatori mancano o la durata è non valida
+     * Crea un piano dopo aver controllato che i campi obbligatori ci siano e che il nome sia univoco.
      */
     @Override
     @Transactional
@@ -91,15 +82,7 @@ public class AdminFacadeImpl implements AdminFacade {
     }
 
     /**
-     * Aggiorna un piano esistente.
-     * Verifica l'unicità del nuovo nome (se cambiato) e applica le modifiche
-     * tramite {@link com.project.tesi.service.PlanService}.
-     *
-     * @param id      identificativo del piano da aggiornare
-     * @param request nuovi dati da applicare
-     * @return DTO del piano aggiornato
-     * @throws ResourceAlreadyExistsException se il nuovo nome è già in uso
-     * @throws IllegalArgumentException se la durata fornita non è valida
+     * Aggiorna un piano; se cambia il nome ne verifica prima l'unicità.
      */
     @Override
     @Transactional
@@ -121,35 +104,30 @@ public class AdminFacadeImpl implements AdminFacade {
         return planMapper.toResponse(planService.createPlan(plan));
     }
 
-    /**
-     * Elimina un piano di abbonamento.
-     * Verifica che non esistano abbonamenti attivi collegati al piano
-     * prima di procedere con l'eliminazione; in caso contrario lancia
-     * {@link IllegalStateException}.
-     *
-     * @param id identificativo del piano da eliminare
-     * @throws IllegalStateException se esistono sottoscrizioni attive sul piano
-     */
+    // Tutti i piani, compresi i disabilitati, per la vista amministrativa.
     @Override
-    @Transactional
-    public void deletePlan(Long id) {
-        if (subscriptionService.hasSubscribersByPlan(id)) {
-            throw new IllegalStateException("Impossibile eliminare il piano: esistono sottoscrizioni collegate.");
-        }
-        planService.deletePlan(id);
+    @Transactional(readOnly = true)
+    public List<PlanResponseDTO> getAllPlansForAdmin() {
+        return planMapper.toResponseList(planService.getAllPlans());
     }
 
     /**
-     * Restituisce le statistiche globali della piattaforma.
-     * Aggrega dati da {@link com.project.tesi.service.UserService},
-     * {@link com.project.tesi.service.SubscriptionService},
-     * {@link com.project.tesi.service.SlotService} e
-     * {@link com.project.tesi.service.PlanService} per costruire
-     * un {@link com.project.tesi.dto.response.stats.AdminStatsResponse} comprensivo di:
-     * utenti per ruolo, trend mensile iscrizioni, popolarità piani,
-     * statistiche crediti, revenue stimata e carico di lavoro dei professionisti.
-     *
-     * @return risposta aggregata con tutte le statistiche admin
+     * Abilita o disabilita un piano (soft-disable: il record resta in DB). Si può disabilitare
+     * solo se non ha abbonamenti collegati, altrimenti viene rifiutato.
+     */
+    @Override
+    @Transactional
+    public PlanResponseDTO setPlanStatus(Long id, boolean active) {
+        if (!active && subscriptionService.hasSubscribersByPlan(id)) {
+            throw new IllegalStateException("Impossibile disabilitare il piano: esistono abbonamenti collegati.");
+        }
+        return planMapper.toResponse(planService.setActive(id, active));
+    }
+
+    /**
+     * Mette insieme le statistiche globali della piattaforma: utenti per ruolo, iscrizioni degli
+     * ultimi sei mesi, popolarità dei piani, utilizzo dei crediti, revenue stimata, prenotazioni
+     * e carico di lavoro dei professionisti.
      */
     @Override
     @Transactional(readOnly = true)

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per l'aggiornamento parziale di un utente da parte del moderatore. Tutti i campi sono opzionali.
+ * Modifica di un utente fatta dal moderatore. Ogni campo è opzionale: valgono solo quelli valorizzati.
  */
 public record ModeratorUserUpdateRequest(
 

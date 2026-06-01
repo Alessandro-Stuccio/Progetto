@@ -6,7 +6,7 @@ import com.project.tesi.model.User;
 import java.time.LocalDateTime;
 
 /**
- * Builder per l'entità Slot. Fluent interface per la costruzione di uno slot di disponibilità professionale.
+ * Costruisce uno Slot di disponibilità di un professionista, con interfaccia fluente.
  */
 public interface SlotBuilder {
     SlotBuilder id(Long id);

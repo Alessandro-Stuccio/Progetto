@@ -7,7 +7,7 @@ import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.exception.document.InvalidFileException;
 import com.project.tesi.facade.InsuranceFacade;
 import com.project.tesi.mapper.DocumentMapper;
@@ -26,9 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * Implementazione di {@link com.project.tesi.facade.InsuranceFacade}.
- * Gestisce le operazioni dell'Insurance Manager: visibilità dei clienti,
- * abbonamenti attivi e polizze assicurative (documenti di tipo INSURANCE_POLICY).
+ * Operazioni dell'Insurance Manager: clienti, abbonamenti e polizze (documenti di tipo INSURANCE_POLICE).
  */
 @Component
 public class InsuranceFacadeImpl implements InsuranceFacade {
@@ -89,16 +87,8 @@ public class InsuranceFacadeImpl implements InsuranceFacade {
     }
 
     /**
-     * Carica una polizza assicurativa associandola a un cliente.
-     * Verifica che il destinatario abbia ruolo {@code CLIENT} e forza il tipo
-     * documento a {@link com.project.tesi.enums.DocumentType#INSURANCE_POLICE}.
-     * In caso di errore durante la creazione del record DB rimuove il file già salvato.
-     *
-     * @param file     file della polizza
-     * @param clientId ID del cliente a cui associare la polizza
-     * @param callerId ID dell'Insurance Manager che esegue l'upload
-     * @return DTO con i metadati della polizza caricata
-     * @throws com.project.tesi.exception.document.InvalidFileException se il destinatario non è un CLIENT
+     * Carica una polizza per un cliente, forzando il tipo a INSURANCE_POLICE. Se la scrittura del
+     * record fallisce, il file appena salvato viene rimosso per non lasciare orfani sul filesystem.
      */
     @Override
     @Transactional
@@ -126,15 +116,6 @@ public class InsuranceFacadeImpl implements InsuranceFacade {
                 .build();
     }
 
-    /**
-     * Scarica i byte di una polizza assicurativa.
-     * Verifica tramite {@link #requireInsurancePolice} che il documento
-     * sia effettivamente di tipo {@code INSURANCE_POLICE}.
-     *
-     * @param documentId ID della polizza da scaricare
-     * @return array di byte del file
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il documento non è una polizza assicurativa
-     */
     @Override
     @Transactional(readOnly = true)
     public byte[] downloadPolicy(Long documentId) {
@@ -143,14 +124,7 @@ public class InsuranceFacadeImpl implements InsuranceFacade {
         return fileStorageService.load(doc.getFilePath());
     }
 
-    /**
-     * Elimina una polizza assicurativa.
-     * Verifica tramite {@link #requireInsurancePolice} che il documento sia di tipo
-     * {@code INSURANCE_POLICE}, poi rimuove il record DB e il file da filesystem.
-     *
-     * @param documentId ID della polizza da eliminare
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il documento non è una polizza assicurativa
-     */
+    // Rimuove sia il record sia il file; requireInsurancePolice impedisce di toccare documenti di altro tipo.
     @Override
     @Transactional
     public void deletePolicy(Long documentId) {
@@ -182,7 +156,7 @@ public class InsuranceFacadeImpl implements InsuranceFacade {
 
     private void requireInsurancePolice(Document doc) {
         if (doc.getType() != DocumentType.INSURANCE_POLICE) {
-            throw new UnauthorizedAccessException("Il documento non è una polizza assicurativa.");
+            throw new AccessDeniedException("Il documento non è una polizza assicurativa.");
         }
     }
 }

@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Implementazione di MessageBuilder. Valida che chat e content siano non nulli, che content non sia vuoto
- * e non superi MAX_MESSAGE_LENGTH (2000 caratteri). Lo status di default è SENT.
+ * Builder concreto per Message. In build pretende chat e content non nulli, content non vuoto ed entro
+ * MAX_MESSAGE_LENGTH; se lo status non è indicato vale SENT.
  */
 public class MessageBuilderImpl implements MessageBuilder {
 
@@ -58,14 +58,6 @@ public class MessageBuilderImpl implements MessageBuilder {
         return this;
     }
 
-    /**
-     * Valida chat e content, imposta status={@link MessageStatus#SENT} se non specificato,
-     * costruisce e ritorna l'entità {@link Message}.
-     *
-     * @return l'entità Message costruita
-     * @throws NullPointerException     se chat o content sono nulli
-     * @throws IllegalArgumentException se content è vuoto o supera MAX_MESSAGE_LENGTH
-     */
     @Override
     public Message build() {
         Objects.requireNonNull(this.chat, "chat è obbligatorio");

@@ -4,7 +4,8 @@ import com.project.tesi.enums.Role;
 import java.util.Objects;
 
 /**
- * DTO di risposta con il riepilogo di un professionista (ID, nome completo, ruolo, media voti).
+ * Riepilogo di un professionista, mostrato nelle liste e nella dashboard del cliente.
+ * isSoldOut segnala che il professionista ha raggiunto il limite di clienti attivi.
  */
 public class ProfessionalSummaryDTO {
 

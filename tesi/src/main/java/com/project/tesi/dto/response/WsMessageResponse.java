@@ -3,7 +3,8 @@ package com.project.tesi.dto.response;
 import java.util.Objects;
 
 /**
- * DTO di risposta WebSocket per un messaggio inviato in tempo reale tramite STOMP.
+ * Versione di un messaggio di chat pensata per l'invio in tempo reale via STOMP.
+ * Date e stato sono già serializzati come stringhe per il client.
  */
 public class WsMessageResponse {
 

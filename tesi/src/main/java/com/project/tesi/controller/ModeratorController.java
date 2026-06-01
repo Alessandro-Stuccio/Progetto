@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controller REST per le operazioni del moderatore.
- * Espone /api/moderator. Richiede ruolo MODERATOR.
- */
+/** Operazioni del moderatore. /api/moderator (e /api/admin), richiede ruolo MODERATOR. */
 @RestController
 @RequestMapping(value = {"/api/moderator", "/api/admin"})
 public class ModeratorController {
@@ -29,57 +26,31 @@ public class ModeratorController {
         this.moderatorFacade = moderatorFacade;
     }
 
-    /**
-     * Restituisce la lista degli utenti che il moderatore autenticato può gestire.
-     *
-     * @param user moderatore autenticato
-     * @return lista di {@link UserResponse}
-     */
+    /** Utenti che il moderatore autenticato può gestire. */
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getManageableUsers(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(moderatorFacade.getManageableUsers(user));
     }
 
-    /**
-     * Restituisce tutti gli abbonamenti presenti nel sistema.
-     *
-     * @return lista di {@link SubscriptionResponse}
-     */
+    /** Tutti gli abbonamenti del sistema. */
     @GetMapping("/subscriptions")
     public ResponseEntity<List<SubscriptionResponse>> getAllSubscriptions() {
         return ResponseEntity.ok(moderatorFacade.getAllSubscriptions());
     }
 
-    /**
-     * Restituisce i contatti disponibili per la chat del moderatore.
-     *
-     * @return lista di {@link UserResponse} con i contatti raggiungibili
-     */
+    /** Contatti con cui il moderatore può aprire una chat. */
     @GetMapping("/chat-contacts")
     public ResponseEntity<List<UserResponse>> getChatContacts() {
         return ResponseEntity.ok(moderatorFacade.getChatContacts());
     }
 
-    /**
-     * Crea un nuovo utente nel sistema.
-     *
-     * @param body dati del nuovo utente da creare
-     * @param user moderatore autenticato che esegue l'operazione
-     * @return il {@link UserResponse} dell'utente appena creato
-     */
+    /** Crea un nuovo utente. */
     @PostMapping("/users")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body, @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(moderatorFacade.createUser(body, user));
     }
 
-    /**
-     * Aggiorna i dati di un utente esistente.
-     *
-     * @param id   ID dell'utente da aggiornare
-     * @param body nuovi dati da applicare all'utente
-     * @param user moderatore autenticato che esegue l'operazione
-     * @return il {@link UserResponse} aggiornato
-     */
+    /** Aggiorna i dati di un utente esistente. */
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
             @Valid @RequestBody ModeratorUserUpdateRequest body,@AuthenticationPrincipal User user) {
@@ -87,12 +58,7 @@ public class ModeratorController {
     }
 
     /**
-     * Disabilita (soft delete) l'account di un utente impostando il flag {@code deleted=true}.
-     * L'utente non potrà più autenticarsi ma i dati vengono conservati.
-     *
-     * @param id   ID dell'utente da disabilitare
-     * @param user moderatore autenticato che esegue l'operazione
-     * @return messaggio di conferma
+     * Soft delete: marca l'utente come deleted. Non potrà più autenticarsi ma i dati restano in DB.
      */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id, @AuthenticationPrincipal User user) {
@@ -100,13 +66,7 @@ public class ModeratorController {
         return ResponseEntity.ok(Map.of("message", "Utente disabilitato"));
     }
 
-    /**
-     * Aggiorna manualmente i crediti di un abbonamento (crediti PT e crediti nutrizionista).
-     *
-     * @param id   ID dell'abbonamento da aggiornare
-     * @param body nuovi valori per creditsPT e creditsNutri
-     * @return il {@link SubscriptionResponse} aggiornato
-     */
+    /** Ritocca a mano i crediti di un abbonamento (PT e nutrizionista). */
     @PutMapping("/subscriptions/{id}/credits")
     public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id,
             @Valid @RequestBody UpdateCreditsRequest body) {

@@ -11,7 +11,7 @@ import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SubscriptionMapper;
@@ -207,13 +207,13 @@ class UserFacadeImplTest {
     // ─── getClientDashboard ───────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("getClientDashboard: non-CLIENT role → throws UnauthorizedAccessException")
+    @DisplayName("getClientDashboard: non-CLIENT role → throws AccessDeniedException")
     void getClientDashboard_nonClient_throwsUnauthorized() {
         ptUser.setRole(Role.PERSONAL_TRAINER);
         when(userService.getUserById(2L)).thenReturn(ptUser);
 
         assertThatThrownBy(() -> userFacade.getClientDashboard(2L))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -462,13 +462,13 @@ class UserFacadeImplTest {
     // ─── activateSubscription ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("activateSubscription: non-CLIENT role → throws UnauthorizedAccessException")
+    @DisplayName("activateSubscription: non-CLIENT role → throws AccessDeniedException")
     void activateSubscription_nonClient_throwsUnauthorized() {
         PlanRequest request = new PlanRequest(1L, PaymentFrequency.UNICA_SOLUZIONE);
         when(userService.getUserById(2L)).thenReturn(ptUser);
 
         assertThatThrownBy(() -> userFacade.activateSubscription(request, 2L))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

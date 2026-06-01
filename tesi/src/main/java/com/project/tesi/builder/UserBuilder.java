@@ -6,7 +6,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Builder per l'entità User. Fluent interface per la costruzione di un utente della piattaforma.
+ * Costruisce uno User della piattaforma con interfaccia fluente.
  */
 public interface UserBuilder {
     UserBuilder id(Long id);

@@ -9,7 +9,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità Chat.
+ * Builder concreto per Chat. In fase di build verifica che i due utenti siano presenti e diversi tra loro.
  */
 public class ChatBuilderImpl implements ChatBuilder {
     private Long id;

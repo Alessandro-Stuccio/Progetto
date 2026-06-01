@@ -14,9 +14,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configurazione RabbitMQ per la messaggistica asincrona della chat.
- * Definisce la coda principale ({@code chat.messages.queue}), la Dead Letter Queue
- * ({@code chat.messages.dlq}), l'exchange diretto e il binding.
+ * Configurazione RabbitMQ per la chat asincrona: coda principale, Dead Letter Queue,
+ * exchange diretto e relativo binding.
  */
 @Configuration
 public class RabbitMQConfig {
@@ -26,12 +25,7 @@ public class RabbitMQConfig {
     public static final String CHAT_EXCHANGE     = "chat.exchange";
     public static final String CHAT_ROUTING_KEY  = "chat.message";
 
-    /**
-     * Coda principale durabile con fallback sulla DLQ in caso di rifiuto
-     * permanente del messaggio.
-     *
-     * @return la coda {@code chat.messages.queue}
-     */
+    // Coda principale durabile: i messaggi rifiutati in modo permanente finiscono in DLQ.
     @Bean
     public Queue chatQueue() {
         return QueueBuilder.durable(CHAT_QUEUE)
@@ -40,53 +34,32 @@ public class RabbitMQConfig {
                 .build();
     }
 
-    /**
-     * Dead Letter Queue persistente che raccoglie i messaggi non elaborabili.
-     *
-     * @return la coda {@code chat.messages.dlq}
-     */
+    // Dead Letter Queue persistente: raccoglie i messaggi non elaborabili.
     @Bean
     public Queue deadLetterQueue() {
         return new Queue(CHAT_DLQ, true);
     }
 
-    /**
-     * Exchange diretto usato per l'instradamento dei messaggi chat.
-     *
-     * @return il {@link DirectExchange} {@code chat.exchange}
-     */
+    // Exchange diretto per instradare i messaggi della chat.
     @Bean
     public DirectExchange chatExchange() {
         return new DirectExchange(CHAT_EXCHANGE);
     }
 
-    /**
-     * Lega la coda principale all'exchange con routing key {@code chat.message}.
-     *
-     * @return il {@link Binding} configurato
-     */
+    // Lega la coda principale all'exchange con la routing key chat.message.
     @Bean
     public Binding chatBinding() {
         return BindingBuilder.bind(chatQueue()).to(chatExchange()).with(CHAT_ROUTING_KEY);
     }
 
-    /**
-     * Converter Jackson per serializzare/deserializzare i payload in JSON.
-     *
-     * @return il {@link MessageConverter} basato su Jackson
-     */
+    // Serializza e deserializza i payload in JSON.
     @Bean
     public MessageConverter messageConverter() {
         return new JacksonJsonMessageConverter();
     }
 
-    /**
-     * Factory per i listener RabbitMQ; usa il converter Jackson e disabilita
-     * il re-enqueue automatico dei messaggi rifiutati.
-     *
-     * @param connectionFactory connessione al broker
-     * @return la factory configurata
-     */
+    // Factory dei listener: usa il converter Jackson e disabilita il re-enqueue
+    // automatico dei messaggi rifiutati (li lasciamo gestire dalla DLQ).
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
@@ -96,12 +69,7 @@ public class RabbitMQConfig {
         return factory;
     }
 
-    /**
-     * Template RabbitMQ con converter Jackson per l'invio dei messaggi.
-     *
-     * @param connectionFactory connessione al broker
-     * @return il {@link RabbitTemplate} configurato
-     */
+    // Template per l'invio dei messaggi, con converter Jackson.
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);

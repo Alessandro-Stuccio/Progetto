@@ -4,8 +4,8 @@ import com.project.tesi.exception.common.BaseException;
 import org.springframework.http.HttpStatus;
 
 /**
- * Eccezione lanciata quando la cancellazione di una prenotazione non è consentita
- * (es. stato errato o meno di 24 ore all'appuntamento). Mappa su HTTP 400.
+ * La si lancia quando una prenotazione non può essere annullata, ad esempio se lo stato
+ * è sbagliato o mancano meno di 24 ore all'appuntamento. Risponde con 400.
  */
 public class BookingCancellationException extends BaseException {
     public BookingCancellationException(String message) {

@@ -3,7 +3,7 @@ package com.project.tesi.dto.response;
 import java.time.LocalDate;
 
 /**
- * DTO di risposta per l'abbonamento attivo di un utente con crediti residui e date.
+ * L'abbonamento di un utente con i crediti PT/nutrizionista residui e il periodo di validità.
  */
 public class SubscriptionResponse {
 

@@ -3,13 +3,10 @@ package com.project.tesi.exception.common;
 import org.springframework.http.HttpStatus;
 
 /**
- * Eccezione generica per violazioni di regole di business (422 Unprocessable Entity).
- * Usata quando la richiesta è sintatticamente valida ma viola una regola di dominio
- * non coperta da eccezioni più specifiche.
+ * La si lancia quando una richiesta valida nella forma viola una regola di dominio che non
+ * ha un'eccezione dedicata. È il fallback generico per la business logic. Risponde con 422.
  */
 public class BusinessLogicException extends BaseException {
-
-    /** @param message descrizione della regola di business violata */
 
     public BusinessLogicException(String message) {
         super(message, HttpStatus.valueOf(422));

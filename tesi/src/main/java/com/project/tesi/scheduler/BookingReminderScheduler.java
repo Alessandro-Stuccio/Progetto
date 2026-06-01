@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Scheduler che invia promemoria email per appuntamenti imminenti.
- * Eseguito ogni 5 minuti (cron configurabile via {@code schedule.time.bookings}).
- * Usa il flag {@code reminderSent} sullo slot per evitare invii duplicati.
+ * Invia i promemoria email per gli appuntamenti imminenti. Gira ogni 5 minuti
+ * (cron in {@code schedule.time.bookings}) e usa il flag {@code reminderSent}
+ * sullo slot per non mandare lo stesso avviso due volte.
  */
 @Component
 public class BookingReminderScheduler {
@@ -31,11 +31,8 @@ public class BookingReminderScheduler {
         this.emailService = emailService;
     }
 
-    /**
-     * Trova gli slot in stato {@code CONFIRMED} nei prossimi 35 minuti senza
-     * reminder già inviato, spedisce email sia al cliente sia al professionista
-     * e imposta {@code reminderSent=true} per prevenire invii duplicati.
-     */
+    // Prende gli slot confermati nei prossimi 35 minuti senza reminder, avvisa via
+    // email cliente e professionista e segna reminderSent per non ripetere l'invio.
     @Scheduled(cron = "${schedule.time.bookings}")
     @Transactional
     public void sendBookingReminders() {

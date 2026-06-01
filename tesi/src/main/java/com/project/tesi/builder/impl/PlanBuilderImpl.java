@@ -7,7 +7,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità Plan.
+ * Builder concreto per Plan. In build controlla i campi obbligatori, prezzi positivi e crediti non negativi.
  */
 public class PlanBuilderImpl implements PlanBuilder {
     private Long id;
@@ -17,6 +17,7 @@ public class PlanBuilderImpl implements PlanBuilder {
     private Double monthlyInstallmentPrice;
     private int monthlyCreditsPT;
     private int monthlyCreditsNutri;
+    private boolean active = true;
 
     @Override
     public PlanBuilder id(Long id) {
@@ -54,6 +55,11 @@ public class PlanBuilderImpl implements PlanBuilder {
         return this;
     }
     @Override
+    public PlanBuilder active(boolean active) {
+        this.active = active;
+        return this;
+    }
+    @Override
     public Plan build() {
         Objects.requireNonNull(this.name, "name è obbligatorio");
         Objects.requireNonNull(this.duration, "duration è obbligatorio");
@@ -79,6 +85,7 @@ public class PlanBuilderImpl implements PlanBuilder {
         obj.setMonthlyInstallmentPrice(this.monthlyInstallmentPrice);
         obj.setMonthlyCreditsPT(this.monthlyCreditsPT);
         obj.setMonthlyCreditsNutri(this.monthlyCreditsNutri);
+        obj.setActive(this.active);
         return obj;
     }
 }

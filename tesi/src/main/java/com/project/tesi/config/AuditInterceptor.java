@@ -18,10 +18,10 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
- * Intercetta ogni richiesta HTTP e salva in modo asincrono un record in {@code audit_log}.
- * Cattura identità utente, metodo HTTP, path, IP, status della response e body della request
- * (solo per POST/PUT/PATCH, troncato a 2000 caratteri).
- * Il body è leggibile grazie al {@link RequestBodyCachingFilter} che avvolge la request.
+ * Per ogni richiesta HTTP salva in modo asincrono un record nell'audit log:
+ * utente, metodo, path, IP, status e, solo per POST/PUT/PATCH, il body troncato
+ * a 2000 caratteri. Il body è leggibile perché {@link RequestBodyCachingFilter}
+ * avvolge la request a monte.
  */
 @Component
 public class AuditInterceptor implements HandlerInterceptor {

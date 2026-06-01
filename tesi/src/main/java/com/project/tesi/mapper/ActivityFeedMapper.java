@@ -11,22 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Mapper per la conversione di {@link Slot} e {@link Document} in
- * {@link ActivityFeedItemResponse}. Il testo descrittivo varia in base al ruolo
- * dell'utente ({@code CLIENT} vs professionista).
+ * Trasforma slot e documenti in voci del feed attività. Il testo cambia a seconda
+ * che l'utente sia un cliente o un professionista.
  */
 @Component
 public class ActivityFeedMapper {
 
-    /**
-     * Aggrega slot e documenti in una lista di voci del feed attività, ordinata
-     * per data decrescente (le attività più recenti prima).
-     *
-     * @param slots     lista di slot prenotati da includere nel feed
-     * @param documents lista di documenti da includere nel feed
-     * @param user      utente corrente, usato per determinare il testo descrittivo
-     * @return lista ordinata di {@link ActivityFeedItemResponse}
-     */
+    // Unisce slot e documenti in un'unica lista, ordinata dalla più recente.
     public List<ActivityFeedItemResponse> toActivityFeedItemResponse(List<Slot> slots, List<Document> documents, User user) {
         List<ActivityFeedItemResponse> result = new ArrayList<>();
         for (Slot slot : slots) {

@@ -3,7 +3,8 @@ package com.project.tesi.dto.response;
 import com.project.tesi.enums.Role;
 
 /**
- * DTO di risposta completo per un utente, con dati aggiuntivi specifici per ruolo (rating medio, conteggio clienti).
+ * Profilo completo di un utente. Alcuni campi valgono solo per certi ruoli: rating medio e numero
+ * di clienti attivi per i professionisti, professionisti assegnati per il cliente.
  */
 public class UserResponse {
 

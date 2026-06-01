@@ -8,7 +8,7 @@ import com.project.tesi.enums.ChatStatus;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.chat.ChatNotAllowedException;
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.mapper.UserMapper;
 import com.project.tesi.facade.ChatFacade;
 import com.project.tesi.mapper.ChatMapper;
@@ -27,10 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Implementazione di {@link ChatFacade}.
- * Coordina {@code ChatService} e {@code MessageService} per la gestione
- * delle conversazioni, inclusa la selezione del moderatore e la costruzione
- * delle anteprime di conversazione.
+ * Gestisce le conversazioni: invio messaggi, anteprime, controllo dei permessi e scelta del moderatore.
  */
 @Component
 public class ChatFacadeImpl implements ChatFacade {
@@ -69,6 +66,7 @@ public class ChatFacadeImpl implements ChatFacade {
         if (chat == null) {
             throw new CustomResourceNotFoundException("Chat", request.chatId());
         }
+        // Scrivere in una chat chiusa la riapre automaticamente.
         if (chat.getStatus() == ChatStatus.CLOSED) {
             chat.setStatus(ChatStatus.OPEN);
             chatService.save(chat);
@@ -96,12 +94,8 @@ public class ChatFacadeImpl implements ChatFacade {
     }
 
     /**
-     * Costruisce la lista delle anteprime di conversazione per l'utente specificato.
-     * Per ogni chat recupera l'ultimo messaggio e il conteggio dei messaggi non letti;
-     * filtra le chat vuote con ADMIN/MODERATOR per utenti CLIENT e professionisti.
-     *
-     * @param userId identificatore dell'utente corrente
-     * @return lista di {@link ConversationPreviewResponse} ordinata per data dell'ultimo messaggio
+     * Anteprime delle conversazioni dell'utente, con ultimo messaggio e numero di non letti.
+     * Per client e professionisti nasconde le chat ancora vuote con admin o moderatori.
      */
     @Override
     @Transactional(readOnly = true)
@@ -146,27 +140,21 @@ public class ChatFacadeImpl implements ChatFacade {
     public void closeChat(Long chatId, Long moderatorId) {
         User moderator = userService.getUserById(moderatorId);
         if (moderator.getRole() != Role.MODERATOR && moderator.getRole() != Role.ADMIN) {
-            throw new UnauthorizedAccessException("Solo i moderatori possono chiudere le chat");
+            throw new AccessDeniedException("Solo i moderatori possono chiudere le chat");
         }
         chatService.closeChat(chatId, moderator);
     }
 
     /**
-     * Restituisce il moderatore da contattare per l'utente.
-     * Se esiste già una chat aperta con un moderatore la riusa;
-     * altrimenti seleziona il moderatore con il minor numero di chat aperte
-     * tramite {@code ChatService#countOpenChatsByModerator}.
-     *
-     * @param user utente che richiede il supporto (non MODERATOR né ADMIN)
-     * @return {@link ClientBasicInfoResponse} del moderatore assegnato
-     * @throws UnauthorizedAccessException se l'utente è un moderatore o admin
-     * @throws CustomResourceNotFoundException   se non esiste alcun moderatore nel sistema
+     * Sceglie il moderatore da assegnare all'utente per il supporto: riusa quello con cui c'è già
+     * una conversazione, altrimenti prende il moderatore con meno chat aperte (load balancing).
+     * Admin e moderatori non possono contattare il supporto.
      */
     @Override
     @Transactional(readOnly = true)
     public ClientBasicInfoResponse getModerator(User user) {
         if (user.getRole() == Role.MODERATOR || user.getRole() == Role.ADMIN) {
-            throw new UnauthorizedAccessException("L'amministrazione non può contattare il supporto.");
+            throw new AccessDeniedException("L'amministrazione non può contattare il supporto.");
         }
         List<User> moderators = userService.findByRole(Role.MODERATOR);
         if (moderators.isEmpty()) {
@@ -190,6 +178,8 @@ public class ChatFacadeImpl implements ChatFacade {
                 .findFirst();
     }
 
+    // L'ordine delle guardie conta: prima i casi che aprono sempre (admin), poi le regole
+    // ristrette dell'insurance manager, infine il vincolo cliente-professionista assegnato.
     private void validateChatPermission(User uA, User uB) {
         if (uA.getRole() == Role.ADMIN || uB.getRole() == Role.ADMIN) return;
 

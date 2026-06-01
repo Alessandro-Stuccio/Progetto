@@ -8,7 +8,8 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità Document.
+ * Builder concreto per Document. In build verifica che il contentType dichiarato sia coerente con
+ * l'estensione del file, quando questa è tra quelle note.
  */
 public class DocumentBuilderImpl implements DocumentBuilder {
 

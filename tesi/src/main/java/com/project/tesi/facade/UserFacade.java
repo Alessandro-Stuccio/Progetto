@@ -12,63 +12,42 @@ import com.project.tesi.enums.Role;
 import java.util.List;
 
 /**
- * Facade per il profilo utente, dashboard cliente e gestione abbonamenti.
+ * Profilo utente, dashboard del cliente e attivazione abbonamenti.
  */
 public interface UserFacade {
 
     /**
-     * Restituisce la dashboard del cliente con prenotazioni, crediti e abbonamento attivo.
-     *
-     * @param userId identificativo del cliente
-     * @return dati della dashboard del cliente
+     * Dashboard del cliente: prenotazioni, crediti e abbonamento attivo.
      */
     ClientDashboardResponse getClientDashboard(Long userId);
 
     /**
-     * Restituisce le informazioni di base dell'amministratore di sistema.
-     *
-     * @return informazioni di base dell'admin
+     * Dati di base dell'amministratore di sistema.
      */
     ClientBasicInfoResponse getAdmin();
 
     /**
-     * Aggiorna il profilo dell'utente con i nuovi dati forniti.
-     *
-     * @param userId  identificativo dell'utente da aggiornare
-     * @param request nuovi dati del profilo
+     * Aggiorna il profilo dell'utente.
      */
     void updateProfile(Long userId, ProfileUpdateRequest request);
 
     /**
-     * Restituisce la lista dei clienti associati a un professionista.
-     *
-     * @param professionalId identificativo del professionista
-     * @return lista dei clienti del professionista
+     * I clienti associati al professionista.
      */
     List<ClientBasicInfoResponse> getClientsForProfessional(Long professionalId);
 
     /**
-     * Attiva un abbonamento per l'utente in base al piano e alla frequenza di pagamento scelti.
-     *
-     * @param request dati del piano e della frequenza di pagamento
-     * @param userId  identificativo dell'utente che attiva l'abbonamento
-     * @return dettagli dell'abbonamento attivato
+     * Attiva l'abbonamento scelto dall'utente (piano e frequenza dalla request).
      */
     SubscriptionResponse activateSubscription(PlanRequest request, Long userId);
 
     /**
-     * Restituisce lo stato corrente dell'abbonamento dell'utente.
-     *
-     * @param userId identificativo dell'utente
-     * @return dettagli dell'abbonamento attivo
+     * Stato dell'abbonamento attivo dell'utente.
      */
     SubscriptionResponse getSubscriptionStatus(Long userId);
 
     /**
-     * Restituisce i professionisti disponibili per il ruolo specificato.
-     *
-     * @param role ruolo del professionista da cercare (es. PERSONAL_TRAINER, NUTRITIONIST)
-     * @return lista dei professionisti disponibili
+     * I professionisti disponibili per il ruolo indicato (es. PERSONAL_TRAINER, NUTRITIONIST).
      */
     List<ProfessionalSummaryDTO> findAvailableProfessionals(Role role);
 }

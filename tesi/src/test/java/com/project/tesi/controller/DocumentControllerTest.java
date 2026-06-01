@@ -8,7 +8,7 @@ import com.project.tesi.dto.response.DocumentUploadResponse;
 import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.document.DocumentNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.facade.DocumentFacade;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
@@ -131,7 +131,7 @@ class DocumentControllerTest {
     @DisplayName("GET /api/documents/download/{id} — 404 quando documento non trovato")
     void downloadFile_notFound_returns404() throws Exception {
         when(documentFacade.getDocumentById(anyLong()))
-                .thenThrow(new DocumentNotFoundException(99L));
+                .thenThrow(new CustomResourceNotFoundException("Documento", 99L));
 
         mockMvc.perform(get("/api/documents/download/99").with(withPtUser))
                 .andExpect(status().isNotFound());
@@ -184,7 +184,7 @@ class DocumentControllerTest {
     @Test
     @DisplayName("DELETE /api/documents/{id} — 404 quando documento non trovato")
     void deleteDocument_notFound_returns404() throws Exception {
-        doThrow(new DocumentNotFoundException(99L))
+        doThrow(new CustomResourceNotFoundException("Documento", 99L))
                 .when(documentFacade).deleteDocument(anyLong(), anyLong());
 
         mockMvc.perform(delete("/api/documents/99").with(withPtUser))

@@ -3,7 +3,7 @@ package com.project.tesi.dto.response;
 import java.util.Objects;
 
 /**
- * DTO di risposta con le informazioni essenziali di un utente (usato per professionisti, moderatori, admin).
+ * Informazioni essenziali di un utente, usate dove non serve il profilo completo.
  */
 public class ClientBasicInfoResponse {
 

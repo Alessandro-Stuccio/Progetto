@@ -10,70 +10,26 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
-/**
- * Servizio per la gestione dei messaggi all'interno di una chat.
- */
+/** Gestione dei messaggi dentro una chat. */
 @Validated
 public interface MessageService {
 
-    /**
-     * Crea e persiste un nuovo messaggio nella chat specificata.
-     *
-     * @param chat    entità chat di destinazione
-     * @param sender  utente mittente
-     * @param content testo del messaggio
-     * @return messaggio salvato
-     */
     Message saveMessage(@NotNull Chat chat, @NotNull User sender, @NotBlank String content);
 
-    /**
-     * Restituisce i messaggi di una chat in modo paginato.
-     *
-     * @param chatId identificativo della chat
-     * @param page   numero di pagina (0-based)
-     * @param size   dimensione della pagina
-     * @return lista paginata dei messaggi
-     */
+    /** Messaggi della chat in pagine (page 0-based). */
     List<Message> getMessages(@NotNull @Min(1) Long chatId, @Min(0) int page, @Min(1) int size);
 
-    /**
-     * Marca tutti i messaggi non ancora consegnati in una chat come consegnati per un utente.
-     *
-     * @param chatId identificativo della chat
-     * @param userId identificativo dell'utente destinatario
-     */
+    /** Segna come consegnati i messaggi della chat ancora in sospeso per il destinatario. */
     void markAsDelivered(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 
-    /**
-     * Marca tutti i messaggi non ancora letti in una chat come letti da un utente.
-     *
-     * @param chatId identificativo della chat
-     * @param userId identificativo dell'utente lettore
-     */
+    /** Segna come letti i messaggi non letti della chat per l'utente. */
     void markAsRead(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 
-    /**
-     * Restituisce il numero totale di messaggi non letti per un utente su tutte le chat.
-     *
-     * @param userId identificativo dell'utente
-     * @return conteggio totale dei messaggi non letti
-     */
+    /** Messaggi non letti dell'utente su tutte le sue chat. */
     int getTotalUnreadCount(@NotNull @Min(1) Long userId);
 
-    /**
-     * Recupera l'ultimo messaggio inviato in una chat.
-     *
-     * @param chatId identificativo della chat
-     * @return ultimo messaggio della chat
-     */
     Message getLastMessage(@NotNull @Min(1) Long chatId);
 
-    /**
-     * Restituisce il numero di messaggi non letti in una chat per un utente specifico.
-     *
-     * @param chatId identificativo della chat
-     * @param userId identificativo dell'utente
-     * @return numero di messaggi non letti
-     */
+    /** Messaggi non letti dell'utente nella singola chat. */
     int getUnreadCount(@NotNull @Min(1) Long chatId, @NotNull @Min(1) Long userId);
 }

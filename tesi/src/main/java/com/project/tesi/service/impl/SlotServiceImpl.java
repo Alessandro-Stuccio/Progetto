@@ -16,11 +16,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Implementazione di {@link SlotService}.
- * Gestisce il ciclo di vita degli slot con locking pessimistico per-slot tramite
- * {@code ConcurrentHashMap<Long, ReentrantLock>} per prevenire il double-booking concorrente.
- * Usa {@link com.project.tesi.repository.SlotRepository} con
- * {@code @Lock(PESSIMISTIC_WRITE)} per le operazioni critiche.
+ * Ciclo di vita degli slot e delle prenotazioni. La prenotazione prende un lock
+ * pessimistico sulla riga (findByIdWithLock con PESSIMISTIC_WRITE) per evitare il
+ * double-booking quando due clienti tentano lo stesso slot in contemporanea.
  */
 @Service
 public class SlotServiceImpl implements SlotService {
@@ -49,17 +47,10 @@ public class SlotServiceImpl implements SlotService {
     }
 
     /**
-     * Acquisisce il lock pessimistico per-slot tramite {@code findByIdWithLock}, verifica
-     * la disponibilità dello slot, imposta l'utente prenotante, lo stato {@code CONFIRMED},
-     * il link Jitsi e il timestamp {@code bookedAt}.
-     * Lancia {@link com.project.tesi.exception.booking.SlotAlreadyBookedException} se lo slot
-     * è già occupato, o {@link com.project.tesi.exception.concurrent.ConcurrentUpdateException}
-     * su conflitto di versione ottimistica.
-     *
-     * @param slotId      id dello slot da prenotare
-     * @param user        utente che effettua la prenotazione
-     * @param meetingLink link Jitsi generato per la videoconferenza
-     * @return lo slot aggiornato con i dati della prenotazione
+     * Prende il lock pessimistico sulla riga, ricontrolla che lo slot sia ancora libero
+     * e lo segna come prenotato (CONFIRMED) con link e timestamp. Se nel frattempo qualcuno
+     * lo ha occupato lancia SlotAlreadyBookedException; un eventuale conflitto di versione
+     * ottimistica viene tradotto altrove dal GlobalExceptionHandler.
      */
     @Override
     public Slot saveBooking(Long slotId, User user, String meetingLink) {
@@ -86,12 +77,8 @@ public class SlotServiceImpl implements SlotService {
     }
 
     /**
-     * Annulla la prenotazione dello slot indicato: azzera {@code bookedBy}, {@code meetingLink}
-     * e {@code bookedAt}, imposta lo stato a {@code CANCELED}.
-     * I crediti vengono ripristinati dal livello superiore (facade) prima di invocare questo metodo.
-     *
-     * @param slotId id dello slot da cancellare
-     * @param userId id dell'utente proprietario della prenotazione (usato per validazione esterna)
+     * Libera lo slot azzerando i dati della prenotazione e portandolo a CANCELED.
+     * Il rimborso dei crediti avviene a monte, nella facade, prima di chiamare qui.
      */
     @Override
     public void cancelBooking(Long slotId, Long userId) {
@@ -137,11 +124,9 @@ public class SlotServiceImpl implements SlotService {
     }
 
     /**
-     * Logga a livello INFO i dettagli della prenotazione appena creata.
-     * Se {@code bookedAt} non è ancora impostato, lo valorizza con il timestamp corrente
-     * e persiste lo slot prima di emettere il log (pattern Observer per l'activity feed).
-     *
-     * @param slot lo slot appena prenotato
+     * Registra la prenotazione sull'activity feed. Se manca bookedAt lo valorizza ora e
+     * salva lo slot, così il timestamp resta coerente anche se la prenotazione arriva da
+     * un percorso che non l'aveva impostato.
      */
     @Override
     public void logBookingCreated(Slot slot) {

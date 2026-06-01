@@ -18,10 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * Controller REST per prenotazioni e cancellazioni.
- * Espone /api/bookings. Richiede autenticazione.
- */
+/** Prenotazioni e cancellazioni degli slot. /api/bookings, richiede autenticazione. */
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
@@ -34,13 +31,8 @@ public class BookingController {
     }
 
     /**
-     * Crea una prenotazione per uno slot disponibile.
-     * Deduce i crediti dall'abbonamento attivo e usa locking pessimistico
-     * per prevenire il double-booking concorrente.
-     *
-     * @param request dati della prenotazione (identificativo dello slot)
-     * @param user    utente autenticato che effettua la prenotazione
-     * @return {@link BookingResponse} con i dettagli della prenotazione confermata
+     * Prenota uno slot libero: scala un credito dall'abbonamento attivo e, dietro le quinte,
+     * usa un lock sullo slot per evitare che due utenti lo prenotino in contemporanea.
      */
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request,
@@ -52,13 +44,8 @@ public class BookingController {
     }
 
     /**
-     * Annulla una prenotazione appartenente all'utente autenticato.
-     * Il credito viene ripristinato sull'abbonamento solo se la cancellazione
-     * avviene con più di 24 ore di anticipo rispetto all'orario dello slot.
-     *
-     * @param id   identificativo della prenotazione da annullare
-     * @param user utente autenticato proprietario della prenotazione
-     * @return messaggio di conferma con indicazione del credito riaccreditato
+     * Annulla una prenotazione dell'utente. Il credito viene riaccreditato solo se si cancella
+     * con più di 24 ore di anticipo rispetto allo slot.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> cancelBooking(@PathVariable Long id,

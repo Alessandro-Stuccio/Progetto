@@ -1,12 +1,11 @@
 package com.project.tesi.enums;
 
 /**
- * Stato di un messaggio nella chat in tempo reale.
- * Usato per gestire le notifiche di messaggi non letti.
+ * Stato di un messaggio nella chat in tempo reale, usato per tracciare i non letti.
  */
 public enum MessageStatus {
-    SENT,       // Messaggio inviato
-    DELIVERED,  // Messaggio consegnato
-    READ        // Messaggio letto
+    SENT,
+    DELIVERED,
+    READ
 }
 

@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DTO di risposta con le statistiche aggregate per la dashboard dell'amministratore.
+ * Tutte le statistiche aggregate che alimentano la dashboard dell'amministratore:
+ * utenti, abbonamenti, crediti, ricavi, prenotazioni e carico dei professionisti.
  */
 public class AdminStatsResponse {
 
@@ -82,8 +83,7 @@ public class AdminStatsResponse {
         public AdminStatsResponse build() { return new AdminStatsResponse(this); }
     }
 
-    // --- Nested classes ---
-
+    /** Iscrizioni di un singolo mese, per il grafico di crescita utenti. */
     public static class MonthlyUserCount {
         private String month;
         private int year;
@@ -115,6 +115,7 @@ public class AdminStatsResponse {
         }
     }
 
+    /** Quota di un piano sul totale degli abbonamenti attivi; percentage è la percentuale calcolata. */
     public static class PlanPopularityItem {
         private String name;
         private long activeCount;
@@ -156,6 +157,7 @@ public class AdminStatsResponse {
         }
     }
 
+    /** Crediti disponibili, totali e consumati, distinti tra PT e nutrizionista; i percentUsed sono calcolati. */
     public static class CreditsStats {
         private int ptAvailable;
         private int ptTotal;
@@ -212,6 +214,7 @@ public class AdminStatsResponse {
         }
     }
 
+    /** Numero di clienti seguiti da un professionista, per misurarne il carico. */
     public static class ProfessionalWorkloadItem {
         private String name;
         private String role;

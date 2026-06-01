@@ -8,17 +8,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Mapper per la conversione di {@link Review} in {@link ReviewResponse}.
+ * Converte le recensioni nel DTO mostrato al pubblico.
  */
 @Component
 public class ReviewMapper {
 
-    /**
-     * Converte una {@link Review} in {@link ReviewResponse}.
-     *
-     * @param review la recensione da convertire
-     * @return il DTO di risposta, o {@code null} se la recensione è {@code null}
-     */
     public ReviewResponse toResponse(Review review) {
         if (review == null) return null;
         return ReviewResponse.builder()
@@ -29,12 +23,6 @@ public class ReviewMapper {
                 .build();
     }
 
-    /**
-     * Converte una lista di {@link Review} in una lista di {@link ReviewResponse}.
-     *
-     * @param reviews lista delle recensioni
-     * @return lista dei DTO di risposta
-     */
     public List<ReviewResponse> toResponseList(List<Review> reviews) {
         return reviews.stream().map(this::toResponse).collect(Collectors.toList());
     }

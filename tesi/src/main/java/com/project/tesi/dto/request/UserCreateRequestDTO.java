@@ -3,7 +3,8 @@ package com.project.tesi.dto.request;
 import jakarta.validation.constraints.*;
 
 /**
- * DTO per la creazione di un nuovo utente da parte del moderatore o admin.
+ * Crea un nuovo utente da pannello moderatore/admin. PT, nutrizionista, piano e frequenza
+ * di pagamento servono solo per i clienti.
  */
 public record UserCreateRequestDTO(
         @NotBlank @Email String email,

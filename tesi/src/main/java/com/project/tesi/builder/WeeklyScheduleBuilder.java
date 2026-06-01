@@ -6,7 +6,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Builder per l'entità WeeklySchedule. Fluent interface per la costruzione di una fascia oraria settimanale di un professionista.
+ * Costruisce un WeeklySchedule, la fascia oraria settimanale di un professionista, con interfaccia fluente.
  */
 public interface WeeklyScheduleBuilder {
     WeeklyScheduleBuilder id(Long id);

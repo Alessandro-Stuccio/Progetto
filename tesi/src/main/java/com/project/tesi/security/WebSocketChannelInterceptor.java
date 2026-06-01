@@ -15,9 +15,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 /**
- * Interceptor STOMP che valida il JWT sul frame {@code CONNECT} prima di permettere
- * l'accesso al WebSocket. Imposta il {@code Principal} autenticato sull'accessor STOMP
- * per rendere disponibile l'utente nei metodi {@code @MessageMapping}.
+ * Valida il JWT sul frame STOMP CONNECT prima di aprire il WebSocket e mette
+ * l'utente autenticato come Principal della sessione, così è disponibile nei
+ * metodi {@code @MessageMapping}.
  */
 @Component
 public class WebSocketChannelInterceptor implements ChannelInterceptor {
@@ -31,16 +31,9 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
         this.userDetailsService = userDetailsService;
     }
 
-    /**
-     * Intercetta solo i frame STOMP {@code CONNECT}. Estrae il JWT dall'header
-     * {@code Authorization}, lo valida tramite {@link JwtUtil} e imposta un
-     * {@link UsernamePasswordAuthenticationToken} come utente corrente sulla sessione.
-     * Lancia {@link MessagingException} se il token è assente o non valido.
-     *
-     * @param message il messaggio STOMP in ingresso
-     * @param channel il canale su cui transita il messaggio
-     * @return il messaggio originale se valido
-     */
+    // Agisce solo sui frame CONNECT: estrae e valida il JWT dell'header Authorization
+    // e imposta l'utente autenticato sulla sessione. Se il token manca o non è valido
+    // solleva MessagingException e la connessione viene rifiutata.
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor =

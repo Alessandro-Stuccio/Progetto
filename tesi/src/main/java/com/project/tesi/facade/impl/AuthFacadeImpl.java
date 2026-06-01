@@ -25,9 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Implementazione di {@link AuthFacade}.
- * Gestisce registrazione, login e reset password coordinando
- * {@code UserService}, {@code EmailService} e {@code JwtUtil}.
+ * Registrazione, login e reset password, coordinando UserService, EmailService e {@link JwtUtil}.
  */
 @Component
 public class AuthFacadeImpl implements AuthFacade {
@@ -57,17 +55,9 @@ public class AuthFacadeImpl implements AuthFacade {
         this.subscriptionFacade = subscriptionFacade;
     }
 
-    /**
-     * Crea un nuovo utente con ruolo {@code CLIENT}, codifica la password,
-     * assegna opzionalmente personal trainer e nutrizionista verificandone
-     * la capienza massima, attiva l'abbonamento se piano e frequenza sono forniti,
-     * e invia un'email di benvenuto (errori SMTP non bloccanti).
-     *
-     * @param request dati di registrazione (email, password, professionisti, piano)
-     * @return {@link UserResponse} con i dati dell'utente appena creato
-     * @throws ResourceAlreadyExistsException se l'email è già in uso
-     * @throws ProfessionalSoldOutException   se il professionista selezionato ha raggiunto la capienza massima
-     */
+    // Crea il cliente, assegna gli eventuali professionisti scelti (con controllo capienza) e,
+    // se indicati piano e frequenza, attiva subito l'abbonamento. L'email di benvenuto è best-effort:
+    // un errore SMTP non deve far fallire la registrazione.
     @Override
     @Transactional
     public UserResponse registerUser(RegisterRequest request) {
@@ -97,14 +87,7 @@ public class AuthFacadeImpl implements AuthFacade {
         return userMapper.toUserResponse(savedUser);
     }
 
-    /**
-     * Autentica l'utente confrontando la password con {@code PasswordEncoder},
-     * genera un JWT tramite {@code JwtUtil} e restituisce token e dati utente.
-     *
-     * @param request credenziali di accesso (email e password)
-     * @return {@link AuthResult} con token JWT e riferimento all'entità {@link User}
-     * @throws BadCredentialsException se la password non corrisponde
-     */
+    // Verifica la password e, se combacia, genera il JWT e lo restituisce insieme all'utente.
     @Override
     @Transactional(readOnly = true)
     public AuthResult login(LoginRequest request) {
@@ -116,12 +99,7 @@ public class AuthFacadeImpl implements AuthFacade {
         return AuthResult.builder().token(jwtToken).user(user).build();
     }
 
-    /**
-     * Genera un token JWT per il reset password (scadenza 30 min) tramite {@code JwtUtil}
-     * e lo invia via email all'utente. Errori SMTP vengono loggati ma non propagati.
-     *
-     * @param email indirizzo email dell'utente che ha richiesto il reset
-     */
+    // Genera il token di reset (vita breve, 30 min) e lo invia via email. Errori SMTP loggati ma non propagati.
     @Override
     @Transactional(readOnly = true)
     public void forgotPassword(String email) {
@@ -134,14 +112,8 @@ public class AuthFacadeImpl implements AuthFacade {
         }
     }
 
-    /**
-     * Valida il token di reset (verifica firma e scadenza 30 min tramite {@code JwtUtil}),
-     * aggiorna la password dell'utente con la nuova password codificata
-     * e invia un'email di conferma avvenuta modifica.
-     *
-     * @param token       token JWT di reset password ricevuto via email
-     * @param newPassword nuova password in chiaro da codificare e salvare
-     */
+    // Valida il token di reset (firma e scadenza), salva la nuova password codificata e manda
+    // l'email di conferma (best-effort).
     @Override
     @Transactional
     public void resetPassword(String token, String newPassword) {

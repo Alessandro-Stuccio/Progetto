@@ -2,6 +2,7 @@ package com.project.tesi.exception;
 
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import jakarta.validation.ConstraintViolation;
+import org.springframework.security.access.AccessDeniedException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,7 +79,7 @@ class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("handleAccessDenied — restituisce 403")
     void handleAccessDenied_returns403() {
-        ResponseEntity<ErrorResponse> response = handler.handleAccessDenied(request);
+        ResponseEntity<ErrorResponse> response = handler.handleAccessDenied(new AccessDeniedException("Accesso negato"), request);
         assertThat(response.getStatusCode().value()).isEqualTo(403);
     }
 

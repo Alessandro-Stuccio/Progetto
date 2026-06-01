@@ -3,7 +3,7 @@ package com.project.tesi.dto.request;
 import jakarta.validation.constraints.Min;
 
 /**
- * DTO per l'aggiornamento manuale dei crediti di un abbonamento (usato dall'admin).
+ * Ritocca a mano i crediti PT e nutrizionista di un abbonamento (azione admin).
  */
 public record SubscriptionCreditsUpdateDTO(
         @Min(value = 0, message = "I crediti PT non possono essere negativi") Integer creditsPT,

@@ -8,9 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Implementazione di PlanService. CRUD sui piani di abbonamento tramite PlanRepository.
- */
+/** CRUD sui piani di abbonamento. */
 @Service
 public class PlanServiceImpl implements PlanService {
 
@@ -26,6 +24,11 @@ public class PlanServiceImpl implements PlanService {
     }
 
     @Override
+    public List<Plan> getActivePlans() {
+        return planRepository.findByActiveTrue();
+    }
+
+    @Override
     public Plan getPlanById(Long id) {
         return planRepository.findById(id)
                 .orElseThrow(() -> new CustomResourceNotFoundException("Piano", id));
@@ -36,16 +39,13 @@ public class PlanServiceImpl implements PlanService {
         return planRepository.save(plan);
     }
 
-    /**
-     * Verifica l'esistenza del piano prima di eliminarlo; lancia
-     * {@link CustomResourceNotFoundException} se non trovato.
-     */
+    // Soft-disable: cambia solo il flag, il piano resta in DB.
     @Override
-    public void deletePlan(Long id) {
-        if (!planRepository.existsById(id)) {
-            throw new CustomResourceNotFoundException("Piano", id);
-        }
-        planRepository.deleteById(id);
+    public Plan setActive(Long id, boolean active) {
+        Plan plan = planRepository.findById(id)
+                .orElseThrow(() -> new CustomResourceNotFoundException("Piano", id));
+        plan.setActive(active);
+        return planRepository.save(plan);
     }
 
     @Override

@@ -6,38 +6,27 @@ import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.dto.response.AuthResult;
 
 /**
- * Facade per autenticazione e gestione delle credenziali.
+ * Autenticazione e gestione delle credenziali.
  */
 public interface AuthFacade {
 
     /**
-     * Registra un nuovo utente nel sistema.
-     *
-     * @param request dati di registrazione dell'utente
-     * @return informazioni dell'utente registrato
+     * Registra un nuovo utente.
      */
     UserResponse registerUser(RegisterRequest request);
 
     /**
-     * Autentica un utente e restituisce il token JWT.
-     *
-     * @param request credenziali di accesso (email e password)
-     * @return risultato dell'autenticazione con token JWT
+     * Verifica le credenziali e restituisce il token JWT.
      */
     AuthResult login(LoginRequest request);
 
     /**
-     * Invia un'email di reset password all'indirizzo specificato.
-     *
-     * @param email indirizzo email dell'utente che ha richiesto il reset
+     * Avvia il recupero password inviando l'email con il link di reset.
      */
     void forgotPassword(String email);
 
     /**
-     * Applica la nuova password utilizzando il token di reset ricevuto via email.
-     *
-     * @param token       token di reset valido ricevuto via email
-     * @param newPassword nuova password da impostare
+     * Imposta la nuova password verificando il token di reset ricevuto via email.
      */
     void resetPassword(String token, String newPassword);
 }

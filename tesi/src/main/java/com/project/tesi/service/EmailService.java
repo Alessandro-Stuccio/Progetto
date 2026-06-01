@@ -5,71 +5,34 @@ import org.springframework.validation.annotation.Validated;
 import com.project.tesi.dto.request.JobApplicationRequest;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Interfaccia del servizio per l'invio di email tramite Resend API.
- */
+/** Invio email tramite l'API di Resend. */
 @Validated
 public interface EmailService {
 
-    /** Invia una candidatura lavorativa via email all'admin con il CV allegato. */
+    /** Inoltra all'admin una candidatura di lavoro con il CV in allegato. */
     void sendJobApplication(JobApplicationRequest request, MultipartFile cv);
 
-    /** Metodo asincrono interno per l'invio post-elaborazione file. */
+    /** Parte asincrona dell'invio candidatura: il file è già stato letto in memoria. */
     void sendEmailAsync(JobApplicationRequest request, byte[] cvBytes, String cvFileName, String cvContentType);
 
-    /** Invia l'email di benvenuto al nuovo utente registrato. */
+    /** Email di benvenuto al nuovo utente registrato. */
     void sendWelcomeEmail(String toEmail, String firstName);
 
-    /**
-     * Invia l'email di promemoria per una prenotazione imminente.
-     *
-     * @param toEmail           email del destinatario
-     * @param recipientName     nome del destinatario
-     * @param otherPartyName    nome dell'altra parte (cliente o professionista)
-     * @param startTime         data/ora dell'appuntamento
-     * @param meetingLink       link Jitsi per la videochiamata
-     * @param isForClient       true se il destinatario è il cliente, false se è il professionista
-     */
+    /** Promemoria per una prenotazione imminente. Il testo cambia se il destinatario è il cliente. */
     void sendBookingReminderEmail(String toEmail, String recipientName, String otherPartyName,
                                    java.time.LocalDateTime startTime, String meetingLink, boolean isForClient);
 
-    /**
-     * Invia l'email con il link per reimpostare la password.
-     *
-     * @param toEmail    email del destinatario
-     * @param firstName  nome del destinatario
-     * @param resetToken il token UUID da includere nel link
-     */
+    /** Email con il link per reimpostare la password (resetToken da inserire nel link). */
     void sendPasswordResetEmail(String toEmail, String firstName, String resetToken);
 
-    /**
-     * Invia un'email di notifica per l'avvenuto cambio della password.
-     *
-     * @param toEmail   email del destinatario
-     * @param firstName nome del destinatario
-     */
+    /** Notifica che la password è stata cambiata. */
     void sendPasswordChangeEmail(String toEmail, String firstName);
 
-    /**
-     * Invia l'email di conferma per una prenotazione appena creata.
-     *
-     * @param toEmail           email del destinatario
-     * @param recipientName     nome del destinatario
-     * @param otherPartyName    nome dell'altra parte (cliente o professionista)
-     * @param startTime         data/ora dell'appuntamento
-     * @param meetingLink       link Jitsi per la videochiamata
-     */
+    /** Conferma di una prenotazione appena creata, con il link Jitsi. */
     void sendBookingConfirmationEmail(String toEmail, String recipientName, String otherPartyName,
                                    java.time.LocalDateTime startTime, String meetingLink);
 
-    /**
-     * Invia l'email per notificare l'annullamento di una prenotazione.
-     *
-     * @param toEmail           email del destinatario
-     * @param recipientName     nome del destinatario
-     * @param otherPartyName    nome dell'altra parte (cliente o professionista)
-     * @param startTime         data/ora dell'appuntamento
-     */
+    /** Notifica l'annullamento di una prenotazione. */
     void sendBookingCancellationEmail(String toEmail, String recipientName, String otherPartyName,
                                    java.time.LocalDateTime startTime);
 }

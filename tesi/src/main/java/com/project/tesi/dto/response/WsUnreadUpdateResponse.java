@@ -1,7 +1,7 @@
 package com.project.tesi.dto.response;
 
 /**
- * DTO di risposta WebSocket per l'aggiornamento del conteggio messaggi non letti (UNREAD_UPDATE).
+ * Notifica WebSocket che aggiorna il badge dei messaggi non letti di un utente (type UNREAD_UPDATE).
  */
 public class WsUnreadUpdateResponse {
 

@@ -1,6 +1,6 @@
 package com.project.tesi.security;
 
-import com.project.tesi.service.impl.RandomGenerationServiceImpl;
+import com.project.tesi.service.RandomGenerationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +15,8 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtUtil unit tests")
@@ -30,8 +32,9 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(new RandomGenerationServiceImpl());
-        ReflectionTestUtils.setField(jwtUtil, "secretKey", SECRET_BASE64);
+        RandomGenerationService random = mock(RandomGenerationService.class);
+        when(random.getTokenKey()).thenReturn(SECRET_BASE64);
+        jwtUtil = new JwtUtil(random);
         ReflectionTestUtils.setField(jwtUtil, "jwtExpiration", EXPIRATION_MS);
 
         userDetails = new User(

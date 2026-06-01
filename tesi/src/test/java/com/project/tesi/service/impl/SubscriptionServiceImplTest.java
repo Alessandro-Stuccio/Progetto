@@ -1,7 +1,6 @@
 package com.project.tesi.service.impl;
 
 import com.project.tesi.exception.common.CustomResourceNotFoundException;
-import com.project.tesi.exception.subscription.SubscriptionNotFoundException;
 import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 import com.project.tesi.repository.SubscriptionRepository;
@@ -70,13 +69,13 @@ class SubscriptionServiceImplTest {
     }
 
     @Test
-    @DisplayName("getSubscriptionStatus: throws SubscriptionNotFoundException when user has no active subscription")
-    void getSubscriptionStatus_noActiveSubscription_throwsSubscriptionNotFoundException() {
+    @DisplayName("getSubscriptionStatus: throws CustomResourceNotFoundException when user has no active subscription")
+    void getSubscriptionStatus_noActiveSubscription_throwsCustomResourceNotFoundException() {
         when(subscriptionRepository.findByUserAndActiveTrue(user))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> subscriptionService.getSubscriptionStatus(user))
-                .isInstanceOf(SubscriptionNotFoundException.class);
+                .isInstanceOf(CustomResourceNotFoundException.class);
     }
 
     @Test

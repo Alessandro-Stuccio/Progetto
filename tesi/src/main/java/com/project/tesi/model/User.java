@@ -29,11 +29,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Entità JPA che rappresenta un utente della piattaforma.
- * Implementa {@link UserDetails} di Spring Security. L'email funge da username
- * ({@link #getUsername()} restituisce email). Un account disabilitato
- * ({@code deleted=true}) non può autenticarsi ({@link #isEnabled()} = false).
- * Il campo {@code version} supporta l'optimistic locking.
+ * Un utente della piattaforma, in qualunque ruolo. Implementa {@link UserDetails}, quindi
+ * vive anche come principal di Spring Security: l'email fa da username e un account con
+ * soft-delete non riesce più ad autenticarsi.
  */
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -45,50 +43,46 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Versione per l'optimistic locking; incrementata automaticamente da JPA ad ogni aggiornamento. */
+    // @Version: optimistic locking, gestito da JPA
     @Version
     private Integer version;
 
-    /** Indirizzo email dell'utente; funge da username univoco per l'autenticazione. */
+    // L'email è anche lo username: deve restare univoca
     @Column(nullable = false)
     private String email;
 
-    /** Password cifrata con BCrypt. */
+    // Hash BCrypt, mai la password in chiaro
     @Column(nullable = false)
     private String password;
 
-    /** Immagine del profilo come stringa Base64 o URL; può essere {@code null}. */
+    // Base64 o URL dell'immagine, può essere null
     @Column(columnDefinition = "TEXT")
     private String profilePicture;
 
     private String firstName;
     private String lastName;
 
-    /** Ruolo dell'utente che determina permessi e accesso alle funzionalità. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
-    /** Personal trainer assegnato al cliente; {@code null} per ruoli non CLIENT. */
+    // PT e nutrizionista del cliente: null per chi non è un CLIENT
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_pt_id", foreignKey = @ForeignKey(name = "fk_user_assigned_pt_id"))
     private User assignedPT;
 
-    /** Nutrizionista assegnato al cliente; {@code null} per ruoli non CLIENT. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_nutritionist_id", foreignKey = @ForeignKey(name = "fk_user_assigned_nutritionist_id"))
     private User assignedNutritionist;
 
-    /** Flag di soft-delete: se {@code true} l'account è disabilitato ma non rimosso dal DB. */
+    // Soft-delete: l'account resta in DB ma non può più autenticarsi
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean deleted = false;
 
-    /** Timestamp di creazione del record; impostato automaticamente e non modificabile. */
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    /** Timestamp dell'ultimo aggiornamento del record; aggiornato automaticamente da Hibernate. */
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
@@ -137,36 +131,23 @@ public class User implements UserDetails {
         return new UserBuilderImpl();
     }
 
-    /**
-     * Restituisce i ruoli Spring Security dell'utente nel formato {@code ROLE_<RUOLO>}
-     * (es. {@code ROLE_CLIENT}, {@code ROLE_ADMIN}).
-     */
+    // Spring Security vuole le authority nel formato ROLE_<RUOLO>
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-    /**
-     * Restituisce il nome completo dell'utente come concatenazione di
-     * {@code firstName} e {@code lastName} separati da uno spazio.
-     */
     public String getFullName() {
         return firstName + " " + lastName;
     }
 
-    /**
-     * Restituisce l'email come username per Spring Security.
-     * Non esiste un campo username separato: l'email è l'identificativo univoco.
-     */
+    // Non c'è uno username dedicato: usiamo l'email
     @Override
     public String getUsername() {
         return email;
     }
 
-    /**
-     * Restituisce {@code true} se l'account non è stato eliminato con soft-delete.
-     * Un account con {@code deleted=true} non può autenticarsi.
-     */
+    // Un account soft-deleted risulta disabilitato e non può loggarsi
     @Override
     public boolean isEnabled() {
         return !deleted;

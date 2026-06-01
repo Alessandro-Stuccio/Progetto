@@ -23,12 +23,9 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 /**
- * Entità JPA per l'abbonamento attivo di un utente.
- * Ogni utente ha al massimo un abbonamento (vincolo unico su user_id).
- * I crediti {@code currentCreditsPT} e {@code currentCreditsNutri} vengono
- * decrementati ad ogni prenotazione e ripristinati mensilmente dallo
- * {@code SubscriptionScheduler}. Il campo {@code version} supporta
- * l'optimistic locking.
+ * L'abbonamento di un utente: ogni utente ne ha al massimo uno (vincolo unico su user_id).
+ * I crediti residui calano a ogni prenotazione e vengono ripristinati ogni mese dal
+ * SubscriptionScheduler.
  */
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = {
@@ -40,50 +37,40 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Versione per l'optimistic locking; incrementata automaticamente da JPA ad ogni aggiornamento. */
+    // @Version: optimistic locking, gestito da JPA
     @Version
     private Integer version;
 
-    /** Utente titolare dell'abbonamento; relazione 1:1. */
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_subscription_user_id"))
     private User user;
 
-    /** Piano sottoscritto (Basic o Premium); caricato in EAGER per accesso diretto ai crediti. */
+    // EAGER perché ci serve subito per leggere i crediti del piano
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plan_id", nullable = false, foreignKey = @ForeignKey(name = "fk_subscription_plan_id"))
     private Plan plan;
 
-    /** Modalità di pagamento: pagamento unico o a rate. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentFrequency paymentFrequency;
 
-    /** Numero di rate già pagate (rilevante solo per pagamento rateale). */
+    // Rate: rilevanti solo col pagamento rateale
     private int installmentsPaid;
-
-    /** Numero totale di rate previste dal piano (rilevante solo per pagamento rateale). */
     private int totalInstallments;
 
-    /** Data della prossima scadenza di pagamento (rata o rinnovo). */
     private LocalDate nextPaymentDate;
 
-    /** Data di inizio validità dell'abbonamento. */
     private LocalDate startDate;
 
-    /** Data di scadenza dell'abbonamento. */
     private LocalDate endDate;
 
-    /** Indica se l'abbonamento è attualmente attivo. */
     private boolean active;
 
-    /** Crediti residui per prenotare sessioni con il personal trainer nel mese corrente. */
+    // Crediti rimasti nel mese corrente, distinti per tipo di professionista
     private int currentCreditsPT;
-
-    /** Crediti residui per prenotare sessioni con il nutrizionista nel mese corrente. */
     private int currentCreditsNutri;
 
-    /** Data dell'ultimo rinnovo mensile dei crediti effettuato dallo {@code SubscriptionScheduler}. */
+    // Ultimo rinnovo mensile dei crediti fatto dallo scheduler
     private LocalDate lastRenewalDate;
 
     public Subscription() {}

@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * DTO di risposta per la dashboard del cliente. Aggrega profilo, abbonamento, professionisti assegnati e prossime prenotazioni.
+ * Aggrega tutto ciò che serve alla dashboard del cliente in un'unica risposta:
+ * profilo, abbonamento, professionisti seguiti e prossime prenotazioni.
  */
 public class ClientDashboardResponse {
 

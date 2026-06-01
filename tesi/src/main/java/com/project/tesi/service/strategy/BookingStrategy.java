@@ -5,42 +5,30 @@ import com.project.tesi.model.Subscription;
 import com.project.tesi.model.User;
 
 /**
- * Interfaccia per la gestione delle prenotazioni.
- * Gestisce le regole specifiche di un tipo di professionista (PT o Nutrizionista):
- * - Verifica l'assegnazione del cliente
- * - Deduce o rimborsa i crediti dall'abbonamento
+ * Racchiude le regole di prenotazione che cambiano in base al tipo di professionista
+ * (PT o nutrizionista): controllo dell'assegnazione cliente-professionista e gestione
+ * dei crediti dedicati sull'abbonamento. SlotServiceImpl sceglie l'implementazione giusta
+ * a runtime in base al ruolo.
  */
 public interface BookingStrategy {
 
-    /**
-     * Restituisce il ruolo del professionista supportato da questa strategia.
-     *
-     * @return il ruolo (PERSONAL_TRAINER o NUTRITIONIST)
-     */
+    /** Ruolo gestito da questa strategia (PERSONAL_TRAINER o NUTRITIONIST). */
     Role getSupportedRole();
 
     /**
-     * Verifica che il cliente sia effettivamente assegnato al professionista indicato.
+     * Controlla che il cliente sia davvero assegnato a quel professionista.
      *
-     * @param client       l'utente cliente
-     * @param professional l'utente professionista
-     * @throws com.project.tesi.exception.booking.ProfessionalNotAssignedException se non c'è corrispondenza
+     * @throws com.project.tesi.exception.booking.ProfessionalNotAssignedException se non lo è
      */
     void verifyAssignment(User client, User professional);
 
     /**
-     * Verifica che il cliente abbia crediti sufficienti e ne scala uno dall'abbonamento.
+     * Scala un credito dall'abbonamento, ma solo se ce n'è almeno uno.
      *
-     * @param subscription l'abbonamento attivo del cliente
      * @throws com.project.tesi.exception.booking.InsufficientCreditsException se i crediti sono esauriti
      */
     void consumeCredits(Subscription subscription);
 
-    /**
-     * Riaccredita un credito all'abbonamento del cliente (operazione inversa di consumeCredits).
-     * Usato quando una prenotazione viene annullata.
-     *
-     * @param subscription l'abbonamento attivo del cliente
-     */
+    /** Riaccredita un credito: è l'inverso di consumeCredits, usato quando si annulla una prenotazione. */
     void refundCredits(Subscription subscription);
 }

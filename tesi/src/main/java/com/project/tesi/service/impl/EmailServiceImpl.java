@@ -25,13 +25,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
- * Servizio per l'invio delle email tramite SMTP.
- *
- * NOTA: Quasi tutti i metodi qui usano @Async. Inviare un'email è un'operazione lenta 
- * e soggetta a timeout di rete. Farla in sincrono dentro una transazione HTTP 
- * rallenterebbe l'app e terrebbe aperta la connessione al database per niente.
- * Usiamo la Self-Injection (iniettando l'interfaccia di se stessa) per forzare le 
- * chiamate asincrone interne a passare attraverso il proxy generato da Spring.
+ * Invio email via SMTP. L'invio è lento e può andare in timeout, quindi quasi tutto gira
+ * in @Async per non bloccare la richiesta HTTP. Ci iniettiamo l'interfaccia di noi stessi
+ * (self) perché le chiamate asincrone interne passino dal proxy Spring, altrimenti @Async
+ * verrebbe ignorato.
  */
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -65,7 +62,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendJobApplication(JobApplicationRequest request, MultipartFile cv) {
-        // Validazione tipo file (solo PDF)
+        // Il CV è accettato solo in PDF.
         if (cv != null && !cv.isEmpty()) {
             String contentType = cv.getContentType();
             if (contentType == null || !contentType.equals("application/pdf")) {
@@ -73,8 +70,8 @@ public class EmailServiceImpl implements EmailService {
             }
         }
 
-        // Leggiamo i bytes del CV o generiamo l'errore se impossibile prima che il
-        // thread muoia
+        // Leggiamo i byte del CV qui, nel thread chiamante: il MultipartFile non sopravvive
+        // al passaggio nel thread asincrono.
         byte[] cvBytes = null;
         String cvFileName = null;
 
@@ -87,7 +84,7 @@ public class EmailServiceImpl implements EmailService {
             }
         }
 
-        // Delega al proxy Async
+        // Via self per attraversare il proxy e far valere l'@Async.
         self.sendEmailAsync(request, cvBytes, cvFileName, "application/pdf");
     }
 
@@ -152,10 +149,6 @@ public class EmailServiceImpl implements EmailService {
                 + "</div></div>";
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  EMAIL DI BENVENUTO (REGISTRAZIONE)
-    // ══════════════════════════════════════════════════════════════
-
     @Override
     @Async("emailTaskExecutor")
     public void sendWelcomeEmail(String toEmail, String firstName) {
@@ -189,10 +182,6 @@ public class EmailServiceImpl implements EmailService {
              + "Email generata automaticamente da Kore Platform"
              + "</div></div>";
     }
-
-    // ══════════════════════════════════════════════════════════════
-    //  EMAIL DI PROMEMORIA PRENOTAZIONE (30 MIN PRIMA)
-    // ══════════════════════════════════════════════════════════════
 
     @Override
     @Async("emailTaskExecutor")
@@ -239,10 +228,6 @@ public class EmailServiceImpl implements EmailService {
              + "</div></div>";
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  EMAIL DI CONFERMA PRENOTAZIONE
-    // ══════════════════════════════════════════════════════════════
-
     @Override
     @Async("emailTaskExecutor")
     public void sendBookingConfirmationEmail(String toEmail, String recipientName, String otherPartyName,
@@ -252,8 +237,8 @@ public class EmailServiceImpl implements EmailService {
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy 'alle' HH:mm");
             String formattedTime = startTime.format(fmt);
             String subject = "✅ Conferma Prenotazione — " + formattedTime;
-            
-            // Per semplicità usiamo un template basilare o riadattiamo quello del promemoria
+
+            // Riusiamo il template del promemoria adattando i testi, invece di scriverne uno nuovo.
             String html = buildReminderHtml(recipientName, otherPartyName, formattedTime, meetingLink, true)
                 .replace("Promemoria Appuntamento", "Conferma Prenotazione")
                 .replace("Il tuo appuntamento è tra 30 minuti", "Il tuo appuntamento è stato confermato con successo")
@@ -266,10 +251,6 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  EMAIL DI ANNULLAMENTO PRENOTAZIONE
-    // ══════════════════════════════════════════════════════════════
-
     @Override
     @Async("emailTaskExecutor")
     public void sendBookingCancellationEmail(String toEmail, String recipientName, String otherPartyName,
@@ -280,6 +261,7 @@ public class EmailServiceImpl implements EmailService {
             String formattedTime = startTime.format(fmt);
             String subject = "❌ Annullamento Prenotazione — " + formattedTime;
 
+            // Stesso template, ma qui nascondiamo il bottone della videochiamata: l'incontro non c'è più.
             String html = buildReminderHtml(recipientName, otherPartyName, formattedTime, "#", true)
                 .replace("Promemoria Appuntamento", "Annullamento Prenotazione")
                 .replace("Il tuo appuntamento è tra 30 minuti", "Il tuo appuntamento è stato annullato")
@@ -292,10 +274,6 @@ public class EmailServiceImpl implements EmailService {
             log.error("Errore nell'invio dell'email di annullamento prenotazione a {}", toEmail, e);
         }
     }
-
-    // ══════════════════════════════════════════════════════════════
-    //  EMAIL DI RESET PASSWORD
-    // ══════════════════════════════════════════════════════════════
 
     @Override
     @Async("emailTaskExecutor")
@@ -333,10 +311,6 @@ public class EmailServiceImpl implements EmailService {
              + "</div></div>";
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  EMAIL DI AVVENUTO CAMBIO PASSWORD
-    // ══════════════════════════════════════════════════════════════
-
     @Override
     @Async("emailTaskExecutor")
     public void sendPasswordChangeEmail(String toEmail, String firstName) {
@@ -367,9 +341,6 @@ public class EmailServiceImpl implements EmailService {
              + "Email generata automaticamente da Kore Platform"
              + "</div></div>";
     }
-
-    // ══════════════════════════════════════════════════════════════
-    // ══════════════════════════════════════════════════════════════
 
     private void sendSimpleEmail(String to, String subject, String html) {
         validateRecipient(to);

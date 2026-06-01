@@ -5,17 +5,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Ruoli disponibili nel sistema.
- * Determina i permessi e le funzionalità accessibili dall'utente.
+ * Ruoli degli utenti: stabiliscono permessi e funzionalità accessibili.
  */
 public enum Role {
-    CLIENT,             // Utente finale
-    PERSONAL_TRAINER,   // Professionista PT
-    NUTRITIONIST,       // Professionista Nutrizionista
-    MODERATOR,          // Moderatore operativo
-    INSURANCE_MANAGER,  // Gestore polizze
-    ADMIN;              // Amministratore sistema
+    CLIENT,
+    PERSONAL_TRAINER,
+    NUTRITIONIST,
+    MODERATOR,
+    INSURANCE_MANAGER,
+    ADMIN;
 
+    // Ruoli che il ruolo dato può gestire (creare, modificare, eliminare).
     public static Set<Role> getManagebleRoles(Role role) {
         return switch (role) {
             case MODERATOR -> EnumSet.of(Role.CLIENT, Role.PERSONAL_TRAINER, Role.NUTRITIONIST);

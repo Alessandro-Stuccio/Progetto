@@ -104,27 +104,56 @@ class PlanServiceImplTest {
         verify(planRepository).save(basicPlan);
     }
 
-    // ---- deletePlan ----
+    // ---- setActive ----
 
     @Test
-    @DisplayName("deletePlan: deletes plan when it exists")
-    void deletePlan_exists_callsDeleteById() {
-        when(planRepository.existsById(1L)).thenReturn(true);
+    @DisplayName("setActive: disables an existing plan and saves it (kept in DB)")
+    void setActive_disable_savesPlan() {
+        when(planRepository.findById(1L)).thenReturn(Optional.of(basicPlan));
+        when(planRepository.save(basicPlan)).thenReturn(basicPlan);
 
-        planService.deletePlan(1L);
+        Plan result = planService.setActive(1L, false);
 
-        verify(planRepository).deleteById(1L);
+        assertThat(result.isActive()).isFalse();
+        verify(planRepository).save(basicPlan);
+        verify(planRepository, never()).deleteById(any());
     }
 
     @Test
-    @DisplayName("deletePlan: throws ResourceNotFoundException when plan id does not exist")
-    void deletePlan_notFound_throwsResourceNotFoundException() {
-        when(planRepository.existsById(99L)).thenReturn(false);
+    @DisplayName("setActive: re-enables a disabled plan")
+    void setActive_enable_savesPlan() {
+        basicPlan.setActive(false);
+        when(planRepository.findById(1L)).thenReturn(Optional.of(basicPlan));
+        when(planRepository.save(basicPlan)).thenReturn(basicPlan);
 
-        assertThatThrownBy(() -> planService.deletePlan(99L))
+        Plan result = planService.setActive(1L, true);
+
+        assertThat(result.isActive()).isTrue();
+        verify(planRepository).save(basicPlan);
+    }
+
+    @Test
+    @DisplayName("setActive: throws CustomResourceNotFoundException when plan id does not exist")
+    void setActive_notFound_throwsResourceNotFoundException() {
+        when(planRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> planService.setActive(99L, false))
                 .isInstanceOf(CustomResourceNotFoundException.class);
 
-        verify(planRepository, never()).deleteById(any());
+        verify(planRepository, never()).save(any());
+    }
+
+    // ---- getActivePlans ----
+
+    @Test
+    @DisplayName("getActivePlans: returns only active plans from repository")
+    void getActivePlans_returnsActiveOnly() {
+        when(planRepository.findByActiveTrue()).thenReturn(List.of(basicPlan));
+
+        List<Plan> result = planService.getActivePlans();
+
+        assertThat(result).containsExactly(basicPlan);
+        verify(planRepository).findByActiveTrue();
     }
 
     // ---- existsByName ----

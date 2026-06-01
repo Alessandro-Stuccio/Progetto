@@ -4,7 +4,7 @@ import com.project.tesi.enums.PaymentFrequency;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * DTO per la selezione di un piano di abbonamento e la relativa frequenza di pagamento.
+ * Sceglie un piano e con quale frequenza pagarlo.
  */
 public record PlanRequest(
         @NotNull Long planId,

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * DTO per le credenziali di accesso (email + password).
+ * Credenziali di accesso: email e password.
  */
 public record LoginRequest(
         @NotBlank(message = "L'email non può essere vuota")

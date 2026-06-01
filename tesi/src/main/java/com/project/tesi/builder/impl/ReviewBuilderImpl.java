@@ -7,7 +7,8 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità Review.
+ * Builder concreto per Review. In build controlla che il rating sia tra 1 e 5 e che client e professional
+ * non coincidano.
  */
 public class ReviewBuilderImpl implements ReviewBuilder {
     private Long id;

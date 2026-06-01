@@ -7,7 +7,7 @@ import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.PaymentFrequency;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.common.ResourceAlreadyExistsException;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.facade.ModeratorFacade;
 import com.project.tesi.facade.SubscriptionFacade;
 import com.project.tesi.mapper.SubscriptionMapper;
@@ -24,9 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Implementazione di {@link com.project.tesi.facade.ModeratorFacade}.
- * Gestisce utenti, abbonamenti e chat per il ruolo {@code MODERATOR}.
- * Funge anche da classe base per {@link AdminFacadeImpl}.
+ * Operazioni del moderatore su utenti, abbonamenti e chat. Fa anche da base per AdminFacadeImpl,
+ * che ne eredita i metodi protected.
  */
 @Primary
 @Component
@@ -56,12 +55,8 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
     }
 
     /**
-     * Restituisce gli utenti gestibili dal chiamante in base al suo ruolo.
-     * Un {@code ADMIN} vede tutti gli utenti; un {@code MODERATOR} vede solo
-     * i ruoli definiti da {@link com.project.tesi.enums.Role#getManagebleRoles}.
-     *
-     * @param user utente autenticato che effettua la richiesta
-     * @return lista di DTO degli utenti visibili
+     * Utenti gestibili dal chiamante: l'admin li vede tutti, il moderatore solo i ruoli che il suo
+     * ruolo gli consente di gestire (vedi Role.getManagebleRoles).
      */
     @Override
     @Transactional(readOnly = true)
@@ -92,39 +87,24 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
     }
 
     /**
-     * Crea un nuovo utente verificando che il ruolo target sia tra quelli
-     * gestibili dal chiamante. Codifica la password, assegna eventuali
-     * professionisti al client e, se forniti piano e frequenza di pagamento,
-     * attiva l'abbonamento tramite {@link com.project.tesi.facade.SubscriptionFacade}.
-     *
-     * @param request dati del nuovo utente
-     * @param user    utente moderatore/admin che esegue la creazione
-     * @return DTO dell'utente creato
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il ruolo target non è gestibile
-     * @throws com.project.tesi.exception.common.ResourceAlreadyExistsException se l'email è già in uso
+     * Crea un utente solo se il suo ruolo è tra quelli che il chiamante può gestire.
+     * La costruzione vera e propria (password, professionisti assegnati, eventuale abbonamento)
+     * è in buildAndSaveUser.
      */
     @Override
     @Transactional
     public UserResponse createUser(UserCreateRequestDTO request,User user) {
         Role targetRole = Role.valueOf(request.role());
         if (!Role.getManagebleRoles(user.getRole()).contains(targetRole)) {
-            throw new UnauthorizedAccessException(
+            throw new AccessDeniedException(
                     "Il moderatore non può creare utenti con ruolo " + targetRole + ".");
         }
         return buildAndSaveUser(request, targetRole);
     }
 
     /**
-     * Aggiorna i dati anagrafici di un utente esistente.
-     * Verifica che il ruolo del target sia gestibile dal chiamante e
-     * controlla l'unicità della nuova email (se modificata).
-     *
-     * @param id      ID dell'utente da aggiornare
-     * @param request nuovi dati da applicare
-     * @param user    utente moderatore/admin che esegue la modifica
-     * @return DTO dell'utente aggiornato
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il ruolo target non è gestibile
-     * @throws com.project.tesi.exception.common.ResourceAlreadyExistsException se la nuova email è già in uso
+     * Aggiorna l'utente solo se il chiamante può gestirne il ruolo. Se cambia l'email, ne verifica
+     * l'unicità escludendo l'utente stesso.
      */
     @Override
     @Transactional
@@ -132,7 +112,7 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
 
         User target = userService.getUserById(id);
         if (!Role.getManagebleRoles(user.getRole()).contains(target.getRole())) {
-            throw new UnauthorizedAccessException(
+            throw new AccessDeniedException(
                     "Il moderatore non può modificare utenti con ruolo " + target.getRole() + ".");
         }
 
@@ -150,13 +130,7 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
     }
 
     /**
-     * Esegue il soft delete di un utente impostando il flag {@code deleted=true}.
-     * Verifica che il ruolo del target sia gestibile dal chiamante prima di delegare
-     * a {@link com.project.tesi.service.UserService#deleteUser}.
-     *
-     * @param id   ID dell'utente da eliminare
-     * @param user utente moderatore/admin che richiede l'eliminazione
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se il ruolo target non è gestibile
+     * Soft delete di un utente, consentito solo se il chiamante può gestirne il ruolo.
      */
     @Override
     @Transactional
@@ -164,7 +138,7 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
 
         User target = userService.getUserById(id);
         if (!Role.getManagebleRoles(user.getRole()).contains(target.getRole())) {
-            throw new UnauthorizedAccessException(
+            throw new AccessDeniedException(
                     "L'utente " + user.getRole() + " non può eliminare utenti con ruolo " + target.getRole() + ".");
         }
 
@@ -206,14 +180,14 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
             if (request.assignedPTId() != null) {
                 User assignedPT = userService.getUserById(request.assignedPTId());
                 if (assignedPT.getRole() != Role.PERSONAL_TRAINER) {
-                    throw new UnauthorizedAccessException("L'utente assegnato come PT non è un PERSONAL_TRAINER");
+                    throw new AccessDeniedException("L'utente assegnato come PT non è un PERSONAL_TRAINER");
                 }
                 user.setAssignedPT(assignedPT);
             }
             if (request.assignedNutritionistId() != null) {
                 User assignedNutri = userService.getUserById(request.assignedNutritionistId());
                 if (assignedNutri.getRole() != Role.NUTRITIONIST) {
-                    throw new UnauthorizedAccessException("L'utente assegnato come nutrizionista non è un NUTRITIONIST");
+                    throw new AccessDeniedException("L'utente assegnato come nutrizionista non è un NUTRITIONIST");
                 }
                 user.setAssignedNutritionist(assignedNutri);
             }

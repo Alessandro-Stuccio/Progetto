@@ -5,7 +5,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Builder per l'entità Review. Fluent interface per la costruzione di una recensione.
+ * Costruisce una Review, cioè una recensione, con interfaccia fluente.
  */
 public interface ReviewBuilder {
     ReviewBuilder id(Long id);

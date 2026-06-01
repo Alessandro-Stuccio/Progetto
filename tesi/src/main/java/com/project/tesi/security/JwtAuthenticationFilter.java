@@ -20,9 +20,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Filtro HTTP ({@link OncePerRequestFilter}) che valida il JWT su ogni richiesta
- * e popola il {@code SecurityContext}. Restituisce HTTP 401 se il token è scaduto,
- * la firma non è valida o l'utente è disabilitato.
+ * Valida il JWT a ogni richiesta e popola il SecurityContext. Risponde 401 se il
+ * token è scaduto, la firma non è valida o l'utente è disabilitato.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -36,16 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
-    /**
-     * Estrae il JWT dall'header {@code Authorization}, lo valida con {@link JwtUtil}
-     * e imposta l'autenticazione nel {@code SecurityContext}. Gestisce
-     * {@link ExpiredJwtException}, {@link SignatureException} e l'account disabilitato
-     * restituendo 401 in tutti i casi.
-     *
-     * @param request     la richiesta HTTP
-     * @param response    la risposta HTTP
-     * @param filterChain la catena di filtri
-     */
+    // Legge il token dall'header Authorization, lo valida e autentica l'utente.
+    // Token scaduto, firma non valida o account disabilitato si traducono in 401.
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {

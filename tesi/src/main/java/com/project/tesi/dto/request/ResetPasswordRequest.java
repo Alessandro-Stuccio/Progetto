@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per il reset della password tramite token ricevuto via email.
+ * Imposta la nuova password usando il token ricevuto via email.
  */
 public record ResetPasswordRequest(
         @NotBlank(message = "Il token è obbligatorio")

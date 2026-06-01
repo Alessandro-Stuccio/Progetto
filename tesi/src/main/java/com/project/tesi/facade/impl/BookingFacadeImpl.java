@@ -29,10 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Implementazione di {@link com.project.tesi.facade.BookingFacade}.
- * Coordina la prenotazione degli slot con locking per-slot basato su
- * {@code ConcurrentHashMap<Long, ReentrantLock>} per prevenire il double-booking.
- * Usa pessimistic write lock sull'abbonamento per la deduzione sicura dei crediti.
+ * Coordina la prenotazione degli slot. Per evitare il double-booking usa un lock dedicato
+ * per ogni slot; la deduzione dei crediti avviene sotto pessimistic write lock sull'abbonamento.
  */
 @Component
 public class BookingFacadeImpl implements BookingFacade {
@@ -44,10 +42,7 @@ public class BookingFacadeImpl implements BookingFacade {
         int count = 0;
     }
 
-    /**
-     * Mappa per gestire i lock a grana fine sugli slot.
-     * ConcurrentHashMap con ReentrantLock per slot — shared resource + lock richiesto dal corso.
-     */
+    // Un ReentrantLock per slot, con conteggio dei riferimenti per poterlo rimuovere quando non serve più.
     private final Map<Long, LockReference> slotLocks = new ConcurrentHashMap<>();
 
     private final UserService userService;
@@ -75,21 +70,12 @@ public class BookingFacadeImpl implements BookingFacade {
     }
 
     /**
-     * Crea una nuova prenotazione per lo slot indicato.
-     * Il metodo acquisisce il lock per-slot tramite {@link #slotLocks} (synchronized +
-     * {@link ReentrantLock}) per prevenire il double-booking concorrente.
-     * Verifica disponibilità slot, abbonamento attivo e crediti sufficienti con
-     * pessimistic write lock sull'abbonamento, genera il link Jitsi e invia email
-     * di conferma a client e professionista.
-     * In caso di {@link org.springframework.orm.ObjectOptimisticLockingFailureException}
-     * durante l'aggiornamento dei crediti, propaga un {@link IllegalStateException}.
-     *
-     * @param request dati della prenotazione (slotId)
-     * @param userId  ID del client che prenota
-     * @return DTO della prenotazione creata
-     * @throws com.project.tesi.exception.booking.SlotAlreadyBookedException se lo slot non è più disponibile
-     * @throws com.project.tesi.exception.booking.SubscriptionExpiredException se l'abbonamento è scaduto
-     * @throws com.project.tesi.exception.common.BusinessLogicException se il client tenta di prenotare con sé stesso
+     * Prenota uno slot prendendo prima il lock dedicato a quello slot, così da serializzare
+     * i tentativi concorrenti ed evitare il double-booking. Controlla che lo slot sia libero,
+     * che non si prenoti con sé stessi e che l'abbonamento copra la data dell'appuntamento;
+     * poi genera il link Jitsi, scala i crediti e invia le email di conferma.
+     * Un conflitto di optimistic locking sui crediti viene tradotto in IllegalStateException
+     * per chiedere di riprovare. Le email sono best-effort: un errore non blocca la prenotazione.
      */
     @Override
     @Transactional
@@ -166,16 +152,9 @@ public class BookingFacadeImpl implements BookingFacade {
     }
 
     /**
-     * Annulla una prenotazione esistente.
-     * Verifica che il chiamante sia il proprietario della prenotazione,
-     * che lo stato sia {@link com.project.tesi.enums.BookingStatus#CONFIRMED} e che
-     * manchino almeno 24 ore all'appuntamento. Delega la cancellazione a
-     * {@link com.project.tesi.service.SlotService}, rimborsa il credito tramite la
-     * strategy appropriata e invia email di cancellazione a entrambe le parti.
-     *
-     * @param bookingId ID dello slot prenotato
-     * @param userId    ID del client che richiede la cancellazione
-     * @throws com.project.tesi.exception.booking.BookingCancellationException se i vincoli di cancellazione non sono soddisfatti
+     * Annulla una prenotazione. Si può annullare solo una propria prenotazione confermata e
+     * solo se mancano almeno 24 ore all'appuntamento. Dopo la cancellazione rimborsa il credito
+     * tramite la strategy del ruolo e avvisa via email entrambe le parti (invio best-effort).
      */
     @Override
     @Transactional

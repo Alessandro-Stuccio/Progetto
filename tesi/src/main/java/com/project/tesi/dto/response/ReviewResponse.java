@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * DTO di risposta per una recensione di un professionista.
+ * Una recensione lasciata a un professionista, così come mostrata sul suo profilo.
  */
 public class ReviewResponse {
 

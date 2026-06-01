@@ -18,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Implementazione di {@link ReviewFacade}.
- * Verifica i prerequisiti per la recensione (prenotazione effettuata,
- * recensione non già presente) prima del salvataggio.
+ * Gestisce le recensioni dei professionisti, controllando i prerequisiti prima di salvarle.
  */
 @Component
 public class ReviewFacadeImpl implements ReviewFacade {
@@ -39,15 +37,8 @@ public class ReviewFacadeImpl implements ReviewFacade {
     }
 
     /**
-     * Verifica che il cliente non abbia già recensito il professionista e che
-     * abbia un rapporto formale con esso (prenotazione effettuata o assegnazione attiva),
-     * quindi costruisce e salva la {@link Review}.
-     *
-     * @param request dati della recensione (professionalId, rating, commento)
-     * @param userId  identificatore del cliente che lascia la recensione
-     * @return {@link ReviewResponse} con i dati della recensione salvata
-     * @throws ResourceAlreadyExistsException se il cliente ha già recensito il professionista
-     * @throws ReviewNotAllowedException      se il cliente non ha un rapporto formale col professionista
+     * Salva una recensione, ma solo se il cliente non ne ha già lasciata una per quel
+     * professionista e ha avuto con lui un rapporto formale (una prenotazione o un'assegnazione attiva).
      */
     @Override
     @Transactional
@@ -80,15 +71,8 @@ public class ReviewFacadeImpl implements ReviewFacade {
         return reviewMapper.toResponseList(reviewService.findByProfessional(professional));
     }
 
-    /**
-     * Verifica se il cliente può recensire il professionista.
-     * Restituisce {@code false} se ha già recensito; {@code true} se ha almeno
-     * una prenotazione completata o se è attualmente assegnato al professionista.
-     *
-     * @param clientId       identificatore del cliente
-     * @param professionalId identificatore del professionista
-     * @return {@code true} se la recensione è consentita, {@code false} altrimenti
-     */
+    // Niente recensione se ne esiste già una; altrimenti serve almeno una prenotazione passata
+    // o un'assegnazione attiva con quel professionista.
     @Override
     @Transactional(readOnly = true)
     public boolean canClientReview(Long clientId, Long professionalId) {

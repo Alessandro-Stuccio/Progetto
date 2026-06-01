@@ -9,10 +9,7 @@ The project lives under `tesi/`. All Maven commands run from that directory.
 ```bash
 cd tesi
 
-# Run with local Docker PostgreSQL (dev profile — starts Docker Compose automatically)
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-
-# Run with production database (default profile)
+# Run the app — the dev profile is active by default and auto-starts Docker Compose
 ./mvnw spring-boot:run
 
 # Run all tests
@@ -91,17 +88,14 @@ RabbitMQ handles async chat delivery: `ChatMessagePublisher` enqueues messages, 
 
 ## Profiles & Configuration
 
-| Profile | DB | Docker Compose | DDL |
-|---|---|---|---|
-| `dev` | Local PostgreSQL (`localhost:5432`) | Auto-started | `create` (schema dropped on each restart) |
-| `prod` (default) | Supabase via Transaction Pooler | Disabled | `validate` |
+Configuration is a **single `application.yaml`** (`src/main/resources/`). The old `application-dev.yaml` and the separate prod profile no longer exist. The dev profile is still kept active (`spring.profiles.active: dev`) on purpose — the two `@Profile("dev")` beans (`DevFileSeedInitializer`, `LogsDatabaseInitializer`) need it — not to separate environments. So there is effectively one runtime config: local PostgreSQL on `localhost:5432`, Docker Compose auto-started, `ddl-auto: create` (schema dropped and recreated on every startup). Tests still run under their own `test` profile with H2 in-memory (`create-drop`), Docker and schedulers disabled.
 
 **Dev Docker Compose services:**
 - PostgreSQL — `localhost:5432`
 - pgAdmin — `localhost:5050` (credentials: `a@a.a` / `root`)
 - RabbitMQ — `localhost:5672`; management UI at `localhost:15672` (guest/guest)
 
-Secrets come from environment variables: `JWT_SECRET`, `MAIL_FROM`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`.
+Overridable via environment variables (all with dev defaults baked into `application.yaml`): `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`. There is no `JWT_SECRET`: the signing key is generated randomly at startup from `jwt.length`, so every restart invalidates issued tokens.
 
 CORS allowed origin is set via `cors.allowed-origins` (dev default: `http://localhost:4200`).
 

@@ -6,7 +6,7 @@ import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.facade.ProfessionalFacade;
 import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SlotMapper;
@@ -32,9 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Implementazione di {@link com.project.tesi.facade.ProfessionalFacade}.
- * Gestisce slot, prenotazioni e statistiche operative dei professionisti
- * (Personal Trainer e Nutrizionisti).
+ * Gestisce slot, prenotazioni e statistiche dei professionisti (personal trainer e nutrizionisti).
  */
 @Component
 public class ProfessionalFacadeImpl implements ProfessionalFacade {
@@ -72,7 +70,7 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     public List<SlotDTO> createSlots(Long professionalId, List<SlotDTO> slots) {
         User professional = userService.getUserById(professionalId);
         if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new UnauthorizedAccessException("Solo i professionisti possono creare slot");
+            throw new AccessDeniedException("Solo i professionisti possono creare slot");
         }
         List<Slot> entities = slotMapper.toEntityList(slots, professional);
         return slotMapper.toDtoList(slotService.createSlots(entities));
@@ -83,7 +81,7 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     public void deleteSlot(Long slotId, Long requesterId) {
         Slot slot = slotService.getSlot(slotId);
         if (!slot.getProfessional().getId().equals(requesterId)) {
-            throw new UnauthorizedAccessException("Non sei autorizzato a eliminare questo slot");
+            throw new AccessDeniedException("Non sei autorizzato a eliminare questo slot");
         }
         if (slot.getBookedBy() != null || slot.getStatus() == BookingStatus.CONFIRMED) {
             throw new IllegalStateException("Non puoi eliminare uno slot già prenotato.");
@@ -92,23 +90,15 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     }
 
     /**
-     * Genera automaticamente slot da 30 minuti a partire dagli orari settimanali del professionista.
-     * Itera ogni giorno nel range {@code startDate}–{@code endDate}, ricerca le regole
-     * {@link com.project.tesi.model.WeeklySchedule} corrispondenti al giorno della settimana e
-     * produce slot consecutivi di 30 minuti tra {@code startTime} ed {@code endTime}.
-     * Gli slot già esistenti (verificati con {@link com.project.tesi.service.SlotService#slotExists})
-     * vengono saltati per evitare duplicati.
-     *
-     * @param professional professionista per cui generare gli slot
-     * @param startDate    primo giorno del range (inclusivo)
-     * @param endDate      ultimo giorno del range (inclusivo)
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se l'utente non è un professionista
+     * Genera gli slot da 30 minuti per il periodo indicato a partire dal calendario settimanale:
+     * per ogni giorno applica le regole di quel giorno della settimana e spezza la fascia oraria
+     * in finestre da mezz'ora. Gli slot già presenti vengono saltati, così la generazione è ripetibile.
      */
     @Override
     @Transactional
     public void generateSlotsFromSchedule(User professional, LocalDate startDate, LocalDate endDate) {
         if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new UnauthorizedAccessException("Solo i professionisti possono generare slot");
+            throw new AccessDeniedException("Solo i professionisti possono generare slot");
         }
 
         List<WeeklySchedule> schedules = weeklyScheduleService.findByProfessional(professional);
@@ -154,7 +144,7 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     public List<BookingResponse> getUpcomingBookings(Long professionalId) {
         User professional = userService.getUserById(professionalId);
         if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new UnauthorizedAccessException("Solo i professionisti possono accedere agli appuntamenti.");
+            throw new AccessDeniedException("Solo i professionisti possono accedere agli appuntamenti.");
         }
         LocalDateTime now = LocalDateTime.now();
         return slotService.findBookingsByProfessional(professional).stream()
@@ -165,21 +155,15 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     }
 
     /**
-     * Calcola e restituisce le statistiche operative del professionista.
-     * Aggrega: prenotazioni del giorno corrente con link meeting, clienti che necessitano
-     * attenzione (nessun documento del tipo rilevante negli ultimi 7 giorni),
-     * documenti caricati nella settimana corrente e totale clienti assegnati.
-     *
-     * @param professionalId ID del professionista
-     * @return DTO con le statistiche aggregate
-     * @throws com.project.tesi.exception.common.UnauthorizedAccessException se l'utente non è un professionista
+     * Raccoglie le statistiche operative del professionista: appuntamenti di oggi, clienti da seguire
+     * (senza un piano aggiornato negli ultimi 7 giorni), documenti caricati questa settimana e clienti totali.
      */
     @Override
     @Transactional(readOnly = true)
     public ProfessionalStatsResponse getProfessionalStats(Long professionalId) {
         User professional = userService.getUserById(professionalId);
         if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
-            throw new UnauthorizedAccessException("Solo i professionisti possono accedere alle statistiche.");
+            throw new AccessDeniedException("Solo i professionisti possono accedere alle statistiche.");
         }
 
         LocalDate today = LocalDate.now();

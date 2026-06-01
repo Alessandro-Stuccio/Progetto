@@ -5,21 +5,11 @@ import org.springframework.validation.annotation.Validated;
 import com.project.tesi.model.User;
 import com.project.tesi.model.Slot;
 
-/**
- * Servizio per la generazione di link per videoconferenze.
- */
+/** Genera i link per le videoconferenze delle prenotazioni. */
 @Validated
 public interface VideoConferenceService {
 
-    /**
-     * Genera un link Jitsi per la videoconferenza relativa allo slot prenotato
-     * tra un utente e un professionista.
-     *
-     * @param user         utente cliente che ha prenotato lo slot
-     * @param professional utente professionista
-     * @param slot         slot di prenotazione per cui generare il link
-     * @return URL della stanza Jitsi da usare per il meeting
-     */
+    /** Crea la stanza Jitsi per l'incontro tra cliente e professionista su quello slot e ne ritorna l'URL. */
     String generateMeetingLink(User user, User professional, Slot slot);
 }
 

@@ -5,8 +5,8 @@ import com.project.tesi.enums.Role;
 import java.util.Objects;
 
 /**
- * DTO di risposta per una prenotazione. Include dettagli su data, orario, professionista, link meeting e stato.
- * Il campo canJoin indica se la videochiamata è avviabile (finestra ±30 minuti dall'orario).
+ * Dati di una prenotazione restituiti al client: orario, controparte, link al meeting e stato.
+ * canJoin è calcolato: indica se la videochiamata è avviabile nella finestra di ±30 minuti dall'orario.
  */
 public class BookingResponse {
 

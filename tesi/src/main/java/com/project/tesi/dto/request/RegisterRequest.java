@@ -7,7 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per la registrazione di un nuovo cliente. Include selezione PT, nutrizionista, piano e frequenza pagamento.
+ * Registrazione di un nuovo cliente: dati anagrafici, credenziali e scelta di PT e nutrizionista (obbligatori).
+ * Piano e frequenza di pagamento sono facoltativi e possono essere definiti in seguito.
  */
 public record RegisterRequest(
         @NotBlank(message = "Il nome è obbligatorio")

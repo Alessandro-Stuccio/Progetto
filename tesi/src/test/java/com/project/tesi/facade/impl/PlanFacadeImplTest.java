@@ -53,24 +53,24 @@ class PlanFacadeImplTest {
     // ─── getAllPlans ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("getAllPlans: delegates to service and mapper, returns list")
+    @DisplayName("getAllPlans: delegates to service (active only) and mapper, returns list")
     void getAllPlans_returnsMappedList() {
         List<Plan> plans = List.of(plan);
         List<PlanResponseDTO> expected = List.of(planResponseDTO);
-        when(planService.getAllPlans()).thenReturn(plans);
+        when(planService.getActivePlans()).thenReturn(plans);
         when(planMapper.toResponseList(plans)).thenReturn(expected);
 
         List<PlanResponseDTO> result = planFacade.getAllPlans();
 
         assertThat(result).isEqualTo(expected);
-        verify(planService).getAllPlans();
+        verify(planService).getActivePlans();
         verify(planMapper).toResponseList(plans);
     }
 
     @Test
     @DisplayName("getAllPlans: empty service result returns empty list")
     void getAllPlans_emptyList_returnsEmpty() {
-        when(planService.getAllPlans()).thenReturn(List.of());
+        when(planService.getActivePlans()).thenReturn(List.of());
         when(planMapper.toResponseList(List.of())).thenReturn(List.of());
 
         List<PlanResponseDTO> result = planFacade.getAllPlans();
@@ -175,15 +175,4 @@ class PlanFacadeImplTest {
         assertThat(plan.getMonthlyCreditsNutri()).isEqualTo(0);
     }
 
-    // ─── deletePlan ──────────────────────────────────────────────────────────────
-
-    @Test
-    @DisplayName("deletePlan: delegates to planService.deletePlan")
-    void deletePlan_callsServiceDelete() {
-        doNothing().when(planService).deletePlan(1L);
-
-        planFacade.deletePlan(1L);
-
-        verify(planService).deletePlan(1L);
-    }
 }

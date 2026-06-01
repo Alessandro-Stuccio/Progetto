@@ -5,17 +5,12 @@ import com.project.tesi.dto.response.ActivityFeedItemResponse;
 import java.util.List;
 
 /**
- * Facade per il recupero del feed di attività recenti di un utente.
+ * Recupera il feed delle attività recenti di un utente.
  */
 public interface ActivityFeedFacade {
 
     /**
-     * Restituisce il feed delle attività recenti dell'utente specificato.
-     *
-     * @param userId identificativo dell'utente di cui recuperare il feed
-     * @param days   numero di giorni passati da considerare per il feed
-     * @param limit  numero massimo di elementi da restituire
-     * @return lista di attività recenti dell'utente
+     * Restituisce le attività dell'utente negli ultimi {@code days} giorni, al massimo {@code limit} elementi.
      */
     List<ActivityFeedItemResponse> getActivityFeed(Long userId, int days, int limit);
 }

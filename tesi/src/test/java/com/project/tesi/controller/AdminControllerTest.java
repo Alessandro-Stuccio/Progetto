@@ -95,16 +95,51 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.name").value("Gold"));
     }
 
-    // ------------------------------------------------------------------ DELETE /api/admin/plans/{id}
+    // ------------------------------------------------------------------ GET /api/admin/plans
 
     @Test
-    @DisplayName("DELETE /api/admin/plans/{id} — 200 con messaggio di conferma")
-    void deletePlan_returns200() throws Exception {
-        doNothing().when(adminFacade).deletePlan(anyLong());
+    @DisplayName("GET /api/admin/plans — 200 con tutti i piani (inclusi disabilitati)")
+    void getAllPlans_returns200() throws Exception {
+        PlanResponseDTO active = PlanResponseDTO.builder()
+                .id(1L).name("Basic").duration("SEMESTRALE").fullPrice(299.0).monthlyInstallmentPrice(59.0)
+                .monthlyCreditsPT(1).monthlyCreditsNutri(1).active(true).build();
+        PlanResponseDTO disabled = PlanResponseDTO.builder()
+                .id(2L).name("Old").duration("ANNUALE").fullPrice(500.0).monthlyInstallmentPrice(45.0)
+                .monthlyCreditsPT(1).monthlyCreditsNutri(1).active(false).build();
+        when(adminFacade.getAllPlansForAdmin()).thenReturn(List.of(active, disabled));
 
-        mockMvc.perform(delete("/api/admin/plans/5"))
+        mockMvc.perform(get("/api/admin/plans"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Plan deleted successfully"));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[1].active").value(false));
+    }
+
+    // ------------------------------------------------------------------ PATCH /api/admin/plans/{id}/disable|enable
+
+    @Test
+    @DisplayName("PATCH /api/admin/plans/{id}/disable — 200 con piano disabilitato")
+    void disablePlan_returns200() throws Exception {
+        PlanResponseDTO plan = PlanResponseDTO.builder()
+                .id(5L).name("Gold").duration("ANNUALE").fullPrice(299.0).monthlyInstallmentPrice(29.9)
+                .monthlyCreditsPT(2).monthlyCreditsNutri(2).active(false).build();
+        when(adminFacade.setPlanStatus(5L, false)).thenReturn(plan);
+
+        mockMvc.perform(patch("/api/admin/plans/5/disable"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/admin/plans/{id}/enable — 200 con piano riabilitato")
+    void enablePlan_returns200() throws Exception {
+        PlanResponseDTO plan = PlanResponseDTO.builder()
+                .id(5L).name("Gold").duration("ANNUALE").fullPrice(299.0).monthlyInstallmentPrice(29.9)
+                .monthlyCreditsPT(2).monthlyCreditsNutri(2).active(true).build();
+        when(adminFacade.setPlanStatus(5L, true)).thenReturn(plan);
+
+        mockMvc.perform(patch("/api/admin/plans/5/enable"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
     }
 
     // ------------------------------------------------------------------ GET /api/admin/stats

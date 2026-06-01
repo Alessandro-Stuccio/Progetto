@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Implementazione di ChatService. Gestisce la creazione e recupero delle chat
- * tramite ChatRepository.
- */
+/** Creazione e recupero delle chat tra utenti. */
 @Service
 public class ChatServiceImpl implements ChatService {
 
@@ -24,10 +21,7 @@ public class ChatServiceImpl implements ChatService {
         this.chatRepository = chatRepository;
     }
 
-    /**
-     * Cerca una chat esistente tra i due utenti tramite repository;
-     * se non trovata ne crea una nuova con stato predefinito e la persiste.
-     */
+    // Riusa la chat esistente tra i due utenti; se non c'è ne crea una nuova al volo.
     @Override
     public Long getOrCreateChat(User sender, User receiver) {
         return chatRepository.findChatBetweenUsers(sender.getId(), receiver.getId())

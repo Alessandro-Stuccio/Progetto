@@ -13,47 +13,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Mapper per la conversione tra {@link Subscription} e {@link SubscriptionResponse},
- * e per la costruzione di un abbonamento a partire da una registrazione utente
- * o da un'assegnazione amministrativa.
+ * Converte gli abbonamenti tra entità e DTO e ne costruisce di nuovi,
+ * sia in fase di registrazione che da assegnazione admin.
  */
 @Component
 public class SubscriptionMapper {
 
-    /**
-     * Costruisce un nuovo {@link Subscription} a partire dai dati di registrazione.
-     * Delega il calcolo di date, rate e crediti iniziali a {@link #buildSubscription}.
-     *
-     * @param request la richiesta di registrazione contenente la frequenza di pagamento
-     * @param user    l'utente titolare dell'abbonamento
-     * @param plan    il piano sottoscritto
-     * @return la nuova entità {@link Subscription}, o {@code null} se un parametro è {@code null}
-     */
+    // Abbonamento creato in fase di registrazione: prende la frequenza dalla richiesta.
     public Subscription toSubscription(RegisterRequest request, User user, Plan plan) {
         if (request == null || user == null || plan == null) return null;
         return buildSubscription(user, plan, request.paymentFrequency());
     }
 
-    /**
-     * Costruisce un nuovo {@link Subscription} a partire da dati forniti dall'amministratore.
-     * Equivalente a {@link #toSubscription} ma accetta direttamente la frequenza di pagamento
-     * senza una richiesta di registrazione.
-     *
-     * @param user             l'utente titolare
-     * @param plan             il piano sottoscritto
-     * @param paymentFrequency la frequenza di pagamento scelta
-     * @return la nuova entità {@link Subscription}
-     */
+    // Come toSubscription, ma la frequenza la passa direttamente l'admin.
     public Subscription toSubscriptionFromAdmin(User user, Plan plan, PaymentFrequency paymentFrequency) {
         return buildSubscription(user, plan, paymentFrequency);
     }
 
-    /**
-     * Converte una {@link Subscription} in {@link SubscriptionResponse}.
-     *
-     * @param s l'abbonamento da convertire
-     * @return il DTO di risposta, o {@code null} se l'abbonamento è {@code null}
-     */
     public SubscriptionResponse toResponse(Subscription s) {
         if (s == null) return null;
         Plan plan = s.getPlan();
@@ -72,27 +48,13 @@ public class SubscriptionMapper {
                 .build();
     }
 
-    /**
-     * Converte una lista di {@link Subscription} in una lista di {@link SubscriptionResponse}.
-     *
-     * @param subscriptions lista degli abbonamenti
-     * @return lista dei DTO di risposta
-     */
     public List<SubscriptionResponse> toResponseList(List<Subscription> subscriptions) {
         return subscriptions.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    /**
-     * Metodo privato che costruisce l'entità {@link Subscription} calcolando:
-     * data di inizio (oggi), data di fine (in base alla durata del piano),
-     * numero di rate totali ({@code 1} per pagamento unico, altrimenti pari ai mesi),
-     * data del prossimo pagamento e crediti iniziali PT e Nutri dal piano.
-     *
-     * @param user             l'utente titolare
-     * @param plan             il piano sottoscritto
-     * @param paymentFrequency la frequenza di pagamento
-     * @return la nuova entità {@link Subscription} pronta per il salvataggio
-     */
+    // Calcola date, rate e crediti iniziali partendo dalla durata del piano:
+    // inizio oggi, fine dopo i mesi del piano, una sola rata per il pagamento unico
+    // altrimenti una al mese, e crediti PT/Nutri presi dal piano.
     private Subscription buildSubscription(User user, Plan plan, PaymentFrequency paymentFrequency) {
         LocalDate startDate = LocalDate.now();
         int months = plan.getDuration().getMonths();

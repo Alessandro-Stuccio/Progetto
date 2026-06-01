@@ -7,47 +7,22 @@ import org.springframework.validation.annotation.Validated;
 import com.project.tesi.model.Plan;
 import java.util.List;
 
-/**
- * Servizio per la gestione dei piani di abbonamento disponibili.
- */
+/** Gestione dei piani di abbonamento. */
 @Validated
 public interface PlanService {
 
-    /**
-     * Restituisce la lista di tutti i piani di abbonamento presenti nel sistema.
-     *
-     * @return lista di tutti i piani
-     */
+    /** Tutti i piani, anche quelli disabilitati: serve alla vista admin e alle statistiche. */
     List<Plan> getAllPlans();
 
-    /**
-     * Recupera un piano tramite il suo identificativo.
-     *
-     * @param id identificativo del piano
-     * @return piano corrispondente
-     */
+    /** Solo i piani attivi, per la vista pubblica/client. */
+    List<Plan> getActivePlans();
+
     Plan getPlanById(@NotNull @Min(1) Long id);
 
-    /**
-     * Crea e persiste un nuovo piano di abbonamento.
-     *
-     * @param plan entità piano da creare
-     * @return piano salvato
-     */
     Plan createPlan(@NotNull Plan plan);
 
-    /**
-     * Elimina un piano di abbonamento tramite il suo identificativo.
-     *
-     * @param id identificativo del piano da eliminare
-     */
-    void deletePlan(@NotNull @Min(1) Long id);
+    /** Attiva o disabilita un piano. È un soft-disable: il record resta in DB. */
+    Plan setActive(@NotNull @Min(1) Long id, boolean active);
 
-    /**
-     * Verifica se esiste già un piano con il nome specificato.
-     *
-     * @param name nome del piano da cercare
-     * @return {@code true} se un piano con quel nome esiste, {@code false} altrimenti
-     */
     boolean existsByName(@NotNull String name);
 }

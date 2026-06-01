@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * DTO per la richiesta di reset password via email.
+ * Avvia il recupero password: serve solo l'email a cui inviare il link.
  */
 public record ForgotPasswordRequest(
         @NotBlank(message = "L'email è obbligatoria")

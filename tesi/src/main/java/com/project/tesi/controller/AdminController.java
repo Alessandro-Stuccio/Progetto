@@ -8,12 +8,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
-/**
- * Controller REST per le operazioni di amministrazione.
- * Espone /api/admin. Richiede ruolo ADMIN.
- */
+/** Operazioni di amministrazione sui piani e statistiche globali. /api/admin, richiede ruolo ADMIN. */
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -25,48 +22,38 @@ public class AdminController {
     }
 
 
-    /**
-     * Crea un nuovo piano di abbonamento.
-     *
-     * @param request dati del piano da creare
-     * @return {@link PlanResponseDTO} del piano appena creato
-     */
+    /** Crea un nuovo piano di abbonamento. */
     @PostMapping("/plans")
     public ResponseEntity<PlanResponseDTO> createPlan(@Valid @RequestBody PlanCreateRequestDTO request) {
         return ResponseEntity.ok(adminFacade.createPlan(request));
     }
 
-    /**
-     * Aggiorna un piano di abbonamento esistente.
-     *
-     * @param id      identificativo del piano da aggiornare
-     * @param request nuovi dati del piano
-     * @return {@link PlanResponseDTO} aggiornato
-     */
+    /** Aggiorna un piano di abbonamento esistente. */
     @PutMapping("/plans/{id}")
     public ResponseEntity<PlanResponseDTO> updatePlan(@PathVariable Long id,
             @Valid @RequestBody PlanCreateRequestDTO request) {
         return ResponseEntity.ok(adminFacade.updatePlan(id, request));
     }
 
-    /**
-     * Elimina un piano di abbonamento.
-     *
-     * @param id identificativo del piano da eliminare
-     * @return messaggio di conferma operazione
-     */
-    @DeleteMapping("/plans/{id}")
-    public ResponseEntity<Map<String, String>> deletePlan(@PathVariable Long id) {
-        adminFacade.deletePlan(id);
-        return ResponseEntity.ok(Map.of("message", "Plan deleted successfully"));
+    /** Tutti i piani, inclusi quelli disabilitati (vista amministrativa, non quella pubblica). */
+    @GetMapping("/plans")
+    public ResponseEntity<List<PlanResponseDTO>> getAllPlans() {
+        return ResponseEntity.ok(adminFacade.getAllPlansForAdmin());
     }
 
-    /**
-     * Restituisce statistiche aggregate per la dashboard dell'amministratore
-     * (utenti attivi, prenotazioni, abbonamenti, ecc.).
-     *
-     * @return {@link AdminStatsResponse} con i dati statistici
-     */
+    /** Disabilita un piano (resta in DB). Solo se non ha abbonamenti collegati. */
+    @PatchMapping("/plans/{id}/disable")
+    public ResponseEntity<PlanResponseDTO> disablePlan(@PathVariable Long id) {
+        return ResponseEntity.ok(adminFacade.setPlanStatus(id, false));
+    }
+
+    /** Riabilita un piano precedentemente disabilitato. */
+    @PatchMapping("/plans/{id}/enable")
+    public ResponseEntity<PlanResponseDTO> enablePlan(@PathVariable Long id) {
+        return ResponseEntity.ok(adminFacade.setPlanStatus(id, true));
+    }
+
+    /** Statistiche aggregate per la dashboard admin: utenti attivi, prenotazioni, abbonamenti, ecc. */
     @GetMapping("/stats")
     public ResponseEntity<AdminStatsResponse> getStats() {
         return ResponseEntity.ok(adminFacade.getAdminStats());

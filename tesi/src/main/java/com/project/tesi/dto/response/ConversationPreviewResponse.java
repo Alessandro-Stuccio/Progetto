@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * DTO di risposta per l'anteprima di una conversazione nella lista chat (partner, ultimo messaggio, non letti).
+ * Anteprima di una conversazione nella lista chat: interlocutore, ultimo messaggio e numero di non letti.
  */
 public class ConversationPreviewResponse {
 

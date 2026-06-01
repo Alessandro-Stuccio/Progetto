@@ -7,7 +7,7 @@ import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.exception.document.InvalidFileException;
 import com.project.tesi.mapper.DocumentMapper;
 import com.project.tesi.mapper.SubscriptionMapper;
@@ -154,12 +154,12 @@ class InsuranceFacadeImplTest {
     }
 
     @Test
-    @DisplayName("getDocumentById: throws UnauthorizedAccessException when document is not an insurance policy")
+    @DisplayName("getDocumentById: throws AccessDeniedException when document is not an insurance policy")
     void getDocumentById_notInsurancePolice_throwsUnauthorized() {
         when(documentService.getDocumentById(200L)).thenReturn(otherDoc);
 
         assertThatThrownBy(() -> facade.getDocumentById(200L))
-                .isInstanceOf(UnauthorizedAccessException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("polizza");
     }
 
@@ -237,12 +237,12 @@ class InsuranceFacadeImplTest {
     }
 
     @Test
-    @DisplayName("downloadPolicy: throws UnauthorizedAccessException when document is not a policy")
+    @DisplayName("downloadPolicy: throws AccessDeniedException when document is not a policy")
     void downloadPolicy_wrongType_throwsUnauthorized() {
         when(documentService.getDocumentById(200L)).thenReturn(otherDoc);
 
         assertThatThrownBy(() -> facade.downloadPolicy(200L))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(fileStorageService, never()).load(anyString());
     }
@@ -261,12 +261,12 @@ class InsuranceFacadeImplTest {
     }
 
     @Test
-    @DisplayName("deletePolicy: throws UnauthorizedAccessException when document is not a policy")
+    @DisplayName("deletePolicy: throws AccessDeniedException when document is not a policy")
     void deletePolicy_wrongType_throwsUnauthorized() {
         when(documentService.getDocumentById(200L)).thenReturn(otherDoc);
 
         assertThatThrownBy(() -> facade.deletePolicy(200L))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(documentService, never()).deleteDocument(anyLong());
         verify(fileStorageService, never()).delete(anyString());
@@ -319,12 +319,12 @@ class InsuranceFacadeImplTest {
     }
 
     @Test
-    @DisplayName("updatePolicyNotes: throws UnauthorizedAccessException when document is not a policy")
+    @DisplayName("updatePolicyNotes: throws AccessDeniedException when document is not a policy")
     void updatePolicyNotes_wrongType_throwsUnauthorized() {
         when(documentService.getDocumentById(200L)).thenReturn(otherDoc);
 
         assertThatThrownBy(() -> facade.updatePolicyNotes(200L, "notes"))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(documentService, never()).updateNotes(anyLong(), anyString());
     }

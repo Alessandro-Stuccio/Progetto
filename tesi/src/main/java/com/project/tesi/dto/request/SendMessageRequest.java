@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per l'invio di un messaggio in una chat via REST.
+ * Invia un messaggio in una chat via REST (max 2000 caratteri).
  */
 public record SendMessageRequest(
         @NotNull(message = "L'ID della chat è obbligatorio") Long chatId,

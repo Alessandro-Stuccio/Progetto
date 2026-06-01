@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO per la sottomissione di una recensione (rating 1-5 e commento opzionale).
+ * Recensione lasciata a un professionista: voto da 1 a 5 e commento facoltativo (max 1000 caratteri).
  */
 public record ReviewRequest(
         @NotNull Long professionalId,

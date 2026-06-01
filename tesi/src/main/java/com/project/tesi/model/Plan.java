@@ -16,21 +16,9 @@ import jakarta.persistence.UniqueConstraint;
 import java.util.Objects;
 
 /**
- * Entità JPA per un piano di abbonamento offerto dalla piattaforma.
- *
- * <p>I piani hanno durata semestrale o annuale ({@code PlanDuration}) e supportano due modalità
- * di pagamento: unica soluzione ({@code fullPrice}) oppure rate mensili ({@code monthlyInstallmentPrice}).
- *
- * <p>I crediti mensili distinguono le due tipologie di professionista:
- * {@code monthlyCreditsPT} per le sessioni con personal trainer e
- * {@code monthlyCreditsNutri} per le sessioni con nutrizionista.
- * Esempio: piano Basic → 1 credito PT + 1 credito nutrizionista al mese;
- * piano Premium → 2 crediti PT + 2 crediti nutrizionista al mese.
- *
- * <p>Vincoli JPA rilevanti:
- * <ul>
- *   <li>Vincolo unico su {@code name} — ogni piano deve avere un nome distinto.</li>
- * </ul>
+ * Un piano di abbonamento offerto dalla piattaforma. È semestrale o annuale, pagabile in
+ * un'unica soluzione o a rate mensili, e assegna ogni mese un certo numero di crediti distinti
+ * per PT e nutrizionista (es. Basic 1+1, Premium 2+2). Il nome è univoco.
  */
 @Entity
 @Table(name = "plans", uniqueConstraints = {
@@ -42,28 +30,29 @@ public class Plan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Nome univoco del piano (es. "Basic Semestrale", "Premium Annuale"). */
+    // Nome univoco, es. "Basic Semestrale"
     @Column(nullable = false)
     private String name;
 
-    /** Durata del piano: {@code SEMESTRALE} (6 mesi) o {@code ANNUALE} (12 mesi). */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PlanDuration duration;
 
-    /** Prezzo totale in caso di pagamento in un'unica soluzione. */
+    // Prezzo pieno e prezzo della singola rata mensile
     @Column(nullable = false)
     private Double fullPrice;
 
-    /** Importo della singola rata mensile in caso di pagamento rateale. */
     @Column(nullable = false)
     private Double monthlyInstallmentPrice;
 
-    /** Numero di crediti mensili utilizzabili per prenotare sessioni con un personal trainer. */
+    // Crediti che il piano regala ogni mese, per tipo di professionista
     private int monthlyCreditsPT;
-
-    /** Numero di crediti mensili utilizzabili per prenotare sessioni con un nutrizionista. */
     private int monthlyCreditsNutri;
+
+    // Se false il piano sparisce dalla vetrina ma resta valido per chi è già abbonato;
+    // l'admin può riattivarlo
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean active = true;
 
     public Plan() {}
 
@@ -87,6 +76,9 @@ public class Plan {
 
     public int getMonthlyCreditsNutri() { return monthlyCreditsNutri; }
     public void setMonthlyCreditsNutri(int monthlyCreditsNutri) { this.monthlyCreditsNutri = monthlyCreditsNutri; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public static PlanBuilder builder() {
         return new PlanBuilderImpl();

@@ -6,7 +6,7 @@ import com.project.tesi.model.*;
 
 
 /**
- * Builder per l'entità Document. Fluent interface per la costruzione dei metadati di un documento caricato.
+ * Costruisce un Document, ovvero i metadati di un file caricato, con interfaccia fluente.
  */
 public interface DocumentBuilder {
     DocumentBuilder id(Long id);

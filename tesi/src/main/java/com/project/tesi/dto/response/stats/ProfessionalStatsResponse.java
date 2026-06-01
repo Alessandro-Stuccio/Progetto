@@ -3,7 +3,8 @@ package com.project.tesi.dto.response.stats;
 import java.util.List;
 
 /**
- * DTO di risposta con le statistiche e metriche per la dashboard del professionista.
+ * Metriche per la dashboard del professionista: appuntamenti di oggi, clienti da seguire e
+ * qualche contatore di riepilogo.
  */
 public class ProfessionalStatsResponse {
 
@@ -51,8 +52,7 @@ public class ProfessionalStatsResponse {
         public ProfessionalStatsResponse build() { return new ProfessionalStatsResponse(this); }
     }
 
-    // --- Nested classes ---
-
+    /** Una prenotazione odierna mostrata nell'agenda del professionista. */
     public static class TodayBookingItem {
         private Long id;
         private String clientName;
@@ -104,6 +104,7 @@ public class ProfessionalStatsResponse {
         }
     }
 
+    /** Un cliente da ricontattare; daysSinceLastDoc è i giorni trascorsi dall'ultimo documento caricato. */
     public static class ClientAttentionItem {
         private Long id;
         private String firstName;

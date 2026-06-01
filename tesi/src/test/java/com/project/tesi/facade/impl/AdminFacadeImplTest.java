@@ -34,6 +34,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -208,28 +210,58 @@ class AdminFacadeImplTest {
                 .hasMessageContaining("Durata non valida");
     }
 
-    // ─── deletePlan ──────────────────────────────────────────────────────────────
+    // ─── setPlanStatus / getAllPlansForAdmin ───────────────────────────────────────
 
     @Test
-    @DisplayName("deletePlan: deletes plan successfully when no active subscriptions exist")
-    void deletePlan_noActiveSubscriptions_success() {
+    @DisplayName("setPlanStatus(disable): disables plan when no subscriptions are linked")
+    void setPlanStatus_disable_noSubscriptions_success() {
         when(subscriptionService.hasSubscribersByPlan(1L)).thenReturn(false);
+        when(planService.setActive(1L, false)).thenReturn(plan);
+        when(planMapper.toResponse(plan)).thenReturn(planResponseDTO);
 
-        facade.deletePlan(1L);
+        PlanResponseDTO result = facade.setPlanStatus(1L, false);
 
-        verify(planService).deletePlan(1L);
+        assertThat(result).isEqualTo(planResponseDTO);
+        verify(planService).setActive(1L, false);
     }
 
     @Test
-    @DisplayName("deletePlan: throws IllegalStateException when active subscriptions are linked to plan")
-    void deletePlan_withActiveSubscriptions_throwsIllegalState() {
+    @DisplayName("setPlanStatus(disable): throws IllegalStateException when subscriptions are linked")
+    void setPlanStatus_disable_withSubscriptions_throwsIllegalState() {
         when(subscriptionService.hasSubscribersByPlan(1L)).thenReturn(true);
 
-        assertThatThrownBy(() -> facade.deletePlan(1L))
+        assertThatThrownBy(() -> facade.setPlanStatus(1L, false))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sottoscrizioni");
+                .hasMessageContaining("abbonamenti");
 
-        verify(planService, never()).deletePlan(any());
+        verify(planService, never()).setActive(anyLong(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("setPlanStatus(enable): re-enables plan without checking subscriptions")
+    void setPlanStatus_enable_success() {
+        when(planService.setActive(1L, true)).thenReturn(plan);
+        when(planMapper.toResponse(plan)).thenReturn(planResponseDTO);
+
+        PlanResponseDTO result = facade.setPlanStatus(1L, true);
+
+        assertThat(result).isEqualTo(planResponseDTO);
+        verify(planService).setActive(1L, true);
+        verify(subscriptionService, never()).hasSubscribersByPlan(anyLong());
+    }
+
+    @Test
+    @DisplayName("getAllPlansForAdmin: returns all plans (incl. disabled) mapped to DTOs")
+    void getAllPlansForAdmin_returnsAll() {
+        List<Plan> plans = List.of(plan);
+        List<PlanResponseDTO> expected = List.of(planResponseDTO);
+        when(planService.getAllPlans()).thenReturn(plans);
+        when(planMapper.toResponseList(plans)).thenReturn(expected);
+
+        List<PlanResponseDTO> result = facade.getAllPlansForAdmin();
+
+        assertThat(result).isEqualTo(expected);
+        verify(planService).getAllPlans();
     }
 
     // ─── getAdminStats ────────────────────────────────────────────────────────────

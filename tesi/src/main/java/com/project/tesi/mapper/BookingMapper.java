@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Mapper per la conversione di {@link Slot} in {@link BookingResponse}.
+ * Converte uno slot prenotato nel DTO della prenotazione.
  */
 @Component
 public class BookingMapper {
@@ -16,13 +16,7 @@ public class BookingMapper {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    /**
-     * Converte uno {@link Slot} in {@link BookingResponse}, formattando data e orari
-     * e calcolando il flag {@code canJoin} tramite {@link #isMeetingJoinable}.
-     *
-     * @param slot lo slot da convertire
-     * @return il DTO di risposta, o {@code null} se lo slot è {@code null}
-     */
+    // Formatta data e orari e ricava canJoin dalla finestra di accesso al meeting.
     public BookingResponse toResponse(Slot slot) {
         if (slot == null) return null;
 
@@ -43,14 +37,7 @@ public class BookingMapper {
                 .build();
     }
 
-    /**
-     * Determina se il meeting è accessibile in questo momento.
-     * Il meeting è considerato apribile a partire da 10 minuti prima dell'inizio
-     * e fino a 30 minuti dopo l'orario di inizio dello slot.
-     *
-     * @param startTime orario di inizio dello slot
-     * @return {@code true} se l'ora corrente rientra nella finestra di accesso
-     */
+    // Il meeting è apribile da 10 minuti prima dell'inizio fino a 30 minuti dopo.
     private boolean isMeetingJoinable(LocalDateTime startTime) {
         if (startTime == null) return false;
         LocalDateTime now = LocalDateTime.now();

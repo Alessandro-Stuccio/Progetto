@@ -9,8 +9,8 @@ import com.project.tesi.model.*;
 
 
 /**
- * Implementazione del pattern Builder per l'entità User.
- * Comodo per costruire l'entità passo-passo senza impazzire con i costruttori.
+ * Builder concreto per User. In build controlla che email, password e role ci siano, che l'email sia in
+ * formato valido e che la password rispetti la lunghezza minima.
  */
 public class UserBuilderImpl implements UserBuilder {
 

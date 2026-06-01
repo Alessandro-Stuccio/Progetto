@@ -10,7 +10,7 @@ import com.project.tesi.dto.response.UpdatedNotesResponse;
 import com.project.tesi.dto.response.UserResponse;
 import com.project.tesi.enums.Role;
 import com.project.tesi.exception.GlobalExceptionHandler;
-import com.project.tesi.exception.document.DocumentNotFoundException;
+import com.project.tesi.exception.common.CustomResourceNotFoundException;
 import com.project.tesi.facade.InsuranceFacade;
 import com.project.tesi.model.Document;
 import com.project.tesi.model.User;
@@ -192,7 +192,7 @@ class InsuranceControllerTest {
     @DisplayName("GET /api/insurance/policies/{id}/download — 404 quando polizza non trovata")
     void downloadPolicy_notFound_returns404() throws Exception {
         when(insuranceFacade.getDocumentById(anyLong()))
-                .thenThrow(new DocumentNotFoundException(99L));
+                .thenThrow(new CustomResourceNotFoundException("Documento", 99L));
 
         mockMvc.perform(get("/api/insurance/policies/99/download"))
                 .andExpect(status().isNotFound());

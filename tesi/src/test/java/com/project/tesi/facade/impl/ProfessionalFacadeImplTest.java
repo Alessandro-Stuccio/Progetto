@@ -6,7 +6,7 @@ import com.project.tesi.dto.response.stats.ProfessionalStatsResponse;
 import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.enums.DocumentType;
 import com.project.tesi.enums.Role;
-import com.project.tesi.exception.common.UnauthorizedAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import com.project.tesi.mapper.BookingMapper;
 import com.project.tesi.mapper.SlotMapper;
 import com.project.tesi.model.Document;
@@ -151,12 +151,12 @@ class ProfessionalFacadeImplTest {
     }
 
     @Test
-    @DisplayName("createSlots: throws UnauthorizedAccessException when user is not a professional")
+    @DisplayName("createSlots: throws AccessDeniedException when user is not a professional")
     void createSlots_notProfessional_throwsUnauthorized() {
         when(userService.getUserById(3L)).thenReturn(clientUser);
 
         assertThatThrownBy(() -> facade.createSlots(3L, List.of()))
-                .isInstanceOf(UnauthorizedAccessException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("professionisti");
     }
 
@@ -179,7 +179,7 @@ class ProfessionalFacadeImplTest {
     }
 
     @Test
-    @DisplayName("deleteSlot: throws UnauthorizedAccessException when requester does not own the slot")
+    @DisplayName("deleteSlot: throws AccessDeniedException when requester does not own the slot")
     void deleteSlot_notOwner_throwsUnauthorized() {
         Slot slot = new Slot();
         slot.setId(10L);
@@ -188,7 +188,7 @@ class ProfessionalFacadeImplTest {
         when(slotService.getSlot(10L)).thenReturn(slot);
 
         assertThatThrownBy(() -> facade.deleteSlot(10L, 99L))  // requester id=99 != owner
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
 
         verify(slotService, never()).deleteSlot(anyLong());
     }
@@ -227,11 +227,11 @@ class ProfessionalFacadeImplTest {
     // ─── generateSlotsFromSchedule ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("generateSlotsFromSchedule: throws UnauthorizedAccessException for non-professional user")
+    @DisplayName("generateSlotsFromSchedule: throws AccessDeniedException for non-professional user")
     void generateSlotsFromSchedule_notProfessional_throwsUnauthorized() {
         assertThatThrownBy(() -> facade.generateSlotsFromSchedule(
                 clientUser, LocalDate.now(), LocalDate.now().plusDays(1)))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -326,12 +326,12 @@ class ProfessionalFacadeImplTest {
     }
 
     @Test
-    @DisplayName("getUpcomingBookings: throws UnauthorizedAccessException when user is not a professional")
+    @DisplayName("getUpcomingBookings: throws AccessDeniedException when user is not a professional")
     void getUpcomingBookings_notProfessional_throwsUnauthorized() {
         when(userService.getUserById(3L)).thenReturn(clientUser);
 
         assertThatThrownBy(() -> facade.getUpcomingBookings(3L))
-                .isInstanceOf(UnauthorizedAccessException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("professionisti");
     }
 
@@ -353,12 +353,12 @@ class ProfessionalFacadeImplTest {
     // ─── getProfessionalStats ────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("getProfessionalStats: throws UnauthorizedAccessException when user is not a professional")
+    @DisplayName("getProfessionalStats: throws AccessDeniedException when user is not a professional")
     void getProfessionalStats_notProfessional_throwsUnauthorized() {
         when(userService.getUserById(3L)).thenReturn(clientUser);
 
         assertThatThrownBy(() -> facade.getProfessionalStats(3L))
-                .isInstanceOf(UnauthorizedAccessException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
