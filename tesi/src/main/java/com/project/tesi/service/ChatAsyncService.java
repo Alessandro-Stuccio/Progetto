@@ -6,12 +6,28 @@ package com.project.tesi.service;
  */
 public interface ChatAsyncService {
 
-    /** Salva un messaggio nella chat fuori dal thread chiamante. */
+    /**
+     * Salva un messaggio nella chat fuori dal thread chiamante.
+     *
+     * @param chatId   id della chat
+     * @param senderId id del mittente
+     * @param content  testo del messaggio
+     */
     void saveChatMessage(Long chatId, Long senderId, String content);
 
-    /** Segna come consegnati i messaggi della chat per il destinatario. */
+    /**
+     * Segna come consegnati i messaggi della chat per il destinatario.
+     *
+     * @param chatId id della chat
+     * @param userId id del destinatario
+     */
     void markAsDeliveredAsync(Long chatId, Long userId);
 
-    /** Segna come letti i messaggi della chat per l'utente. */
+    /**
+     * Segna come letti i messaggi della chat per l'utente.
+     *
+     * @param chatId id della chat
+     * @param userId id dell'utente che legge
+     */
     void markAsReadAsync(Long chatId, Long userId);
 }

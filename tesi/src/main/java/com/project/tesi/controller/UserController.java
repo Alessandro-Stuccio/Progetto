@@ -32,26 +32,46 @@ public class UserController {
         this.userFacade = userFacade;
     }
 
-    /** Dashboard del cliente: profilo, abbonamento, professionisti assegnati e prossimi appuntamenti. */
+    /**
+     * Dashboard del cliente: profilo, abbonamento, professionisti assegnati e prossimi appuntamenti.
+     *
+     * @param user cliente autenticato
+     * @return 200 con i dati della dashboard
+     */
     @GetMapping("/dashboard")
     public ResponseEntity<ClientDashboardResponse> getDashboard(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.getClientDashboard(user.getId()));
     }
 
-    /** Clienti assegnati al professionista autenticato. */
+    /**
+     * Clienti assegnati al professionista autenticato.
+     *
+     * @param user professionista autenticato
+     * @return 200 con i clienti a lui assegnati
+     */
     @GetMapping("/clients")
     public ResponseEntity<List<ClientBasicInfoResponse>> getClientsForProfessional(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.getClientsForProfessional(user.getId()));
     }
 
-    /** Aggiorna dati anagrafici o password dell'utente autenticato. */
+    /**
+     * Aggiorna dati anagrafici o password dell'utente autenticato.
+     *
+     * @param user    utente autenticato
+     * @param request dati di profilo aggiornati
+     * @return 200 senza corpo
+     */
     @PutMapping("/profile")
     public ResponseEntity<Void> updateProfile(@AuthenticationPrincipal User user, @Valid @RequestBody ProfileUpdateRequest request) {
         userFacade.updateProfile(user.getId(), request);
         return ResponseEntity.ok().build();
     }
 
-    /** Contatti dell'amministratore, usati dal frontend per la sezione "Contatta supporto". */
+    /**
+     * Contatti dell'amministratore, usati dal frontend per la sezione "Contatta supporto".
+     *
+     * @return 200 con i dati di base dell'admin
+     */
     @GetMapping("/admin")
     public ResponseEntity<ClientBasicInfoResponse> getAdmin() {
         return ResponseEntity.ok(userFacade.getAdmin());

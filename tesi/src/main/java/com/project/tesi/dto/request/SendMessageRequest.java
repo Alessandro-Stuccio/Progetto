@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Invia un messaggio in una chat via REST (max 2000 caratteri).
+ *
+ * @param chatId  id della chat di destinazione
+ * @param content testo del messaggio (max 2000 caratteri)
  */
 public record SendMessageRequest(
         @NotNull(message = "L'ID della chat è obbligatorio") Long chatId,

@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Imposta la nuova password usando il token ricevuto via email.
+ *
+ * @param token       token di reset ricevuto via email
+ * @param newPassword nuova password in chiaro (almeno 6 caratteri)
  */
 public record ResetPasswordRequest(
         @NotBlank(message = "Il token è obbligatorio")

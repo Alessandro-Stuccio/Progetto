@@ -22,7 +22,11 @@ public class PlanController {
         this.planFacade = planFacade;
     }
 
-    /** Restituisce la lista di tutti i piani di abbonamento disponibili. */
+    /**
+     * Restituisce la lista di tutti i piani di abbonamento disponibili.
+     *
+     * @return 200 con i piani attivi
+     */
     @GetMapping
     public ResponseEntity<List<PlanResponseDTO>> getAllPlans() {
         return ResponseEntity.ok(planFacade.getAllPlans());

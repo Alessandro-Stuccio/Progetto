@@ -12,6 +12,11 @@ import java.util.List;
 @Validated
 public interface WeeklyScheduleService {
 
-    /** Calendari settimanali del professionista. */
+    /**
+     * Calendari settimanali del professionista.
+     *
+     * @param professional il professionista
+     * @return i suoi calendari settimanali
+     */
     List<WeeklySchedule> findByProfessional(@NotNull User professional);
 }

@@ -14,6 +14,12 @@ import java.util.stream.Collectors;
 @Component
 public class DocumentMapper {
 
+    /**
+     * Converte un documento nel suo DTO di risposta.
+     *
+     * @param doc il documento da convertire
+     * @return il DTO del documento, oppure {@code null} se l'input è {@code null}
+     */
     public DocumentResponse toResponse(Document doc) {
         if (doc == null) return null;
         return DocumentResponse.builder()
@@ -27,11 +33,22 @@ public class DocumentMapper {
                 .build();
     }
 
+    /**
+     * Converte una lista di documenti nei rispettivi DTO.
+     *
+     * @param documents i documenti da convertire
+     * @return i DTO dei documenti
+     */
     public List<DocumentResponse> toResponseList(List<Document> documents) {
         return documents.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // Risposta minimale dopo la modifica delle note: solo id e note aggiornate.
+    /**
+     * Risposta minimale dopo la modifica delle note: solo id e note aggiornate.
+     *
+     * @param doc il documento aggiornato
+     * @return il DTO con id e note
+     */
     public UpdatedNotesResponse toUpdatedNotesResponse(Document doc) {
         return UpdatedNotesResponse.builder().id(doc.getId()).notes(doc.getNotes()).build();
     }

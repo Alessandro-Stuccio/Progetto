@@ -9,6 +9,16 @@ import jakarta.validation.constraints.Size;
 /**
  * Registrazione di un nuovo cliente: dati anagrafici, credenziali e scelta di PT e nutrizionista (obbligatori).
  * Piano e frequenza di pagamento sono facoltativi e possono essere definiti in seguito.
+ *
+ * @param firstName               nome
+ * @param lastName                cognome
+ * @param email                   email (fa da username)
+ * @param password                password in chiaro (6-100 caratteri)
+ * @param selectedPtId            id del personal trainer scelto
+ * @param selectedNutritionistId  id del nutrizionista scelto
+ * @param profilePicture          URL dell'immagine di profilo (opzionale)
+ * @param selectedPlanId          id del piano scelto (opzionale)
+ * @param paymentFrequency        frequenza di pagamento scelta (opzionale)
  */
 public record RegisterRequest(
         @NotBlank(message = "Il nome è obbligatorio")

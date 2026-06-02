@@ -17,7 +17,13 @@ import java.util.stream.Collectors;
 @Component
 public class ChatMapper {
 
-    // Mittente e destinatario si ricavano dal flag sentByUser1 sulla Chat collegata.
+    /**
+     * Converte un messaggio nel suo DTO; mittente e destinatario si ricavano dal flag
+     * {@code sentByUser1} sulla chat collegata.
+     *
+     * @param message il messaggio da convertire
+     * @return il DTO del messaggio
+     */
     public ChatMessageResponse toMessageResponse(Message message) {
         User sender = message.isSentByUser1()
                 ? message.getChat().getUser1()
@@ -38,13 +44,28 @@ public class ChatMapper {
                 .build();
     }
 
+    /**
+     * Converte una lista di messaggi nei rispettivi DTO.
+     *
+     * @param messages i messaggi da convertire
+     * @return i DTO dei messaggi
+     */
     public List<ChatMessageResponse> toMessageResponseList(List<Message> messages) {
         return messages.stream()
                 .map(this::toMessageResponse)
                 .collect(Collectors.toList());
     }
 
-    // Anteprima per la lista chat: il partner è l'altro utente rispetto a currentUserId.
+    /**
+     * Costruisce l'anteprima della chat per la lista conversazioni: il partner è l'altro
+     * utente rispetto a {@code currentUserId}.
+     *
+     * @param chat          la chat
+     * @param currentUserId id dell'utente che visualizza la lista
+     * @param lastMsg       ultimo messaggio della chat (può essere {@code null})
+     * @param unreadCount   numero di messaggi non letti per l'utente corrente
+     * @return l'anteprima della conversazione
+     */
     public ConversationPreviewResponse toConversationPreview(Chat chat, Long currentUserId,
                                                               Message lastMsg, int unreadCount) {
         User partner = chat.getUser1().getId().equals(currentUserId)

@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Messaggio WebSocket per inviare un nuovo messaggio in chat (max 2000 caratteri).
+ *
+ * @param chatId  id della chat di destinazione
+ * @param content testo del messaggio (max 2000 caratteri)
  */
 public record WsSendMessageRequest(
         @NotNull Long chatId,

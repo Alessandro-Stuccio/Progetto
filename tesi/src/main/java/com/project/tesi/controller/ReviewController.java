@@ -35,6 +35,10 @@ public class ReviewController {
     /**
      * Recensione (1-5 stelle) di un cliente verso un professionista. Solo chi ha già prenotato
      * con quel professionista e non l'ha ancora recensito può farlo.
+     *
+     * @param request dati della recensione (professionista, voto, commento)
+     * @param user    cliente autenticato che recensisce
+     * @return 200 con la recensione registrata
      */
     @PostMapping
     public ResponseEntity<ReviewResponse> addReview(@Valid @RequestBody ReviewRequest request,
@@ -43,7 +47,12 @@ public class ReviewController {
         return ResponseEntity.ok(reviewFacade.addReview(request, user.getId()));
     }
 
-    /** Tutte le recensioni ricevute dal professionista indicato. */
+    /**
+     * Tutte le recensioni ricevute dal professionista indicato.
+     *
+     * @param professionalId id del professionista
+     * @return 200 con le sue recensioni
+     */
     @GetMapping("/professional/{professionalId}")
     public ResponseEntity<List<ReviewResponse>> getReviewsForProfessional(@PathVariable Long professionalId) {
         return ResponseEntity.ok(reviewFacade.getReviewsForProfessional(professionalId));
@@ -52,6 +61,10 @@ public class ReviewController {
     /**
      * Dice al frontend se l'utente può recensire il professionista e se lo ha già fatto.
      * Restituisce i due flag canReview e hasReviewed.
+     *
+     * @param user           cliente autenticato
+     * @param professionalId id del professionista da valutare
+     * @return 200 con i flag {@code canReview} e {@code hasReviewed}
      */
     @GetMapping("/can-review")
     public ResponseEntity<Map<String, Object>> canReview(@AuthenticationPrincipal User user,

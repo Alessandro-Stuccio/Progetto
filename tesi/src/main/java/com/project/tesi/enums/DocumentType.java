@@ -11,6 +11,11 @@ public enum DocumentType {
 
     private final String desc;
 
+    /**
+     * Descrizione leggibile del tipo di documento, usata in email e feed attività.
+     *
+     * @return la descrizione in linguaggio naturale
+     */
     public String getDesc() {
         return desc;
     }

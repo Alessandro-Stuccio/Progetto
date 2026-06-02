@@ -14,6 +14,11 @@ public enum PlanDuration {
         this.months = months;
     }
 
+    /**
+     * Numero di mesi coperti dal piano, usato per calcolare la data di scadenza.
+     *
+     * @return la durata in mesi
+     */
     public int getMonths() {
         return months;
     }

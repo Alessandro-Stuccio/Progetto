@@ -26,14 +26,25 @@ public class SubscriptionController {
         this.userFacade = userFacade;
     }
 
-    /** Attiva un abbonamento per il cliente autenticato col piano, la durata e la modalità di pagamento scelti. */
+    /**
+     * Attiva un abbonamento per il cliente autenticato col piano, la durata e la modalità di pagamento scelti.
+     *
+     * @param request piano e frequenza di pagamento scelti
+     * @param user    cliente autenticato
+     * @return 200 con i dati dell'abbonamento attivato
+     */
     @PostMapping("/activate")
     public ResponseEntity<SubscriptionResponse> activateSubscription(@Valid @RequestBody PlanRequest request,
                                                                        @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.activateSubscription(request, user.getId()));
     }
 
-    /** Crediti residui e dettagli dell'abbonamento attivo del cliente autenticato. */
+    /**
+     * Crediti residui e dettagli dell'abbonamento attivo del cliente autenticato.
+     *
+     * @param user cliente autenticato
+     * @return 200 con i dati dell'abbonamento attivo
+     */
     @GetMapping("/status")
     public ResponseEntity<SubscriptionResponse> getSubscriptionStatus(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(userFacade.getSubscriptionStatus(user.getId()));

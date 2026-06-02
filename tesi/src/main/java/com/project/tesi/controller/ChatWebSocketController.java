@@ -61,7 +61,12 @@ public class ChatWebSocketController {
         this.userService = userService;
     }
 
-    /** Registra la sessione corrente nella stanza, così sa quando il ricevitore è "presente". */
+    /**
+     * Registra la sessione corrente nella stanza, così sa quando il ricevitore è "presente".
+     *
+     * @param request payload con l'id della stanza (chat) a cui unirsi
+     * @param ha       accessor degli header STOMP, da cui si legge il session id
+     */
     @MessageMapping("/chat.join")
     public void joinRoom(@Payload JoinRoomRequest request, SimpMessageHeaderAccessor ha) {
         String sid = ha.getSessionId();
@@ -70,7 +75,12 @@ public class ChatWebSocketController {
         }
     }
 
-    /** Toglie la sessione corrente dalla stanza. */
+    /**
+     * Toglie la sessione corrente dalla stanza.
+     *
+     * @param request payload con l'id della stanza (chat) da abbandonare
+     * @param ha       accessor degli header STOMP, da cui si legge il session id
+     */
     @MessageMapping("/chat.leave")
     public void leaveRoom(@Payload LeaveRoomRequest request, SimpMessageHeaderAccessor ha) {
         String sid = ha.getSessionId();
@@ -83,6 +93,9 @@ public class ChatWebSocketController {
      * Smista un messaggio sul topic della stanza e ne pubblica una copia asincrona (persistenza via coda).
      * Se la chat era CLOSED viene riaperta. Quando il ricevitore non è nella stanza gli mando una notifica
      * NEW_MESSAGE privata; in ogni caso aggiorno il suo contatore di non letti.
+     *
+     * @param request   payload con id chat e contenuto del messaggio
+     * @param principal il Principal STOMP del mittente autenticato
      */
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload WsSendMessageRequest request, Principal principal) {
@@ -163,7 +176,12 @@ public class ChatWebSocketController {
         }
     }
 
-    /** Segna i messaggi come DELIVERED e avvisa il mittente con un evento DELIVERED_UPDATE. */
+    /**
+     * Segna i messaggi come DELIVERED e avvisa il mittente con un evento DELIVERED_UPDATE.
+     *
+     * @param request   payload con l'id della chat interessata
+     * @param principal il Principal STOMP del destinatario autenticato
+     */
     @MessageMapping("/chat.delivered")
     public void markAsDelivered(@Payload WsMarkReadRequest request, Principal principal) {
         User user = extractUser(principal);
@@ -190,7 +208,12 @@ public class ChatWebSocketController {
         }
     }
 
-    /** Segna i messaggi come READ, aggiorna i non letti del lettore e avvisa il mittente con READ_UPDATE. */
+    /**
+     * Segna i messaggi come READ, aggiorna i non letti del lettore e avvisa il mittente con READ_UPDATE.
+     *
+     * @param request   payload con l'id della chat interessata
+     * @param principal il Principal STOMP del lettore autenticato
+     */
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload WsMarkReadRequest request, Principal principal) {
         User user = extractUser(principal);

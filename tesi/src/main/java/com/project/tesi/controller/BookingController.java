@@ -33,6 +33,10 @@ public class BookingController {
     /**
      * Prenota uno slot libero: scala un credito dall'abbonamento attivo e, dietro le quinte,
      * usa un lock sullo slot per evitare che due utenti lo prenotino in contemporanea.
+     *
+     * @param request dati della prenotazione (id dello slot)
+     * @param user    utente autenticato che prenota
+     * @return 200 con i dati della prenotazione confermata
      */
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request,
@@ -46,6 +50,10 @@ public class BookingController {
     /**
      * Annulla una prenotazione dell'utente. Il credito viene riaccreditato solo se si cancella
      * con più di 24 ore di anticipo rispetto allo slot.
+     *
+     * @param id   id della prenotazione (slot) da annullare
+     * @param user utente autenticato proprietario della prenotazione
+     * @return 200 con un messaggio di conferma annullamento
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> cancelBooking(@PathVariable Long id,

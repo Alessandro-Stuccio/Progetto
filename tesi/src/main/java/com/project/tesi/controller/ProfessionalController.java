@@ -32,26 +32,48 @@ public class ProfessionalController {
         this.professionalFacade = professionalFacade;
     }
 
-    /** Professionisti disponibili filtrati per ruolo (PERSONAL_TRAINER o NUTRITIONIST). */
+    /**
+     * Professionisti disponibili filtrati per ruolo (PERSONAL_TRAINER o NUTRITIONIST).
+     *
+     * @param role ruolo dei professionisti da cercare
+     * @return 200 con i professionisti disponibili
+     */
     @GetMapping
     public ResponseEntity<List<ProfessionalSummaryDTO>> getProfessionals(@RequestParam Role role) {
         return ResponseEntity.ok(userFacade.findAvailableProfessionals(role));
     }
 
-    /** Slot liberi di un professionista, per il calendario di prenotazione. */
+    /**
+     * Slot liberi di un professionista, per il calendario di prenotazione.
+     *
+     * @param id id del professionista
+     * @return 200 con i suoi slot liberi
+     */
     @GetMapping("/{id}/slots")
     public ResponseEntity<List<SlotDTO>> getProfessionalSlots(@PathVariable Long id) {
         return ResponseEntity.ok(professionalFacade.getAvailableSlots(id));
     }
 
-    /** Aggiunge slot al calendario del professionista autenticato. */
+    /**
+     * Aggiunge slot al calendario del professionista autenticato.
+     *
+     * @param user  professionista autenticato
+     * @param slots gli slot da creare
+     * @return 200 con gli slot creati
+     */
     @PostMapping("/slots")
     public ResponseEntity<List<SlotDTO>> createSlots(@AuthenticationPrincipal User user,
                                                       @RequestBody List<SlotDTO> slots) {
         return ResponseEntity.ok(professionalFacade.createSlots(user.getId(), slots));
     }
 
-    /** Rimuove uno slot del professionista autenticato (deve esserne il proprietario). */
+    /**
+     * Rimuove uno slot del professionista autenticato (deve esserne il proprietario).
+     *
+     * @param slotId id dello slot da rimuovere
+     * @param user   professionista autenticato
+     * @return 204 senza corpo
+     */
     @DeleteMapping("/slots/{slotId}")
     public ResponseEntity<Void> deleteSlot(@PathVariable Long slotId,
                                             @AuthenticationPrincipal User user) {

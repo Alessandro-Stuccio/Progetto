@@ -7,6 +7,10 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Recensione lasciata a un professionista: voto da 1 a 5 e commento facoltativo (max 1000 caratteri).
+ *
+ * @param professionalId id del professionista recensito
+ * @param rating         voto da 1 a 5
+ * @param comment        commento testuale (opzionale, max 1000 caratteri)
  */
 public record ReviewRequest(
         @NotNull Long professionalId,

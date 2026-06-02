@@ -15,6 +15,12 @@ import java.util.stream.Collectors;
 @Component
 public class PlanMapper {
 
+    /**
+     * Converte un piano nel suo DTO di risposta.
+     *
+     * @param p il piano da convertire
+     * @return il DTO del piano, oppure {@code null} se l'input è {@code null}
+     */
     public PlanResponseDTO toResponse(Plan p) {
         if (p == null) return null;
         return PlanResponseDTO.builder()
@@ -29,10 +35,22 @@ public class PlanMapper {
                 .build();
     }
 
+    /**
+     * Converte una lista di piani nei rispettivi DTO.
+     *
+     * @param plans i piani da convertire
+     * @return i DTO dei piani
+     */
     public List<PlanResponseDTO> toResponseList(List<Plan> plans) {
         return plans.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    /**
+     * Costruisce un piano a partire dalla richiesta di creazione.
+     *
+     * @param request dati del piano da creare
+     * @return il nuovo piano
+     */
     public Plan toPlan(PlanCreateRequestDTO request) {
         PlanDuration duration = PlanDuration.valueOf(request.duration());
         return Plan.builder()
@@ -45,8 +63,13 @@ public class PlanMapper {
                 .build();
     }
 
-    // Aggiornamento parziale: sovrascrive solo i campi valorizzati nel DTO,
-    // lasciando intatti quelli null o blank.
+    /**
+     * Aggiornamento parziale: sovrascrive solo i campi valorizzati nel DTO, lasciando intatti
+     * quelli null o blank.
+     *
+     * @param request  dati aggiornati (i campi nulli/blank vengono ignorati)
+     * @param existing il piano da aggiornare in place
+     */
     public void updatePlanFromRequest(PlanCreateRequestDTO request, Plan existing) {
         if (request.name() != null && !request.name().isBlank())
             existing.setName(request.name());

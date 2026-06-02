@@ -36,7 +36,15 @@ public class DocumentController {
         this.documentFacade = documentFacade;
     }
 
-    /** Carica un documento validando il ruolo dell'uploader rispetto al tipo di file. */
+    /**
+     * Carica un documento validando il ruolo dell'uploader rispetto al tipo di file.
+     *
+     * @param file     file binario da caricare
+     * @param clientId id del cliente proprietario del documento
+     * @param type     tipo di documento richiesto
+     * @param uploader utente autenticato che effettua il caricamento
+     * @return 200 con i dati del documento caricato
+     */
     @PostMapping("/upload")
     public ResponseEntity<DocumentUploadResponse> uploadFile(
             @RequestParam("file") MultipartFile file,
@@ -46,7 +54,13 @@ public class DocumentController {
         return ResponseEntity.ok(documentFacade.uploadDocumentWithValidation(file, clientId, uploader.getId(), type));
     }
 
-    /** Scarica il contenuto binario di un documento per la visualizzazione inline nel browser. */
+    /**
+     * Scarica il contenuto binario di un documento per la visualizzazione inline nel browser.
+     *
+     * @param id     id del documento
+     * @param caller utente autenticato che richiede il download
+     * @return 200 con il contenuto del file e l'header Content-Disposition inline
+     */
     @GetMapping("/download/{id}")
     public ResponseEntity<byte[]> downloadFile(@PathVariable Long id,
                                                @AuthenticationPrincipal User caller) {
@@ -60,14 +74,27 @@ public class DocumentController {
                 .body(data);
     }
 
-    /** Restituisce tutti i documenti di un utente (qualsiasi tipo). */
+    /**
+     * Restituisce tutti i documenti di un utente (qualsiasi tipo).
+     *
+     * @param userId id dell'utente di cui leggere i documenti
+     * @param caller utente autenticato che effettua la richiesta
+     * @return 200 con i documenti visibili al chiamante
+     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<DocumentResponse>> getUserDocuments(@PathVariable Long userId,
                                                                     @AuthenticationPrincipal User caller) {
         return ResponseEntity.ok(documentFacade.getUserDocumentsDtoSecure(userId, caller.getId()));
     }
 
-    /** Restituisce i documenti di un utente filtrati per tipologia. */
+    /**
+     * Restituisce i documenti di un utente filtrati per tipologia.
+     *
+     * @param userId id dell'utente di cui leggere i documenti
+     * @param type   tipo di documento da filtrare
+     * @param caller utente autenticato che effettua la richiesta
+     * @return 200 con i documenti del tipo indicato visibili al chiamante
+     */
     @GetMapping("/user/{userId}/type/{type}")
     public ResponseEntity<List<DocumentResponse>> getUserDocumentsByType(
             @PathVariable Long userId, @PathVariable String type,
@@ -75,7 +102,13 @@ public class DocumentController {
         return ResponseEntity.ok(documentFacade.getUserDocumentsByTypeDtoSecure(userId, type, caller.getId()));
     }
 
-    /** Elimina un documento dal database e dal filesystem. */
+    /**
+     * Elimina un documento dal database e dal filesystem.
+     *
+     * @param id     id del documento
+     * @param caller utente autenticato che richiede l'eliminazione
+     * @return 204 senza corpo
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id,
                                                @AuthenticationPrincipal User caller) {
@@ -83,7 +116,14 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Aggiorna le note testuali associate a un documento. Solo proprietario, uploader o admin/moderatore. */
+    /**
+     * Aggiorna le note testuali associate a un documento. Solo proprietario, uploader o admin/moderatore.
+     *
+     * @param id     id del documento
+     * @param body   richiesta con il nuovo testo delle note
+     * @param caller utente autenticato che effettua la modifica
+     * @return 200 con i dati aggiornati delle note
+     */
     @PutMapping("/{id}/notes")
     public ResponseEntity<UpdatedNotesResponse> updateNotes(
             @PathVariable Long id,

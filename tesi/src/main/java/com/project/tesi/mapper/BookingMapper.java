@@ -16,7 +16,13 @@ public class BookingMapper {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    // Formatta data e orari e ricava canJoin dalla finestra di accesso al meeting.
+    /**
+     * Converte uno slot prenotato nel DTO della prenotazione, formattando data e orari e
+     * ricavando il flag {@code canJoin} dalla finestra di accesso al meeting.
+     *
+     * @param slot lo slot prenotato da convertire
+     * @return il DTO della prenotazione, oppure {@code null} se lo slot è {@code null}
+     */
     public BookingResponse toResponse(Slot slot) {
         if (slot == null) return null;
 

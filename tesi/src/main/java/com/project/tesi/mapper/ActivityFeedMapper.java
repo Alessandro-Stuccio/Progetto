@@ -17,7 +17,15 @@ import java.util.List;
 @Component
 public class ActivityFeedMapper {
 
-    // Unisce slot e documenti in un'unica lista, ordinata dalla più recente.
+    /**
+     * Unisce slot e documenti in un'unica lista di voci del feed, ordinata dalla più recente.
+     * Il testo di ogni voce cambia a seconda che l'utente sia cliente o professionista.
+     *
+     * @param slots     gli slot prenotati da rappresentare
+     * @param documents i documenti da rappresentare
+     * @param user      l'utente destinatario del feed (ne determina il punto di vista)
+     * @return le voci del feed ordinate dalla più recente
+     */
     public List<ActivityFeedItemResponse> toActivityFeedItemResponse(List<Slot> slots, List<Document> documents, User user) {
         List<ActivityFeedItemResponse> result = new ArrayList<>();
         for (Slot slot : slots) {

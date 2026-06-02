@@ -41,7 +41,11 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // All'avvio fallisce subito se JWT_SECRET non è configurata.
+    /**
+     * All'avvio fallisce subito se la chiave di firma non è configurata.
+     *
+     * @throws IllegalStateException se la chiave segreta è nulla o vuota
+     */
     @PostConstruct
     public void validateSecret() {
         if (SECRET_KEY == null || SECRET_KEY.isBlank()) {
@@ -52,17 +56,35 @@ public class JwtUtil {
         }
     }
 
-    // Il subject del token è l'email dell'utente.
+    /**
+     * Estrae lo username dal token: il subject è l'email dell'utente.
+     *
+     * @param token il token JWT
+     * @return l'email contenuta nel subject
+     */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+    /**
+     * Estrae un claim arbitrario dal token applicando il resolver indicato.
+     *
+     * @param token          il token JWT
+     * @param claimsResolver funzione che seleziona il claim dai {@link Claims}
+     * @param <T>            tipo del valore estratto
+     * @return il valore del claim
+     */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Token di autenticazione, con scadenza presa da jwt.expiration.
+    /**
+     * Genera il token di autenticazione, con scadenza presa da {@code jwt.expiration}.
+     *
+     * @param userDetails l'utente per cui emettere il token
+     * @return il token JWT firmato
+     */
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
@@ -72,7 +94,12 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Token per il reset password: claim purpose=PASSWORD_RESET e validità 30 minuti.
+    /**
+     * Genera il token per il reset password: claim {@code purpose=PASSWORD_RESET} e validità 30 minuti.
+     *
+     * @param email email dell'account che richiede il reset
+     * @return il token di reset firmato
+     */
     public String generatePasswordResetToken(String email) {
         return Jwts.builder()
                 .setClaims(Map.of(PURPOSE_CLAIM, PURPOSE_PASSWORD_RESET))
@@ -83,8 +110,13 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Accetta solo i token di reset e restituisce l'email; altrimenti solleva
-    // IllegalArgumentException.
+    /**
+     * Accetta solo i token di reset e ne restituisce l'email.
+     *
+     * @param token il token da validare
+     * @return l'email contenuta nel subject del token di reset
+     * @throws IllegalArgumentException se il token non è un token di reset password
+     */
     public String validatePasswordResetToken(String token) {
         Claims claims = extractAllClaims(token);
         String purpose = claims.get(PURPOSE_CLAIM, String.class);
@@ -94,7 +126,13 @@ public class JwtUtil {
         return claims.getSubject();
     }
 
-    // Vero se il token è dell'utente indicato e non è scaduto.
+    /**
+     * Verifica che il token appartenga all'utente indicato e non sia scaduto.
+     *
+     * @param token       il token da validare
+     * @param userDetails l'utente atteso
+     * @return {@code true} se il token è valido per quell'utente
+     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);

@@ -26,7 +26,13 @@ public class JobApplicationController {
         this.emailService = emailService;
     }
 
-    /** Riceve una candidatura con CV allegato (PDF opzionale) e la inoltra via email. */
+    /**
+     * Riceve una candidatura con CV allegato (PDF opzionale) e la inoltra via email.
+     *
+     * @param request dati della candidatura (parte "data" del multipart)
+     * @param cv      CV in PDF (parte "cv" del multipart, opzionale)
+     * @return 200 con un messaggio di conferma invio
+     */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> submitApplication(
             @RequestPart("data") @Valid JobApplicationRequest request,

@@ -28,8 +28,13 @@ public class UserMapper {
         this.reviewRepository = reviewRepository;
     }
 
-    // Risposta completa: ai clienti aggiunge i nomi di PT e nutrizionista assegnati,
-    // ai professionisti la media voti e il conteggio dei clienti attivi.
+    /**
+     * Risposta completa: ai clienti aggiunge i nomi di PT e nutrizionista assegnati,
+     * ai professionisti la media voti e il conteggio dei clienti attivi (letti dai repository).
+     *
+     * @param user l'utente da convertire
+     * @return il DTO completo dell'utente
+     */
     public UserResponse toUserResponse(User user) {
         Double avgRating = null;
         Integer clientsCount = null;
@@ -61,8 +66,13 @@ public class UserMapper {
                 .build();
     }
 
-    // Versione leggera senza accessi al DB: per le viste admin/moderator
-    // rating e conteggio clienti non servono.
+    /**
+     * Versione leggera senza accessi al DB: per le viste admin/moderator rating e
+     * conteggio clienti non servono.
+     *
+     * @param user l'utente da convertire
+     * @return il DTO dell'utente senza dati calcolati
+     */
     public UserResponse toAdminResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
@@ -78,10 +88,22 @@ public class UserMapper {
                 .build();
     }
 
+    /**
+     * Variante su lista della risposta leggera.
+     *
+     * @param user gli utenti da convertire (può essere {@code null})
+     * @return i DTO degli utenti, lista vuota se l'input è {@code null}
+     */
     public List<UserResponse> toAdminResponse(List<User> user) {
         return user==null?new ArrayList<>():user.stream().map(this::toAdminResponse).toList();
     }
 
+    /**
+     * Costruisce l'entità utente da una richiesta di registrazione (ruolo forzato a CLIENT).
+     *
+     * @param request dati di registrazione
+     * @return il nuovo utente, oppure {@code null} se la richiesta è {@code null}
+     */
     public User toUser(RegisterRequest request) {
         if (request == null) {
             return null;
@@ -97,6 +119,12 @@ public class UserMapper {
                 .build();
     }
 
+    /**
+     * Converte l'utente nelle sole informazioni essenziali.
+     *
+     * @param user l'utente da convertire
+     * @return il DTO con i dati di base
+     */
     public ClientBasicInfoResponse toBasicInfoResponse(User user) {
         return ClientBasicInfoResponse.builder()
                 .id(user.getId())
@@ -108,6 +136,12 @@ public class UserMapper {
                 .build();
     }
 
+    /**
+     * Converte un professionista nel suo riepilogo per liste e dashboard.
+     *
+     * @param pro il professionista da convertire
+     * @return il DTO di riepilogo del professionista
+     */
     public ProfessionalSummaryDTO toProfessionalSummary(User pro) {
         return ProfessionalSummaryDTO.builder()
                 .id(pro.getId())

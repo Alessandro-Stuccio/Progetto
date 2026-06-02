@@ -15,7 +15,12 @@ public enum Role {
     INSURANCE_MANAGER,
     ADMIN;
 
-    // Ruoli che il ruolo dato può gestire (creare, modificare, eliminare).
+    /**
+     * Ruoli che il ruolo dato può gestire (creare, modificare, eliminare).
+     *
+     * @param role il ruolo di cui calcolare i permessi di gestione
+     * @return l'insieme dei ruoli gestibili, eventualmente vuoto
+     */
     public static Set<Role> getManagebleRoles(Role role) {
         return switch (role) {
             case MODERATOR -> EnumSet.of(Role.CLIENT, Role.PERSONAL_TRAINER, Role.NUTRITIONIST);

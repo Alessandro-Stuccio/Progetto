@@ -5,6 +5,11 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Modifica di un utente fatta dal moderatore. Ogni campo è opzionale: valgono solo quelli valorizzati.
+ *
+ * @param email     nuova email (opzionale)
+ * @param firstName nuovo nome (opzionale)
+ * @param lastName  nuovo cognome (opzionale)
+ * @param password  nuova password (opzionale)
  */
 public record ModeratorUserUpdateRequest(
 

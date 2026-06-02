@@ -23,7 +23,14 @@ public class ActivityFeedController {
         this.activityFeedFacade = activityFeedFacade;
     }
 
-    /** Prenotazioni e documenti degli ultimi {@code days} giorni, dal più recente. */
+    /**
+     * Prenotazioni e documenti degli ultimi {@code days} giorni, dal più recente.
+     *
+     * @param user utente autenticato
+     * @param days ampiezza della finestra temporale in giorni (default 14)
+     * @param size numero massimo di elementi da restituire (default 15)
+     * @return 200 con le attività recenti dell'utente
+     */
     @GetMapping("/feed")
     public ResponseEntity<List<ActivityFeedItemResponse>> getActivityFeed(
             @AuthenticationPrincipal User user,

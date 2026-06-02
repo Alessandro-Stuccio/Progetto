@@ -25,13 +25,23 @@ public class ProfessionalStatsController {
         this.professionalFacade = professionalFacade;
     }
 
-    /** Restituisce tutte le statistiche aggregate per la dashboard del professionista autenticato. */
+    /**
+     * Restituisce tutte le statistiche aggregate per la dashboard del professionista autenticato.
+     *
+     * @param user professionista autenticato
+     * @return 200 con le statistiche aggregate
+     */
     @GetMapping("/stats")
     public ResponseEntity<ProfessionalStatsResponse> getStats(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(professionalFacade.getProfessionalStats(user.getId()));
     }
 
-    /** Restituisce gli appuntamenti futuri del professionista autenticato per il calendario. */
+    /**
+     * Restituisce gli appuntamenti futuri del professionista autenticato per il calendario.
+     *
+     * @param user professionista autenticato
+     * @return 200 con le sue prenotazioni future
+     */
     @GetMapping("/bookings")
     public ResponseEntity<List<BookingResponse>> getUpcomingBookings(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(professionalFacade.getUpcomingBookings(user.getId()));
