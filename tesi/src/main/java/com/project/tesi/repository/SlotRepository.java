@@ -1,6 +1,5 @@
 package com.project.tesi.repository;
 
-import com.project.tesi.enums.BookingStatus;
 import com.project.tesi.model.Slot;
 import com.project.tesi.model.User;
 import jakarta.persistence.LockModeType;
@@ -86,9 +85,4 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     // Tutti gli slot effettivamente prenotati (cliente e data valorizzati), per le statistiche admin.
     @Query("SELECT s FROM Slot s WHERE s.bookedBy IS NOT NULL AND s.bookedAt IS NOT NULL")
     List<Slot> findAllBooked();
-
-    // Vero se lo slot esiste e si trova nello stato indicato.
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Slot s " +
-           "WHERE s.id = :slotId AND s.status = :status")
-    boolean existsByIdAndStatus(@Param("slotId") Long slotId, @Param("status") BookingStatus status);
 }

@@ -26,30 +26,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Tutti gli utenti non soft-deleted.
     List<User> findAllByDeletedFalse();
 
-    // Filtra per ruolo includendo anche i cancellati.
-    List<User> findByRole(Role role);
-
     // Filtra per ruolo solo tra gli utenti attivi.
     List<User> findByRoleAndDeletedFalse(Role role);
 
-    // Conta i clienti di un PT, cancellati inclusi.
-    long countByAssignedPT(User pt);
-
+    // Conta i clienti attivi di un PT.
     long countByAssignedPTAndDeletedFalse(User pt);
 
-    // Conta i clienti di un nutrizionista, cancellati inclusi.
-    long countByAssignedNutritionist(User nutritionist);
-
+    // Conta i clienti attivi di un nutrizionista.
     long countByAssignedNutritionistAndDeletedFalse(User nutritionist);
 
-    // Clienti di un PT, cancellati inclusi.
-    List<User> findByAssignedPT(User pt);
-
+    // Clienti attivi di un PT.
     List<User> findByAssignedPTAndDeletedFalse(User pt);
 
-    // Clienti di un nutrizionista, cancellati inclusi.
-    List<User> findByAssignedNutritionist(User nutritionist);
-
+    // Clienti attivi di un nutrizionista.
     List<User> findByAssignedNutritionistAndDeletedFalse(User nutritionist);
 
     // Stacca il PT da tutti i suoi clienti: da fare prima del soft-delete del PT per non lasciare riferimenti orfani.

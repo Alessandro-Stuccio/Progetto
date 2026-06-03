@@ -16,10 +16,6 @@ import java.util.List;
  */
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
-    List<Document> findByOwner(User owner);
-
-    List<Document> findByOwnerAndType(User owner, DocumentType type);
-
     List<Document> findByOwnerOrderByUploadDateDesc(User owner);
 
     List<Document> findByOwnerAndTypeOrderByUploadDateDesc(User owner, DocumentType type);
