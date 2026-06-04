@@ -44,7 +44,7 @@ e messaggistica asincrona su RabbitMQ.
 |---|---|
 | Runtime | Java 21 (LTS) |
 | Framework | Spring Boot 4.0.5 — Web, Data JPA, Security, WebSocket, Validation, AMQP, Mail, Actuator |
-| Database | PostgreSQL 16 (H2 in-memory per i test) |
+| Database | PostgreSQL 16 (anche per i test) |
 | Sicurezza | Spring Security + JWT stateless (`jjwt` 0.11.5) |
 | Real-time | STOMP su WebSocket |
 | Messaggistica asincrona | RabbitMQ (con Dead Letter Queue) |
