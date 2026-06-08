@@ -43,7 +43,7 @@ public class ChatController {
      */
     @PostMapping("/create/{receiverId}")
     public ResponseEntity<Long> createChat(@AuthenticationPrincipal User user,
-                                            @PathVariable Long receiverId) {
+                                            @PathVariable("receiverId") Long receiverId) {
         return ResponseEntity.ok(chatFacade.createChat(user.getId(), receiverId));
     }
 
@@ -72,9 +72,9 @@ public class ChatController {
     @GetMapping("/conversation/{chatId}")
     public ResponseEntity<List<ChatMessageResponse>> getConversation(
             @AuthenticationPrincipal User user,
-            @PathVariable Long chatId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @PathVariable("chatId") Long chatId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "50") int size) {
         return ResponseEntity.ok(chatFacade.getConversation(chatId, user.getId(), page, size));
     }
 
@@ -98,7 +98,7 @@ public class ChatController {
      */
     @PutMapping("/read/{chatId}")
     public ResponseEntity<Void> markAsRead(@AuthenticationPrincipal User user,
-                                            @PathVariable Long chatId) {
+                                            @PathVariable("chatId") Long chatId) {
         chatFacade.markAsRead(chatId, user.getId());
         return ResponseEntity.ok().build();
     }
@@ -133,7 +133,7 @@ public class ChatController {
      * @return 204 senza corpo
      */
     @PostMapping("/{chatId}/close")
-    public ResponseEntity<Void> closeChat(@PathVariable Long chatId,
+    public ResponseEntity<Void> closeChat(@PathVariable("chatId") Long chatId,
                                            @AuthenticationPrincipal User user) {
         chatFacade.closeChat(chatId, user.getId());
         return ResponseEntity.noContent().build();
