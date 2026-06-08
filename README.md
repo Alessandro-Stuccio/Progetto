@@ -420,8 +420,7 @@ Disponibili con il profilo `dev` (seed da `data.sql`). **Password comune: `passw
 | Profilo | Database | Docker Compose | DDL |
 |---|---|---|---|
 | `dev` (default) | PostgreSQL locale (`localhost:5432`) | Auto-avviato | `create` (schema ricreato ad ogni restart) |
-| `prod` | DB remoto | Disabilitato | `validate` |
-| `test` | H2 in-memory | Disabilitato | `create-drop` |
+| `test` | PostgreSQL locale (`localhost:5432`) | Disabilitato | `create` |
 
 ### Logging (Log4j2)
 
@@ -458,7 +457,7 @@ Configurazione in `src/main/resources/log4j2-spring.xml`, con tre appender:
 .\mvnw.cmd verify
 ```
 
-I test usano **H2 in-memory** con profilo `test` (`create-drop`). Scheduler e Docker Compose sono
+I test girano sul profilo `test` contro **PostgreSQL locale** (`localhost:5432`). Gli scheduler sono
 disabilitati automaticamente.
 
 ### Pattern adottati
