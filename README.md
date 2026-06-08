@@ -15,7 +15,7 @@ Trainer, Nutrizionisti e copertura assicurativa. È un **monolite modulare** su 
 Boot 4, con un'architettura rigorosa a layer, sicurezza JWT stateless, chat real-time su WebSocket
 e messaggistica asincrona su RabbitMQ.
 
-> L'applicazione vive sotto `tesi/`. Tutti i comandi Maven vanno eseguiti da quella directory.
+> L'applicazione vive sotto `kore/`. Tutti i comandi Maven vanno eseguiti da quella directory.
 
 ---
 
@@ -49,14 +49,13 @@ e messaggistica asincrona su RabbitMQ.
 | Real-time | STOMP su WebSocket |
 | Messaggistica asincrona | RabbitMQ (con Dead Letter Queue) |
 | Logging | Log4j2 (via SLF4J) — Console + RollingFile + JDBC async su DB dedicato |
-| API Docs | springdoc-openapi (Swagger UI) |
 | Coverage | JaCoCo 0.8.12 |
 | Video consulti | Jitsi Meet (`JitsiVideoConferenceServiceImpl`) |
 | Build | Maven Wrapper (`mvnw`) |
 | Container | spring-boot-docker-compose (PostgreSQL + pgAdmin + RabbitMQ) |
 | Testing | JUnit 5, Mockito, Spring Security Test |
 
-Coordinate Maven: `com.project:tesi:0.0.1-SNAPSHOT`. Package base: `com.project.tesi`.
+Coordinate Maven: `com.project:kore:0.0.1-SNAPSHOT`. Package base: `com.project.kore`.
 
 ---
 
@@ -79,7 +78,7 @@ Controllers → Facades → Services → Builders → Repositories → PostgreSQ
 ### Struttura dei package
 
 ```
-com.project.tesi/
+com.project.kore/
 ├── controller/           # 16 REST controller
 ├── facade/               # 13 interfacce facade
 │   └── impl/             # implementazioni facade
@@ -245,8 +244,7 @@ mezzanotte per rinnovare i crediti e gestire le rate.
 
 ## API REST
 
-I 16 controller espongono la superficie API sotto `/api`. Documentazione interattiva su
-**`/swagger-ui.html`** ad applicazione avviata.
+I 16 controller espongono la superficie API sotto `/api`.
 
 | Controller | Base path | Accesso |
 |---|---|---|
@@ -340,7 +338,7 @@ Eccezioni di dominio per modulo:
 ### Avvio (profilo dev)
 
 ```powershell
-cd tesi
+cd kore
 
 # Windows PowerShell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
@@ -433,17 +431,17 @@ Configurazione in `src/main/resources/log4j2-spring.xml`, con tre appender:
 |---|---|---|
 | `Console` | stdout | Tutti i layer applicativi |
 | `File` (RollingFile) | `logs/app.log` | Rolling giornaliero, max 10 MB, 30 file |
-| `AsyncLogDB` (JDBC async) | catalog PostgreSQL `tesi_logs` (tabella `app_logs`) | Buffer di eventi; DB creato all'avvio da `LogsDatabaseInitializer` |
+| `AsyncLogDB` (JDBC async) | catalog PostgreSQL `kore_logs` (tabella `app_logs`) | Buffer di eventi; DB creato all'avvio da `LogsDatabaseInitializer` |
 
 ### Note non ovvie
 
 - **Email come username** — `UserDetails.getUsername()` restituisce l'email; non esiste un campo username separato.
 - **Doppia durata JWT** — token di autenticazione 24 h, token di reset password 30 min (entrambi in `JwtUtil`).
-- **IPv4 per SMTP** — `TesiApplication` imposta `java.net.preferIPv4Stack=true` per evitare hang SMTP su IPv6.
+- **IPv4 per SMTP** — `KoreApplication` imposta `java.net.preferIPv4Stack=true` per evitare hang SMTP su IPv6.
 - **WebSocket JWT** — il token è validato sul frame STOMP CONNECT prima di ogni subscription.
 - **DDL dev** — `ddl-auto: create` ricrea lo schema ad ogni avvio; `data.sql` lo ripopola.
 - **Jitsi** — il base URL delle stanze è configurabile (`https://meet.jit.si/Kore_Consulto_...` di default).
-- **DB di log separato** — `tesi_logs` è un catalog PostgreSQL distinto dal database principale.
+- **DB di log separato** — `kore_logs` è un catalog PostgreSQL distinto dal database principale.
 
 ---
 

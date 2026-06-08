@@ -43,6 +43,6 @@ skills-lock.json
 logs/
 
 # === File temporanei di sviluppo ===
-tesi/temp.txt
-tesi/git_status.txt
-tesi/compile_output.txt
+kore/temp.txt
+kore/git_status.txt
+kore/compile_output.txt

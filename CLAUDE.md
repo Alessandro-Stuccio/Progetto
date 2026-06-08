@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Run
 
-The project lives under `tesi/`. All Maven commands run from that directory.
+The project lives under `kore/`. All Maven commands run from that directory.
 
 ```bash
-cd tesi
+cd kore
 
 # Run the app — the dev profile is active by default and auto-starts Docker Compose
 ./mvnw spring-boot:run
@@ -108,7 +108,7 @@ Pattern used throughout:
 - `MockMvc` + `@WebMvcTest` for controller-layer tests
 - `@DisplayName` on every test method for readable output
 
-Tests mirror the source tree under `src/test/java/com/project/tesi/`.
+Tests mirror the source tree under `src/test/java/com/project/kore/`.
 
 ## Exception Handling
 
@@ -118,11 +118,8 @@ All domain exceptions extend `BaseException` (which carries an HTTP status) and 
 
 - **Email as username** — `UserDetails.getUsername()` returns the user's email address; there is no separate username field.
 - **Dual JWT lifetimes** — auth tokens expire in 24 h; password-reset tokens expire in 30 min (both in `JwtUtil`).
-- **IPv4 for SMTP** — `TesiApplication` sets `java.net.preferIPv4Stack=true` at startup to prevent IPv6-related SMTP hangs.
+- **IPv4 for SMTP** — `KoreApplication` sets `java.net.preferIPv4Stack=true` at startup to prevent IPv6-related SMTP hangs.
 - **WebSocket JWT validation** — `WebSocketChannelInterceptor` validates the JWT token on the STOMP CONNECT frame before allowing any subscription.
 - **Audit trail** — `AuditLog` entity + `AuditInterceptor` records all user actions; add new auditable operations there.
 - **Dev DDL** — `spring.jpa.hibernate.ddl-auto: create` in the dev profile means the database schema is dropped and recreated on every application startup; `data.sql` re-seeds it each time.
 
-## API Documentation
-
-Swagger UI is available at `/swagger-ui.html` when the app is running (via springdoc-openapi).

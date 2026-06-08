@@ -1,0 +1,29 @@
+package com.project.kore.dto.request;
+
+import jakarta.validation.constraints.*;
+
+/**
+ * Crea un nuovo utente da pannello moderatore/admin. PT, nutrizionista, piano e frequenza
+ * di pagamento servono solo per i clienti.
+ *
+ * @param email                  email del nuovo utente (fa da username)
+ * @param firstName              nome
+ * @param lastName               cognome
+ * @param password               password in chiaro (8-100 caratteri)
+ * @param role                   ruolo da assegnare (nome dell'enum)
+ * @param assignedPTId           id del personal trainer assegnato (solo clienti)
+ * @param assignedNutritionistId id del nutrizionista assegnato (solo clienti)
+ * @param planId                 id del piano (solo clienti)
+ * @param paymentFrequency       frequenza di pagamento (solo clienti)
+ */
+public record UserCreateRequestDTO(
+        @NotBlank @Email String email,
+        @NotBlank @Size(min = 2, max = 50) String firstName,
+        @NotBlank @Size(min = 2, max = 50) String lastName,
+        @NotBlank @Size(min = 8, max = 100) String password,
+        @NotBlank String role,
+        @Min(1) Long assignedPTId,
+        @Min(1) Long assignedNutritionistId,
+        @Min(1) Long planId,
+        String paymentFrequency
+) {}
