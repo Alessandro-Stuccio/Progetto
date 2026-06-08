@@ -32,17 +32,5 @@ uploads/
 # === Tokens / secrets ===
 tokens/
 
-# === graphify knowledge graph (locale, non pushare) ===
-graphify-out/
-
-# === Claude Code (stato locale agent) ===
-.agents/
-skills-lock.json
-
 # === Log applicativi ===
 logs/
-
-# === File temporanei di sviluppo ===
-kore/temp.txt
-kore/git_status.txt
-kore/compile_output.txt
