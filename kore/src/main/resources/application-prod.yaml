@@ -42,6 +42,12 @@ cors:
   # Uno o più origin separati da virgola, es. https://kore-frontend.vercel.app
   allowed-origins: ${CORS_ALLOWED_ORIGINS:https://kore-frontend.vercel.app}
 
+# Anti spin-down del free tier: Render valorizza da solo RENDER_EXTERNAL_URL
+# (l'URL pubblico del servizio); il KeepAliveScheduler lo pinga ogni 10 minuti
+# così il traffico in ingresso non si azzera mai e il servizio resta sveglio.
+keepalive:
+  url: ${RENDER_EXTERNAL_URL:}
+
 # Solo console: il filesystem di Render è effimero e l'appender JDBC
 # richiederebbe il catalog kore_logs, che sul Postgres gestito non esiste.
 logging:
