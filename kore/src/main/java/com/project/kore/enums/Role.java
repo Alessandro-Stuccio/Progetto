@@ -11,6 +11,7 @@ public enum Role {
     CLIENT,
     PERSONAL_TRAINER,
     NUTRITIONIST,
+    PSYCHOLOGIST,
     MODERATOR,
     INSURANCE_MANAGER,
     ADMIN;
@@ -23,9 +24,9 @@ public enum Role {
      */
     public static Set<Role> getManagebleRoles(Role role) {
         return switch (role) {
-            case MODERATOR -> EnumSet.of(Role.CLIENT, Role.PERSONAL_TRAINER, Role.NUTRITIONIST);
+            case MODERATOR -> EnumSet.of(Role.CLIENT, Role.PERSONAL_TRAINER, Role.NUTRITIONIST, Role.PSYCHOLOGIST);
             case INSURANCE_MANAGER -> EnumSet.of(Role.ADMIN);
-            case ADMIN -> EnumSet.of(Role.CLIENT, Role.PERSONAL_TRAINER, Role.NUTRITIONIST, Role.MODERATOR, Role.INSURANCE_MANAGER);
+            case ADMIN -> EnumSet.of(Role.CLIENT, Role.PERSONAL_TRAINER, Role.NUTRITIONIST, Role.PSYCHOLOGIST, Role.MODERATOR, Role.INSURANCE_MANAGER);
             default -> new HashSet<>();
         };
     }

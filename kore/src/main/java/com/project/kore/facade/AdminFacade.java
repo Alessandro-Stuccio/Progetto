@@ -1,9 +1,11 @@
 package com.project.kore.facade;
 
-import com.project.kore.dto.request.PlanCreateRequestDTO;
-import com.project.kore.dto.response.PlanResponseDTO;
+import com.project.kore.dto.request.PlanCreateRequest;
+import com.project.kore.dto.response.PlanResponse;
 import com.project.kore.dto.response.stats.AdminStatsResponse;
 import com.project.kore.exception.common.ResourceAlreadyExistsException;
+import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
@@ -11,6 +13,7 @@ import java.util.List;
  * Operazioni amministrative: oltre a quanto offerto da ModeratorFacade, aggiunge
  * la gestione dei piani e le statistiche globali.
  */
+@Validated
 public interface AdminFacade {
 
     /**
@@ -21,7 +24,7 @@ public interface AdminFacade {
      * @throws ResourceAlreadyExistsException se esiste già un piano con quel nome
      * @throws IllegalArgumentException       se i dati del piano non sono validi (es. durata non riconosciuta)
      */
-    PlanResponseDTO createPlan(PlanCreateRequestDTO request);
+    PlanResponse createPlan(@Valid PlanCreateRequest request);
 
     /**
      * Aggiorna un piano esistente.
@@ -32,14 +35,14 @@ public interface AdminFacade {
      * @throws ResourceAlreadyExistsException se il nuovo nome collide con un altro piano
      * @throws IllegalArgumentException       se i dati del piano non sono validi (es. durata non riconosciuta)
      */
-    PlanResponseDTO updatePlan(Long id, PlanCreateRequestDTO request);
+    PlanResponse updatePlan(Long id, @Valid PlanCreateRequest request);
 
     /**
      * Tutti i piani, compresi quelli disabilitati, per la gestione amministrativa.
      *
      * @return l'elenco completo dei piani
      */
-    List<PlanResponseDTO> getAllPlansForAdmin();
+    List<PlanResponse> getAllPlansForAdmin();
 
     /**
      * Abilita o disabilita un piano (soft-disable: il record resta in DB). Disabilitare
@@ -50,7 +53,7 @@ public interface AdminFacade {
      * @return il piano aggiornato
      * @throws IllegalStateException se il piano ha abbonamenti collegati
      */
-    PlanResponseDTO setPlanStatus(Long id, boolean active);
+    PlanResponse setPlanStatus(Long id, boolean active);
 
     /**
      * Statistiche globali della piattaforma.

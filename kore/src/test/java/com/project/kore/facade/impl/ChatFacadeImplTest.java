@@ -52,6 +52,7 @@ class ChatFacadeImplTest {
     private User moderatorUser;
     private User adminUser;
     private User insuranceUser;
+    private User psychologistUser;
     private Chat openChat;
     private Chat closedChat;
 
@@ -86,6 +87,12 @@ class ChatFacadeImplTest {
         insuranceUser.setFirstName("Ins");
         insuranceUser.setLastName("Man");
         insuranceUser.setRole(Role.INSURANCE_MANAGER);
+
+        psychologistUser = new User();
+        psychologistUser.setId(8L);
+        psychologistUser.setFirstName("Sara");
+        psychologistUser.setLastName("Psico");
+        psychologistUser.setRole(Role.PSYCHOLOGIST);
 
         openChat = new Chat();
         openChat.setId(10L);
@@ -212,6 +219,32 @@ class ChatFacadeImplTest {
         when(userService.getUserById(1L)).thenReturn(clientUser);
 
         assertThatThrownBy(() -> chatFacade.createChat(7L, 1L))
+                .isInstanceOf(ChatNotAllowedException.class);
+    }
+
+    @Test
+    @DisplayName("createChat: CLIENT↔assigned Psychologist → allowed")
+    void createChat_clientWithAssignedPsychologist_isAllowed() {
+        clientUser.setAssignedPsychologist(psychologistUser);
+
+        when(userService.getUserById(1L)).thenReturn(clientUser);
+        when(userService.getUserById(8L)).thenReturn(psychologistUser);
+        when(chatService.getOrCreateChat(clientUser, psychologistUser)).thenReturn(15L);
+
+        Long chatId = chatFacade.createChat(1L, 8L);
+
+        assertThat(chatId).isEqualTo(15L);
+    }
+
+    @Test
+    @DisplayName("createChat: CLIENT↔unassigned Psychologist → throws ChatNotAllowedException")
+    void createChat_clientWithUnassignedPsychologist_throwsChatNotAllowedException() {
+        clientUser.setAssignedPsychologist(null);
+
+        when(userService.getUserById(1L)).thenReturn(clientUser);
+        when(userService.getUserById(8L)).thenReturn(psychologistUser);
+
+        assertThatThrownBy(() -> chatFacade.createChat(1L, 8L))
                 .isInstanceOf(ChatNotAllowedException.class);
     }
 

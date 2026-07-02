@@ -1,10 +1,9 @@
 package com.project.kore.controller;
 
-import com.project.kore.dto.request.PlanCreateRequestDTO;
-import com.project.kore.dto.response.PlanResponseDTO;
+import com.project.kore.dto.request.PlanCreateRequest;
+import com.project.kore.dto.response.PlanResponse;
 import com.project.kore.dto.response.stats.AdminStatsResponse;
 import com.project.kore.facade.AdminFacade;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +28,7 @@ public class AdminController {
      * @return 200 con il piano creato
      */
     @PostMapping("/plans")
-    public ResponseEntity<PlanResponseDTO> createPlan(@Valid @RequestBody PlanCreateRequestDTO request) {
+    public ResponseEntity<PlanResponse> createPlan(@RequestBody PlanCreateRequest request) {
         return ResponseEntity.ok(adminFacade.createPlan(request));
     }
 
@@ -41,8 +40,8 @@ public class AdminController {
      * @return 200 con il piano aggiornato
      */
     @PutMapping("/plans/{id}")
-    public ResponseEntity<PlanResponseDTO> updatePlan(@PathVariable Long id,
-            @Valid @RequestBody PlanCreateRequestDTO request) {
+    public ResponseEntity<PlanResponse> updatePlan(@PathVariable Long id,
+                                                   @RequestBody PlanCreateRequest request) {
         return ResponseEntity.ok(adminFacade.updatePlan(id, request));
     }
 
@@ -52,7 +51,7 @@ public class AdminController {
      * @return 200 con l'elenco completo dei piani
      */
     @GetMapping("/plans")
-    public ResponseEntity<List<PlanResponseDTO>> getAllPlans() {
+    public ResponseEntity<List<PlanResponse>> getAllPlans() {
         return ResponseEntity.ok(adminFacade.getAllPlansForAdmin());
     }
 
@@ -63,7 +62,7 @@ public class AdminController {
      * @return 200 con il piano aggiornato
      */
     @PatchMapping("/plans/{id}/disable")
-    public ResponseEntity<PlanResponseDTO> disablePlan(@PathVariable Long id) {
+    public ResponseEntity<PlanResponse> disablePlan(@PathVariable Long id) {
         return ResponseEntity.ok(adminFacade.setPlanStatus(id, false));
     }
 
@@ -74,7 +73,7 @@ public class AdminController {
      * @return 200 con il piano aggiornato
      */
     @PatchMapping("/plans/{id}/enable")
-    public ResponseEntity<PlanResponseDTO> enablePlan(@PathVariable Long id) {
+    public ResponseEntity<PlanResponse> enablePlan(@PathVariable Long id) {
         return ResponseEntity.ok(adminFacade.setPlanStatus(id, true));
     }
 

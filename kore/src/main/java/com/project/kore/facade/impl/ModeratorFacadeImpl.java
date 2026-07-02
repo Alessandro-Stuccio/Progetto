@@ -1,7 +1,7 @@
 package com.project.kore.facade.impl;
 
 import com.project.kore.dto.request.ModeratorUserUpdateRequest;
-import com.project.kore.dto.request.UserCreateRequestDTO;
+import com.project.kore.dto.request.UserCreateRequest;
 import com.project.kore.dto.response.SubscriptionResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.enums.PaymentFrequency;
@@ -93,7 +93,7 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
      */
     @Override
     @Transactional
-    public UserResponse createUser(UserCreateRequestDTO request,User user) {
+    public UserResponse createUser(UserCreateRequest request, User user) {
         Role targetRole = Role.valueOf(request.role());
         if (!Role.getManagebleRoles(user.getRole()).contains(targetRole)) {
             throw new AccessDeniedException(
@@ -143,18 +143,25 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
         }
 
         userService.deleteUser(id);
+
+        // Un utente eliminato non deve più avere un abbonamento attivo: lo disattiviamo così
+        // sparisce dalle statistiche (attivi, revenue, popolarità piani, crediti) e dalla home.
+        subscriptionService.findActiveByUser(target).ifPresent(sub -> {
+            sub.setActive(false);
+            subscriptionService.save(sub);
+        });
     }
 
     @Override
     @Transactional
-    public SubscriptionResponse updateSubscriptionCredits(Long id, int pt, int nutri) {
-        if (pt < 0 || nutri < 0) {
+    public SubscriptionResponse updateSubscriptionCredits(Long id, int pt, int nutri, int psico) {
+        if (pt < 0 || nutri < 0 || psico < 0) {
             throw new IllegalArgumentException("I crediti non possono essere negativi.");
         }
-        return subscriptionMapper.toResponse(subscriptionService.updateSubscriptionCredits(id, pt, nutri));
+        return subscriptionMapper.toResponse(subscriptionService.updateSubscriptionCredits(id, pt, nutri, psico));
     }
 
-    protected UserResponse buildAndSaveUser(UserCreateRequestDTO request, Role targetRole) {
+    protected UserResponse buildAndSaveUser(UserCreateRequest request, Role targetRole) {
         String email = request.email();
         String firstName = request.firstName();
         String lastName = request.lastName();
@@ -168,13 +175,12 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
             throw new ResourceAlreadyExistsException("Utente", "email", email);
         }
 
-        User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .password(userService.encodePassword(password))
-                .role(targetRole)
-                .build();
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setPassword(userService.encodePassword(password));
+        user.setRole(targetRole);
 
         if (targetRole == Role.CLIENT) {
             if (request.assignedPTId() != null) {
@@ -190,6 +196,13 @@ public class ModeratorFacadeImpl implements ModeratorFacade {
                     throw new AccessDeniedException("L'utente assegnato come nutrizionista non è un NUTRITIONIST");
                 }
                 user.setAssignedNutritionist(assignedNutri);
+            }
+            if (request.assignedPsychologistId() != null) {
+                User assignedPsico = userService.getUserById(request.assignedPsychologistId());
+                if (assignedPsico.getRole() != Role.PSYCHOLOGIST) {
+                    throw new AccessDeniedException("L'utente assegnato come psicologo non è un PSYCHOLOGIST");
+                }
+                user.setAssignedPsychologist(assignedPsico);
             }
         }
 

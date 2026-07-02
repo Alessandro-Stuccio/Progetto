@@ -51,17 +51,23 @@ public Subscription getSubscriptionStatus(User user) {
     }
 
     @Override
-    public Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri) {
+    public Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri, int creditsPsico) {
         Subscription sub = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new CustomResourceNotFoundException("Abbonamento", subscriptionId));
 
         sub.setCurrentCreditsPT(creditsPT);
         sub.setCurrentCreditsNutri(creditsNutri);
+        sub.setCurrentCreditsPsico(creditsPsico);
         return subscriptionRepository.save(sub);
     }
 
     @Override
     public boolean hasSubscribersByPlan(Long planId) {
         return subscriptionRepository.existsByPlanId(planId);
+    }
+
+    @Override
+    public boolean hasActiveSubscribersByPlan(Long planId) {
+        return subscriptionRepository.existsByPlanIdAndActiveTrue(planId);
     }
 }

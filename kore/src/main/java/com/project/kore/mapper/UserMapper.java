@@ -2,7 +2,7 @@ package com.project.kore.mapper;
 
 import com.project.kore.dto.request.RegisterRequest;
 import com.project.kore.dto.response.ClientBasicInfoResponse;
-import com.project.kore.dto.response.ProfessionalSummaryDTO;
+import com.project.kore.dto.response.ProfessionalSummaryResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.enums.Role;
 import com.project.kore.model.User;
@@ -40,14 +40,15 @@ public class UserMapper {
         Integer clientsCount = null;
 
         // Solo i professionisti hanno rating e clienti da calcolare.
-        if (user.getRole() == Role.PERSONAL_TRAINER || user.getRole() == Role.NUTRITIONIST) {
+        if (user.getRole() == Role.PERSONAL_TRAINER || user.getRole() == Role.NUTRITIONIST
+                || user.getRole() == Role.PSYCHOLOGIST) {
             avgRating = reviewRepository.getAverageRating(user.getId());
             if (avgRating == null) avgRating = 0.0;
-            if (user.getRole() == Role.PERSONAL_TRAINER) {
-                clientsCount = (int) userRepository.countByAssignedPTAndDeletedFalse(user);
-            } else {
-                clientsCount = (int) userRepository.countByAssignedNutritionistAndDeletedFalse(user);
-            }
+            clientsCount = switch (user.getRole()) {
+                case PERSONAL_TRAINER -> (int) userRepository.countByAssignedPTAndDeletedFalse(user);
+                case NUTRITIONIST -> (int) userRepository.countByAssignedNutritionistAndDeletedFalse(user);
+                default -> (int) userRepository.countByAssignedPsychologistAndDeletedFalse(user);
+            };
         }
 
         return UserResponse.builder()
@@ -61,6 +62,8 @@ public class UserMapper {
                         user.getAssignedPT().getFullName() : null)
                 .assignedNutritionistName(user.getAssignedNutritionist() != null ?
                         user.getAssignedNutritionist().getFullName() : null)
+                .assignedPsychologistName(user.getAssignedPsychologist() != null ?
+                        user.getAssignedPsychologist().getFullName() : null)
                 .activeClientsCount(clientsCount)
                 .averageRating(avgRating)
                 .build();
@@ -85,6 +88,8 @@ public class UserMapper {
                         user.getAssignedPT().getFullName() : null)
                 .assignedNutritionistName(user.getAssignedNutritionist() != null ?
                         user.getAssignedNutritionist().getFullName() : null)
+                .assignedPsychologistName(user.getAssignedPsychologist() != null ?
+                        user.getAssignedPsychologist().getFullName() : null)
                 .build();
     }
 
@@ -109,14 +114,14 @@ public class UserMapper {
             return null;
         }
 
-        return User.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .email(request.email())
-                .password(request.password())
-                .profilePicture(request.profilePicture())
-                .role(Role.CLIENT)
-                .build();
+        User user = new User();
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setEmail(request.email());
+        user.setPassword(request.password());
+        user.setProfilePicture(request.profilePicture());
+        user.setRole(Role.CLIENT);
+        return user;
     }
 
     /**
@@ -142,8 +147,8 @@ public class UserMapper {
      * @param pro il professionista da convertire
      * @return il DTO di riepilogo del professionista
      */
-    public ProfessionalSummaryDTO toProfessionalSummary(User pro) {
-        return ProfessionalSummaryDTO.builder()
+    public ProfessionalSummaryResponse toProfessionalSummary(User pro) {
+        return ProfessionalSummaryResponse.builder()
                 .id(pro.getId())
                 .fullName(pro.getFullName())
                 .role(pro.getRole())

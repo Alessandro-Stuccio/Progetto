@@ -2,7 +2,7 @@ package com.project.kore.mapper;
 
 import com.project.kore.dto.request.RegisterRequest;
 import com.project.kore.dto.response.ClientBasicInfoResponse;
-import com.project.kore.dto.response.ProfessionalSummaryDTO;
+import com.project.kore.dto.response.ProfessionalSummaryResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.enums.Role;
 import com.project.kore.model.User;
@@ -212,7 +212,7 @@ class UserMapperTest {
     @DisplayName("toUser: maps RegisterRequest to User with CLIENT role")
     void toUser_validRequest_mapsToClientUser() {
         RegisterRequest request = new RegisterRequest(
-                "Mario", "Rossi", "mario@test.com", "password", 1L, 2L, null, null, null);
+                "Mario", "Rossi", "mario@test.com", "password", 1L, 2L, 3L, null, null, null);
 
         User user = userMapper.toUser(request);
 
@@ -234,7 +234,7 @@ class UserMapperTest {
     @DisplayName("toUser: maps profilePicture when present in request")
     void toUser_requestWithProfilePicture_mapsProfilePicture() {
         RegisterRequest request = new RegisterRequest(
-                "Mario", "Rossi", "mario@test.com", "password", 1L, 2L, "http://img.url/pic.png", null, null);
+                "Mario", "Rossi", "mario@test.com", "password", 1L, 2L, 3L, "http://img.url/pic.png", null, null);
 
         User user = userMapper.toUser(request);
 
@@ -280,7 +280,7 @@ class UserMapperTest {
     void toProfessionalSummary_mapsFields() {
         User pro = buildUser(9L, "Giulia", "Marchi", "giulia@test.com", Role.NUTRITIONIST);
 
-        ProfessionalSummaryDTO summary = userMapper.toProfessionalSummary(pro);
+        ProfessionalSummaryResponse summary = userMapper.toProfessionalSummary(pro);
 
         assertThat(summary.getId()).isEqualTo(9L);
         assertThat(summary.getFullName()).isEqualTo("Giulia Marchi");

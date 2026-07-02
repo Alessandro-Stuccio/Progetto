@@ -1,7 +1,7 @@
 package com.project.kore.facade.impl;
 
-import com.project.kore.dto.request.PlanCreateRequestDTO;
-import com.project.kore.dto.response.PlanResponseDTO;
+import com.project.kore.dto.request.PlanCreateRequest;
+import com.project.kore.dto.response.PlanResponse;
 import com.project.kore.dto.response.stats.AdminStatsResponse;
 import com.project.kore.enums.Role;
 import com.project.kore.exception.common.ResourceAlreadyExistsException;
@@ -56,7 +56,7 @@ public class AdminFacadeImpl implements AdminFacade {
      */
     @Override
     @Transactional
-    public PlanResponseDTO createPlan(PlanCreateRequestDTO request) {
+    public PlanResponse createPlan(PlanCreateRequest request) {
         String name = request.name();
         String durationRaw = request.duration();
         Double fullPrice = request.fullPrice();
@@ -86,8 +86,12 @@ public class AdminFacadeImpl implements AdminFacade {
      */
     @Override
     @Transactional
-    public PlanResponseDTO updatePlan(Long id, PlanCreateRequestDTO request) {
+    public PlanResponse updatePlan(Long id, PlanCreateRequest request) {
         Plan plan = planService.getPlanById(id);
+
+        if (subscriptionService.hasActiveSubscribersByPlan(id)) {
+            throw new IllegalStateException("Impossibile modificare il piano: esistono abbonamenti attivi collegati.");
+        }
 
         if (request.name() != null && !request.name().isBlank() && !request.name().equals(plan.getName())) {
             if (planService.existsByName(request.name())) {
@@ -107,7 +111,7 @@ public class AdminFacadeImpl implements AdminFacade {
     // Tutti i piani, compresi i disabilitati, per la vista amministrativa.
     @Override
     @Transactional(readOnly = true)
-    public List<PlanResponseDTO> getAllPlansForAdmin() {
+    public List<PlanResponse> getAllPlansForAdmin() {
         return planMapper.toResponseList(planService.getAllPlans());
     }
 
@@ -117,7 +121,7 @@ public class AdminFacadeImpl implements AdminFacade {
      */
     @Override
     @Transactional
-    public PlanResponseDTO setPlanStatus(Long id, boolean active) {
+    public PlanResponse setPlanStatus(Long id, boolean active) {
         if (!active && subscriptionService.hasSubscribersByPlan(id)) {
             throw new IllegalStateException("Impossibile disabilitare il piano: esistono abbonamenti collegati.");
         }
@@ -178,12 +182,14 @@ public class AdminFacadeImpl implements AdminFacade {
                 .sorted((a, b) -> Long.compare(b.getActiveCount(), a.getActiveCount()))
                 .collect(Collectors.toList());
 
-        int ptAvail = 0, nutriAvail = 0, ptMax = 0, nutriMax = 0;
+        int ptAvail = 0, nutriAvail = 0, psicoAvail = 0, ptMax = 0, nutriMax = 0, psicoMax = 0;
         for (Subscription s : activeSubs) {
             ptAvail    += s.getCurrentCreditsPT();
             nutriAvail += s.getCurrentCreditsNutri();
+            psicoAvail += s.getCurrentCreditsPsico();
             ptMax      += s.getPlan().getMonthlyCreditsPT();
             nutriMax   += s.getPlan().getMonthlyCreditsNutri();
+            psicoMax   += s.getPlan().getMonthlyCreditsPsico();
         }
         AdminStatsResponse.CreditsStats credits = AdminStatsResponse.CreditsStats.builder()
                 .ptAvailable(ptAvail)
@@ -194,6 +200,10 @@ public class AdminFacadeImpl implements AdminFacade {
                 .nutriTotal(nutriMax)
                 .nutriConsumed(nutriMax - nutriAvail)
                 .nutriPercentUsed(nutriMax > 0 ? Math.round(((nutriMax - nutriAvail) * 100.0) / nutriMax) : 0)
+                .psicoAvailable(psicoAvail)
+                .psicoTotal(psicoMax)
+                .psicoConsumed(psicoMax - psicoAvail)
+                .psicoPercentUsed(psicoMax > 0 ? Math.round(((psicoMax - psicoAvail) * 100.0) / psicoMax) : 0)
                 .build();
 
         double monthlyRevenue = activeSubs.stream()
@@ -208,11 +218,14 @@ public class AdminFacadeImpl implements AdminFacade {
                 .count();
 
         List<AdminStatsResponse.ProfessionalWorkloadItem> proWorkload = allUsers.stream()
-                .filter(u -> u.getRole() == Role.PERSONAL_TRAINER || u.getRole() == Role.NUTRITIONIST)
+                .filter(u -> u.getRole() == Role.PERSONAL_TRAINER || u.getRole() == Role.NUTRITIONIST
+                        || u.getRole() == Role.PSYCHOLOGIST)
                 .map(pro -> {
-                    long clientCount = pro.getRole() == Role.PERSONAL_TRAINER
-                            ? allUsers.stream().filter(u -> u.getAssignedPT() != null && u.getAssignedPT().getId().equals(pro.getId())).count()
-                            : allUsers.stream().filter(u -> u.getAssignedNutritionist() != null && u.getAssignedNutritionist().getId().equals(pro.getId())).count();
+                    long clientCount = switch (pro.getRole()) {
+                        case PERSONAL_TRAINER -> allUsers.stream().filter(u -> u.getAssignedPT() != null && u.getAssignedPT().getId().equals(pro.getId())).count();
+                        case NUTRITIONIST -> allUsers.stream().filter(u -> u.getAssignedNutritionist() != null && u.getAssignedNutritionist().getId().equals(pro.getId())).count();
+                        default -> allUsers.stream().filter(u -> u.getAssignedPsychologist() != null && u.getAssignedPsychologist().getId().equals(pro.getId())).count();
+                    };
                     return AdminStatsResponse.ProfessionalWorkloadItem.builder()
                             .name(pro.getFullName())
                             .role(pro.getRole().name())

@@ -1,7 +1,7 @@
 package com.project.kore.facade.impl;
 
 import com.project.kore.dto.response.BookingResponse;
-import com.project.kore.dto.response.SlotDTO;
+import com.project.kore.dto.response.SlotResponse;
 import com.project.kore.dto.response.stats.ProfessionalStatsResponse;
 import com.project.kore.enums.BookingStatus;
 import com.project.kore.enums.DocumentType;
@@ -28,7 +28,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -60,19 +62,44 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SlotDTO> getAvailableSlots(Long professionalId) {
+    public List<SlotResponse> getAvailableSlots(Long professionalId) {
         User professional = userService.getUserById(professionalId);
         return slotMapper.toDtoList(slotService.getAvailableSlots(professional));
     }
 
+    /**
+     * Salva la disponibilità del professionista in modo idempotente: scarta i doppioni interni
+     * alla richiesta (stesso startTime) e gli orari già a calendario, così come fa
+     * {@link #generateSlotsFromSchedule}. Evita la violazione del vincolo uq_slot_prof_start
+     * quando la selezione include slot già generati dallo scheduler o ripetuti.
+     */
     @Override
     @Transactional
-    public List<SlotDTO> createSlots(Long professionalId, List<SlotDTO> slots) {
+    public List<SlotResponse> createSlots(Long professionalId, List<SlotResponse> slots) {
         User professional = userService.getUserById(professionalId);
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
+        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST
+                && professional.getRole() != Role.PSYCHOLOGIST) {
             throw new AccessDeniedException("Solo i professionisti possono creare slot");
         }
-        List<Slot> entities = slotMapper.toEntityList(slots, professional);
+
+        // Dedup interna: un solo slot per startTime, preservando l'ordine e scartando i null.
+        Map<LocalDateTime, SlotResponse> distinct = new LinkedHashMap<>();
+        for (SlotResponse slot : slots) {
+            if (slot.getStartTime() != null) {
+                distinct.putIfAbsent(slot.getStartTime(), slot);
+            }
+        }
+
+        // Tiene solo gli orari non ancora presenti a DB per questo professionista.
+        List<SlotResponse> toCreate = distinct.values().stream()
+                .filter(slot -> !slotService.slotExists(professional, slot.getStartTime()))
+                .toList();
+
+        if (toCreate.isEmpty()) {
+            return List.of();
+        }
+
+        List<Slot> entities = slotMapper.toEntityList(toCreate, professional);
         return slotMapper.toDtoList(slotService.createSlots(entities));
     }
 
@@ -97,7 +124,8 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     @Override
     @Transactional
     public void generateSlotsFromSchedule(User professional, LocalDate startDate, LocalDate endDate) {
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
+        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST
+                && professional.getRole() != Role.PSYCHOLOGIST) {
             throw new AccessDeniedException("Solo i professionisti possono generare slot");
         }
 
@@ -121,12 +149,12 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
                     LocalDateTime endSlot = startSlot.plusMinutes(30);
 
                     if (!slotService.slotExists(professional, startSlot)) {
-                        newSlots.add(Slot.builder()
-                                .professional(professional)
-                                .startTime(startSlot)
-                                .endTime(endSlot)
-                                .bookedBy(null)
-                                .build());
+                        Slot slot = new Slot();
+                        slot.setProfessional(professional);
+                        slot.setStartTime(startSlot);
+                        slot.setEndTime(endSlot);
+                        slot.setBookedBy(null);
+                        newSlots.add(slot);
                     }
 
                     currentTime = currentTime.plusMinutes(30);
@@ -143,7 +171,8 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     @Transactional(readOnly = true)
     public List<BookingResponse> getUpcomingBookings(Long professionalId) {
         User professional = userService.getUserById(professionalId);
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
+        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST
+                && professional.getRole() != Role.PSYCHOLOGIST) {
             throw new AccessDeniedException("Solo i professionisti possono accedere agli appuntamenti.");
         }
         LocalDateTime now = LocalDateTime.now();
@@ -162,7 +191,8 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
     @Transactional(readOnly = true)
     public ProfessionalStatsResponse getProfessionalStats(Long professionalId) {
         User professional = userService.getUserById(professionalId);
-        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST) {
+        if (professional.getRole() != Role.PERSONAL_TRAINER && professional.getRole() != Role.NUTRITIONIST
+                && professional.getRole() != Role.PSYCHOLOGIST) {
             throw new AccessDeniedException("Solo i professionisti possono accedere alle statistiche.");
         }
 
@@ -183,11 +213,16 @@ public class ProfessionalFacadeImpl implements ProfessionalFacade {
                         .build()
         ).collect(Collectors.toList());
 
-        DocumentType relevantDocType = professional.getRole() == Role.PERSONAL_TRAINER
-                ? DocumentType.WORKOUT_PLAN : DocumentType.DIET_PLAN;
-        List<User> clients = professional.getRole() == Role.PERSONAL_TRAINER
-                ? userService.findByAssignedPT(professional)
-                : userService.findByAssignedNutritionist(professional);
+        DocumentType relevantDocType = switch (professional.getRole()) {
+            case PERSONAL_TRAINER -> DocumentType.WORKOUT_PLAN;
+            case NUTRITIONIST -> DocumentType.DIET_PLAN;
+            default -> DocumentType.PSYCHOLOGY_PLAN;
+        };
+        List<User> clients = switch (professional.getRole()) {
+            case PERSONAL_TRAINER -> userService.findByAssignedPT(professional);
+            case NUTRITIONIST -> userService.findByAssignedNutritionist(professional);
+            default -> userService.findByAssignedPsychologist(professional);
+        };
 
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
         List<ProfessionalStatsResponse.ClientAttentionItem> clientsNeedingAttention = new ArrayList<>();

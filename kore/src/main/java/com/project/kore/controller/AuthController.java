@@ -5,11 +5,10 @@ import com.project.kore.dto.request.LoginRequest;
 import com.project.kore.dto.request.RegisterRequest;
 import com.project.kore.dto.request.ResetPasswordRequest;
 import com.project.kore.dto.response.AuthResponse;
+import com.project.kore.dto.response.AuthResultResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.facade.AuthFacade;
 import com.project.kore.model.User;
-import com.project.kore.dto.response.AuthResult;
-import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +39,7 @@ public class AuthController {
      * @return 200 con i dati dell'utente registrato
      */
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
         log.info("Registrazione nuovo utente: {}", request.email());
         UserResponse response = authFacade.registerUser(request);
         log.info("Utente registrato con successo: id={}", response.getId());
@@ -54,9 +53,9 @@ public class AuthController {
      * @return 200 con token JWT e dati del profilo
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         log.info("Tentativo di login: {}", request.email());
-        AuthResult result = authFacade.login(request);
+        AuthResultResponse result = authFacade.login(request);
         User u = result.getUser();
         return ResponseEntity.ok(AuthResponse.builder()
                 .token(result.getToken())
@@ -76,7 +75,7 @@ public class AuthController {
      * @return 200 con un messaggio di conferma invio
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         authFacade.forgotPassword(request.email());
         return ResponseEntity.ok(Map.of("message", "Link di reset inviato. Controlla la tua casella di posta."));
     }
@@ -88,7 +87,7 @@ public class AuthController {
      * @return 200 con un messaggio di conferma
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ResetPasswordRequest request) {
         authFacade.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok(Map.of("message", "Password reimpostata con successo."));
     }

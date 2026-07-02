@@ -3,7 +3,7 @@ package com.project.kore.dto.response;
 import java.time.LocalDate;
 
 /**
- * L'abbonamento di un utente con i crediti PT/nutrizionista residui e il periodo di validità.
+ * L'abbonamento di un utente con i crediti PT/nutrizionista/psicologo residui e il periodo di validità.
  */
 public class SubscriptionResponse {
 
@@ -16,6 +16,7 @@ public class SubscriptionResponse {
     private boolean active;
     private int currentCreditsPT;
     private int currentCreditsNutri;
+    private int currentCreditsPsico;
     private Double monthlyPrice;
 
 
@@ -30,6 +31,7 @@ public class SubscriptionResponse {
     public boolean isActive() { return active; }
     public int getCurrentCreditsPT() { return currentCreditsPT; }
     public int getCurrentCreditsNutri() { return currentCreditsNutri; }
+    public int getCurrentCreditsPsico() { return currentCreditsPsico; }
     public Double getMonthlyPrice() { return monthlyPrice; }
 
     public static class Builder {
@@ -42,6 +44,7 @@ public class SubscriptionResponse {
         private boolean active;
         private int currentCreditsPT;
         private int currentCreditsNutri;
+        private int currentCreditsPsico;
         private Double monthlyPrice;
 
         public Builder id(Long id) { this.id = id; return this; }
@@ -53,6 +56,7 @@ public class SubscriptionResponse {
         public Builder active(boolean active) { this.active = active; return this; }
         public Builder currentCreditsPT(int credits) { this.currentCreditsPT = credits; return this; }
         public Builder currentCreditsNutri(int credits) { this.currentCreditsNutri = credits; return this; }
+        public Builder currentCreditsPsico(int credits) { this.currentCreditsPsico = credits; return this; }
         public Builder monthlyPrice(Double price) { this.monthlyPrice = price; return this; }
 
         public SubscriptionResponse build() {
@@ -66,6 +70,7 @@ public class SubscriptionResponse {
             r.active = this.active;
             r.currentCreditsPT = this.currentCreditsPT;
             r.currentCreditsNutri = this.currentCreditsNutri;
+            r.currentCreditsPsico = this.currentCreditsPsico;
             r.monthlyPrice = this.monthlyPrice;
             return r;
         }

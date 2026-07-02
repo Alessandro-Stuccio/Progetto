@@ -16,8 +16,16 @@ public class RandomGenerationServiceImpl implements RandomGenerationService {
     @Value("${jwt.length}")
     private int length;
 
+    // Se valorizzata (env JWT_SECRET), la chiave di firma è fissa e i token
+    // sopravvivono ai riavvii; altrimenti resta la generazione casuale.
+    @Value("${jwt.secret:}")
+    private String configuredSecret;
+
     @Override
     public String getTokenKey() {
+        if (configuredSecret != null && !configuredSecret.isBlank()) {
+            return configuredSecret;
+        }
         CharacterData lowerCase= EnglishCharacterData.LowerCase;
         CharacterRule lowerCaseRule = new CharacterRule(lowerCase);
         CharacterData upperCase = EnglishCharacterData.UpperCase;

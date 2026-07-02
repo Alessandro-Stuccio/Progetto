@@ -17,10 +17,11 @@ import java.util.List;
 
 /**
  * Crea i file PDF placeholder per i documenti inseriti da data.sql.
- * Attivo solo con il profilo dev — non tocca ambienti di produzione.
+ * Attivo in dev e in prod: il deploy pubblico è una demo che riparte dai dati
+ * seed a ogni avvio, quindi i PDF referenziati da data.sql devono esistere.
  */
 @Component
-@Profile("dev")
+@Profile({"dev", "prod"})
 public class DevFileSeedInitializer implements ApplicationListener<ApplicationReadyEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(DevFileSeedInitializer.class);
@@ -30,18 +31,23 @@ public class DevFileSeedInitializer implements ApplicationListener<ApplicationRe
 
     private static final List<String> SEED_FILES = List.of(
         "polizza_luca.pdf",
+        "percorso_luca.pdf",
         "scheda_luca_pt1.pdf",
         "dieta_luca_n1.pdf",
         "polizza_sofia.pdf",
+        "percorso_sofia.pdf",
         "scheda_sofia_pt1.pdf",
         "dieta_sofia_n2.pdf",
         "polizza_matteo.pdf",
+        "percorso_matteo.pdf",
         "scheda_matteo_pt2.pdf",
         "dieta_matteo_n1.pdf",
         "polizza_chiara.pdf",
+        "percorso_chiara.pdf",
         "scheda_chiara_pt2.pdf",
         "dieta_chiara_n2.pdf",
         "polizza_elena.pdf",
+        "percorso_elena.pdf",
         "scheda_davide_pt2.pdf"
     );
 

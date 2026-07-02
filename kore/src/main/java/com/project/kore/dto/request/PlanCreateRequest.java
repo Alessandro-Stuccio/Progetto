@@ -11,12 +11,14 @@ import jakarta.validation.constraints.*;
  * @param monthlyInstallmentPrice  importo della rata mensile
  * @param monthlyCreditsPT         crediti PT erogati ogni mese
  * @param monthlyCreditsNutri      crediti nutrizionista erogati ogni mese
+ * @param monthlyCreditsPsico      crediti psicologo erogati ogni mese
  */
-public record PlanCreateRequestDTO(
+public record PlanCreateRequest(
         @NotBlank @Size(min = 2, max = 100) String name,
         @NotBlank String duration,
         @NotNull @Positive Double fullPrice,
         @NotNull @Positive Double monthlyInstallmentPrice,
         @Min(0) Integer monthlyCreditsPT,
-        @Min(0) Integer monthlyCreditsNutri
+        @Min(0) Integer monthlyCreditsNutri,
+        @Min(0) Integer monthlyCreditsPsico
 ) {}

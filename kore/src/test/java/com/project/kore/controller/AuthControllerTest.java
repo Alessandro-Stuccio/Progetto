@@ -28,7 +28,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("register — chiama UserFacade e restituisce 200 con il profilo creato")
     void register() {
-        RegisterRequest req = new RegisterRequest(null, null, "mario@test.com", null, null, null, null, null, null);
+        RegisterRequest req = new RegisterRequest(null, null, "mario@test.com", null, null, null, null, null, null, null);
         UserResponse userResp = UserResponse.builder().id(1L).email("mario@test.com").role(Role.CLIENT).build();
         when(authFacade.registerUser(req)).thenReturn(userResp);
 

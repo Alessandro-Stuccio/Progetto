@@ -35,11 +35,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Conta i clienti attivi di un nutrizionista.
     long countByAssignedNutritionistAndDeletedFalse(User nutritionist);
 
+    // Conta i clienti attivi di uno psicologo.
+    long countByAssignedPsychologistAndDeletedFalse(User psychologist);
+
     // Clienti attivi di un PT.
     List<User> findByAssignedPTAndDeletedFalse(User pt);
 
     // Clienti attivi di un nutrizionista.
     List<User> findByAssignedNutritionistAndDeletedFalse(User nutritionist);
+
+    // Clienti attivi di uno psicologo.
+    List<User> findByAssignedPsychologistAndDeletedFalse(User psychologist);
 
     // Stacca il PT da tutti i suoi clienti: da fare prima del soft-delete del PT per non lasciare riferimenti orfani.
     @Modifying
@@ -50,4 +56,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.assignedNutritionist = null WHERE u.assignedNutritionist.id = :nutriId")
     void clearAssignedNutritionist(@Param("nutriId") Long nutriId);
+
+    // Come clearAssignedPT ma per lo psicologo.
+    @Modifying
+    @Query("UPDATE User u SET u.assignedPsychologist = null WHERE u.assignedPsychologist.id = :psicoId")
+    void clearAssignedPsychologist(@Param("psicoId") Long psicoId);
 }

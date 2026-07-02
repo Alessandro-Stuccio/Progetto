@@ -2,12 +2,11 @@ package com.project.kore.controller;
 
 import com.project.kore.dto.request.ModeratorUserUpdateRequest;
 import com.project.kore.dto.request.UpdateCreditsRequest;
-import com.project.kore.dto.request.UserCreateRequestDTO;
+import com.project.kore.dto.request.UserCreateRequest;
 import com.project.kore.dto.response.SubscriptionResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.facade.ModeratorFacade;
 import com.project.kore.model.User;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -65,7 +64,7 @@ public class ModeratorController {
      * @return 200 con i dati dell'utente creato
      */
     @PostMapping("/users")
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequestDTO body, @AuthenticationPrincipal User user) {
+    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequest body, @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(moderatorFacade.createUser(body, user));
     }
 
@@ -79,7 +78,7 @@ public class ModeratorController {
      */
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,
-            @Valid @RequestBody ModeratorUserUpdateRequest body,@AuthenticationPrincipal User user) {
+            @RequestBody ModeratorUserUpdateRequest body,@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(moderatorFacade.updateUser(id, body,user));
     }
 
@@ -105,9 +104,9 @@ public class ModeratorController {
      */
     @PutMapping("/subscriptions/{id}/credits")
     public ResponseEntity<SubscriptionResponse> updateSubscriptionCredits(@PathVariable Long id,
-            @Valid @RequestBody UpdateCreditsRequest body) {
+            @RequestBody UpdateCreditsRequest body) {
         return ResponseEntity.ok(moderatorFacade.updateSubscriptionCredits(
-                id, body.creditsPT(), body.creditsNutri()));
+                id, body.creditsPT(), body.creditsNutri(), body.creditsPsico()));
     }
 
 }

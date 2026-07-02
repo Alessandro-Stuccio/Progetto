@@ -3,6 +3,7 @@ package com.project.kore.service;
 import com.project.kore.exception.common.CustomResourceNotFoundException;
 import com.project.kore.model.Subscription;
 import com.project.kore.model.User;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
@@ -29,7 +30,7 @@ public interface SubscriptionService {
      * @param sub l'abbonamento da salvare
      * @return l'abbonamento salvato
      */
-    Subscription save(@NotNull Subscription sub);
+    Subscription save(@NotNull @Valid Subscription sub);
 
     /**
      * Cerca l'abbonamento attivo senza prendere lock.
@@ -55,15 +56,16 @@ public interface SubscriptionService {
     List<Subscription> getAllSubscriptions();
 
     /**
-     * Imposta i crediti PT e nutrizionista dell'abbonamento.
+     * Imposta i crediti PT, nutrizionista e psicologo dell'abbonamento.
      *
      * @param subscriptionId id dell'abbonamento
      * @param creditsPT      crediti per il personal trainer da impostare
      * @param creditsNutri   crediti per il nutrizionista da impostare
+     * @param creditsPsico   crediti per lo psicologo da impostare
      * @return l'abbonamento aggiornato
      * @throws CustomResourceNotFoundException se l'abbonamento non esiste
      */
-    Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri);
+    Subscription updateSubscriptionCredits(Long subscriptionId, int creditsPT, int creditsNutri, int creditsPsico);
 
     /**
      * Dice se qualche abbonamento attivo usa quel piano (serve prima di disabilitarlo).
@@ -72,4 +74,12 @@ public interface SubscriptionService {
      * @return {@code true} se esiste almeno un abbonamento collegato al piano
      */
     boolean hasSubscribersByPlan(@NotNull @Min(1) Long planId);
+
+    /**
+     * Dice se qualche abbonamento <b>attivo</b> usa quel piano (serve prima di modificarlo).
+     *
+     * @param planId id del piano
+     * @return {@code true} se esiste almeno un abbonamento attivo collegato al piano
+     */
+    boolean hasActiveSubscribersByPlan(@NotNull @Min(1) Long planId);
 }

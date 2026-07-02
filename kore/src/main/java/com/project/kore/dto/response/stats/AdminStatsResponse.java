@@ -157,7 +157,7 @@ public class AdminStatsResponse {
         }
     }
 
-    /** Crediti disponibili, totali e consumati, distinti tra PT e nutrizionista; i percentUsed sono calcolati. */
+    /** Crediti disponibili, totali e consumati, distinti tra PT, nutrizionista e psicologo; i percentUsed sono calcolati. */
     public static class CreditsStats {
         private int ptAvailable;
         private int ptTotal;
@@ -167,6 +167,10 @@ public class AdminStatsResponse {
         private int nutriTotal;
         private int nutriConsumed;
         private long nutriPercentUsed;
+        private int psicoAvailable;
+        private int psicoTotal;
+        private int psicoConsumed;
+        private long psicoPercentUsed;
 
 
         private CreditsStats(Builder b) {
@@ -178,6 +182,10 @@ public class AdminStatsResponse {
             this.nutriTotal = b.nutriTotal;
             this.nutriConsumed = b.nutriConsumed;
             this.nutriPercentUsed = b.nutriPercentUsed;
+            this.psicoAvailable = b.psicoAvailable;
+            this.psicoTotal = b.psicoTotal;
+            this.psicoConsumed = b.psicoConsumed;
+            this.psicoPercentUsed = b.psicoPercentUsed;
         }
 
         public static Builder builder() { return new Builder(); }
@@ -190,6 +198,10 @@ public class AdminStatsResponse {
         public int getNutriTotal() { return nutriTotal; }
         public int getNutriConsumed() { return nutriConsumed; }
         public long getNutriPercentUsed() { return nutriPercentUsed; }
+        public int getPsicoAvailable() { return psicoAvailable; }
+        public int getPsicoTotal() { return psicoTotal; }
+        public int getPsicoConsumed() { return psicoConsumed; }
+        public long getPsicoPercentUsed() { return psicoPercentUsed; }
 
         public static class Builder {
             private int ptAvailable;
@@ -200,6 +212,10 @@ public class AdminStatsResponse {
             private int nutriTotal;
             private int nutriConsumed;
             private long nutriPercentUsed;
+            private int psicoAvailable;
+            private int psicoTotal;
+            private int psicoConsumed;
+            private long psicoPercentUsed;
 
             public Builder ptAvailable(int v) { this.ptAvailable = v; return this; }
             public Builder ptTotal(int v) { this.ptTotal = v; return this; }
@@ -209,6 +225,10 @@ public class AdminStatsResponse {
             public Builder nutriTotal(int v) { this.nutriTotal = v; return this; }
             public Builder nutriConsumed(int v) { this.nutriConsumed = v; return this; }
             public Builder nutriPercentUsed(long v) { this.nutriPercentUsed = v; return this; }
+            public Builder psicoAvailable(int v) { this.psicoAvailable = v; return this; }
+            public Builder psicoTotal(int v) { this.psicoTotal = v; return this; }
+            public Builder psicoConsumed(int v) { this.psicoConsumed = v; return this; }
+            public Builder psicoPercentUsed(long v) { this.psicoPercentUsed = v; return this; }
 
             public CreditsStats build() { return new CreditsStats(this); }
         }

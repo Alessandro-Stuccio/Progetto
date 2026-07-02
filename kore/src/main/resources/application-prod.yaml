@@ -1,0 +1,48 @@
+## Profilo di produzione (Render). Si attiva con SPRING_PROFILES_ACTIVE=prod.
+## Tutta la configurazione arriva da variabili d'ambiente: datasource sul
+## PostgreSQL gestito di Render, RabbitMQ su CloudAMQP, CORS sul dominio Vercel.
+
+server:
+  port: ${PORT:8080}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}?sslmode=${DB_SSLMODE:require}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      # Come in dev: schema ricreato a ogni avvio e ripopolato da data.sql.
+      # Il sito pubblicato è una demo: ogni riavvio (incluso il risveglio dal
+      # free tier di Render) riparte dai dati seed puliti.
+      ddl-auto: create
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+
+  # Su Render non c'è Docker: DB e broker sono servizi gestiti esterni.
+  docker:
+    compose:
+      enabled: false
+
+  # CloudAMQP: URI unico amqps://user:password@host/vhost.
+  # "addresses" prevale su host/port/username/password del profilo base.
+  rabbitmq:
+    addresses: ${CLOUDAMQP_URL}
+
+# Chiave di firma JWT fissa (base64/alfanumerica, min 44 caratteri) così i token
+# sopravvivono ai riavvii. Se vuota, viene generata casualmente come in dev.
+jwt:
+  secret: ${JWT_SECRET:}
+
+cors:
+  # Uno o più origin separati da virgola, es. https://kore-frontend.vercel.app
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://kore-frontend.vercel.app}
+
+# Solo console: il filesystem di Render è effimero e l'appender JDBC
+# richiederebbe il catalog kore_logs, che sul Postgres gestito non esiste.
+logging:
+  config: classpath:log4j2-prod.xml

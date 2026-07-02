@@ -192,10 +192,11 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeSubscription));
         when(subscriptionRepository.save(activeSubscription)).thenReturn(activeSubscription);
 
-        Subscription result = subscriptionService.updateSubscriptionCredits(100L, 3, 1);
+        Subscription result = subscriptionService.updateSubscriptionCredits(100L, 3, 1, 2);
 
         assertThat(result.getCurrentCreditsPT()).isEqualTo(3);
         assertThat(result.getCurrentCreditsNutri()).isEqualTo(1);
+        assertThat(result.getCurrentCreditsPsico()).isEqualTo(2);
         verify(subscriptionRepository).save(activeSubscription);
     }
 
@@ -205,10 +206,11 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeSubscription));
         when(subscriptionRepository.save(activeSubscription)).thenReturn(activeSubscription);
 
-        subscriptionService.updateSubscriptionCredits(100L, 0, 0);
+        subscriptionService.updateSubscriptionCredits(100L, 0, 0, 0);
 
         assertThat(activeSubscription.getCurrentCreditsPT()).isZero();
         assertThat(activeSubscription.getCurrentCreditsNutri()).isZero();
+        assertThat(activeSubscription.getCurrentCreditsPsico()).isZero();
     }
 
     @Test
@@ -216,7 +218,7 @@ class SubscriptionServiceImplTest {
     void updateSubscriptionCredits_notFound_throwsResourceNotFoundException() {
         when(subscriptionRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> subscriptionService.updateSubscriptionCredits(999L, 2, 2))
+        assertThatThrownBy(() -> subscriptionService.updateSubscriptionCredits(999L, 2, 2, 2))
                 .isInstanceOf(CustomResourceNotFoundException.class)
                 .hasMessageContaining("999");
 
@@ -234,7 +236,7 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findById(100L)).thenReturn(Optional.of(activeSubscription));
         when(subscriptionRepository.save(activeSubscription)).thenReturn(updatedSub);
 
-        Subscription result = subscriptionService.updateSubscriptionCredits(100L, 5, 5);
+        Subscription result = subscriptionService.updateSubscriptionCredits(100L, 5, 5, 5);
 
         assertThat(result).isSameAs(updatedSub);
     }
@@ -256,5 +258,24 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.existsByPlanId(99L)).thenReturn(false);
 
         assertThat(subscriptionService.hasSubscribersByPlan(99L)).isFalse();
+    }
+
+    // ---- hasActiveSubscribersByPlan ----
+
+    @Test
+    @DisplayName("hasActiveSubscribersByPlan: returns true when at least one active subscription references the plan")
+    void hasActiveSubscribersByPlan_hasActiveSubs_returnsTrue() {
+        when(subscriptionRepository.existsByPlanIdAndActiveTrue(42L)).thenReturn(true);
+
+        assertThat(subscriptionService.hasActiveSubscribersByPlan(42L)).isTrue();
+        verify(subscriptionRepository).existsByPlanIdAndActiveTrue(42L);
+    }
+
+    @Test
+    @DisplayName("hasActiveSubscribersByPlan: returns false when no active subscription references the plan")
+    void hasActiveSubscribersByPlan_noActiveSubs_returnsFalse() {
+        when(subscriptionRepository.existsByPlanIdAndActiveTrue(99L)).thenReturn(false);
+
+        assertThat(subscriptionService.hasActiveSubscribersByPlan(99L)).isFalse();
     }
 }

@@ -65,6 +65,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public long countByAssignedPsychologist(User psychologist) {
+        return userRepository.countByAssignedPsychologistAndDeletedFalse(psychologist);
+    }
+
+    @Override
     public List<User> findByAssignedPT(User pt) {
         return userRepository.findByAssignedPTAndDeletedFalse(pt);
     }
@@ -72,6 +77,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findByAssignedNutritionist(User nutritionist) {
         return userRepository.findByAssignedNutritionistAndDeletedFalse(nutritionist);
+    }
+
+    @Override
+    public List<User> findByAssignedPsychologist(User psychologist) {
+        return userRepository.findByAssignedPsychologistAndDeletedFalse(psychologist);
     }
 
     // Esclude l'utente stesso dal controllo: serve in update profilo, dove tenere la propria email non è un duplicato.
@@ -96,6 +106,8 @@ public class UserServiceImpl implements UserService {
             userRepository.clearAssignedPT(id);
         } else if (target.getRole() == Role.NUTRITIONIST) {
             userRepository.clearAssignedNutritionist(id);
+        } else if (target.getRole() == Role.PSYCHOLOGIST) {
+            userRepository.clearAssignedPsychologist(id);
         }
     }
 

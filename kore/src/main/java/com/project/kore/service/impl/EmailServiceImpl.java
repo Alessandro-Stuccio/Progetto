@@ -93,7 +93,11 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmailAsync(JobApplicationRequest request, byte[] cvBytes, String cvFileName,
             String cvContentType) {
         try {
-            String roleName = "PERSONAL_TRAINER".equals(request.role()) ? "Personal Trainer" : "Nutrizionista";
+            String roleName = switch (request.role() == null ? "" : request.role()) {
+                case "PERSONAL_TRAINER" -> "Personal Trainer";
+                case "PSYCHOLOGIST" -> "Psicologo";
+                default -> "Nutrizionista";
+            };
             String subject = "Nuova Candidatura — " + request.firstName() + " " + request.lastName() + " — "
                     + roleName;
             String htmlBody = buildHtmlBody(request, roleName);

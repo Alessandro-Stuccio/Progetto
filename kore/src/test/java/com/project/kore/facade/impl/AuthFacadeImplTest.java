@@ -2,7 +2,7 @@ package com.project.kore.facade.impl;
 
 import com.project.kore.dto.request.LoginRequest;
 import com.project.kore.dto.request.RegisterRequest;
-import com.project.kore.dto.response.AuthResult;
+import com.project.kore.dto.response.AuthResultResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.enums.PaymentFrequency;
 import com.project.kore.enums.Role;
@@ -92,7 +92,7 @@ class AuthFacadeImplTest {
     void registerUser_emailAlreadyExists_throwsResourceAlreadyExistsException() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         when(userService.existsByEmail("mario@test.com")).thenReturn(true);
 
@@ -107,7 +107,7 @@ class AuthFacadeImplTest {
     void registerUser_noProfessionalNoPlan_savesUserAndSendsEmail() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         when(userService.existsByEmail("mario@test.com")).thenReturn(false);
         when(userMapper.toUser(request)).thenReturn(client);
@@ -128,7 +128,7 @@ class AuthFacadeImplTest {
     void registerUser_withPT_setsAssignedPT() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                10L, null, null, null, null);
+                10L, null, null, null, null, null);
 
         User newUser = new User();
         newUser.setEmail("mario@test.com");
@@ -152,7 +152,7 @@ class AuthFacadeImplTest {
     void registerUser_withNutri_setsAssignedNutritionist() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, 20L, null, null, null);
+                null, 20L, null, null, null, null);
 
         User newUser = new User();
         newUser.setEmail("mario@test.com");
@@ -176,7 +176,7 @@ class AuthFacadeImplTest {
     void registerUser_ptSoldOut_throwsProfessionalSoldOutException() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                10L, null, null, null, null);
+                10L, null, null, null, null, null);
 
         User newUser = new User();
         newUser.setEmail("mario@test.com");
@@ -200,7 +200,7 @@ class AuthFacadeImplTest {
     void registerUser_nutriSoldOut_throwsProfessionalSoldOutException() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, 20L, null, null, null);
+                null, 20L, null, null, null, null);
 
         User newUser = new User();
         newUser.setEmail("mario@test.com");
@@ -222,7 +222,7 @@ class AuthFacadeImplTest {
     void registerUser_ptIdWrongRole_throwsIllegalArgumentException() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                20L, null, null, null, null);
+                20L, null, null, null, null, null);
 
         User newUser = new User();
         newUser.setEmail("mario@test.com");
@@ -243,7 +243,7 @@ class AuthFacadeImplTest {
     void registerUser_withPlanAndFrequency_activatesSubscription() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, null, null, 5L, PaymentFrequency.RATE_MENSILI);
+                null, null, null, null, 5L, PaymentFrequency.RATE_MENSILI);
 
         Plan plan = new Plan();
         plan.setId(5L);
@@ -265,7 +265,7 @@ class AuthFacadeImplTest {
     void registerUser_planWithoutFrequency_doesNotActivateSubscription() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, null, null, 5L, null);
+                null, null, null, null, 5L, null);
 
         when(userService.existsByEmail("mario@test.com")).thenReturn(false);
         when(userMapper.toUser(request)).thenReturn(client);
@@ -283,7 +283,7 @@ class AuthFacadeImplTest {
     void registerUser_frequencyWithoutPlan_doesNotActivateSubscription() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, null, null, null, PaymentFrequency.RATE_MENSILI);
+                null, null, null, null, null, PaymentFrequency.RATE_MENSILI);
 
         when(userService.existsByEmail("mario@test.com")).thenReturn(false);
         when(userMapper.toUser(request)).thenReturn(client);
@@ -301,7 +301,7 @@ class AuthFacadeImplTest {
     void registerUser_emailFailure_doesNotPropagateException() {
         RegisterRequest request = new RegisterRequest(
                 "Mario", "Rossi", "mario@test.com", "pass123",
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         when(userService.existsByEmail("mario@test.com")).thenReturn(false);
         when(userMapper.toUser(request)).thenReturn(client);
@@ -319,7 +319,7 @@ class AuthFacadeImplTest {
     // ─── login ───────────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("login: valid credentials → returns AuthResult with token and user")
+    @DisplayName("login: valid credentials → returns AuthResultResponse with token and user")
     void login_validCredentials_returnsAuthResult() {
         LoginRequest request = new LoginRequest("mario@test.com", "pass123");
 
@@ -327,7 +327,7 @@ class AuthFacadeImplTest {
         when(passwordEncoder.matches("pass123", "encoded_pass")).thenReturn(true);
         when(jwtUtil.generateToken(client)).thenReturn("jwt-token");
 
-        AuthResult result = authFacade.login(request);
+        AuthResultResponse result = authFacade.login(request);
 
         assertThat(result.getToken()).isEqualTo("jwt-token");
         assertThat(result.getUser()).isEqualTo(client);

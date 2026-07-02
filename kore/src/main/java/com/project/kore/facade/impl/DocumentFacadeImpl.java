@@ -57,6 +57,9 @@ public class DocumentFacadeImpl implements DocumentFacade {
         if (uploader.getRole() == Role.INSURANCE_MANAGER && !"INSURANCE_POLICE".equals(type)) {
             throw new InvalidFileException("L'Insurance Manager può caricare solo polizze assicurative.");
         }
+        if (uploader.getRole() == Role.PSYCHOLOGIST && !"PSYCHOLOGY_PLAN".equals(type)) {
+            throw new InvalidFileException("Lo Psicologo può caricare solo percorsi psicologici.");
+        }
 
         User client = userService.getUserById(clientId);
         String filePath = fileStorageService.store(file);
@@ -121,7 +124,11 @@ public class DocumentFacadeImpl implements DocumentFacade {
                 && caller.getRole() == Role.NUTRITIONIST
                 && doc.getOwner().getAssignedNutritionist() != null
                 && doc.getOwner().getAssignedNutritionist().getId().equals(callerId);
-        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
+        boolean isAssignedPsico = doc.getOwner() != null
+                && caller.getRole() == Role.PSYCHOLOGIST
+                && doc.getOwner().getAssignedPsychologist() != null
+                && doc.getOwner().getAssignedPsychologist().getId().equals(callerId);
+        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri || isAssignedPsico;
         boolean isPrivileged = caller.getRole() == Role.ADMIN || caller.getRole() == Role.MODERATOR;
         if (!isOwner && !isUploader && !isAssignedProfessional && !isPrivileged) {
             throw new AccessDeniedException("Non sei autorizzato a scaricare questo documento");
@@ -146,7 +153,10 @@ public class DocumentFacadeImpl implements DocumentFacade {
         boolean isAssignedNutri = caller.getRole() == Role.NUTRITIONIST
                 && target.getAssignedNutritionist() != null
                 && target.getAssignedNutritionist().getId().equals(callerId);
-        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
+        boolean isAssignedPsico = caller.getRole() == Role.PSYCHOLOGIST
+                && target.getAssignedPsychologist() != null
+                && target.getAssignedPsychologist().getId().equals(callerId);
+        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri || isAssignedPsico;
         if (!isSelf && !isAssignedProfessional && !isPrivileged) {
             throw new AccessDeniedException("Non sei autorizzato a visualizzare questi documenti");
         }
@@ -167,7 +177,10 @@ public class DocumentFacadeImpl implements DocumentFacade {
         boolean isAssignedNutri = caller.getRole() == Role.NUTRITIONIST
                 && target.getAssignedNutritionist() != null
                 && target.getAssignedNutritionist().getId().equals(callerId);
-        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri;
+        boolean isAssignedPsico = caller.getRole() == Role.PSYCHOLOGIST
+                && target.getAssignedPsychologist() != null
+                && target.getAssignedPsychologist().getId().equals(callerId);
+        boolean isAssignedProfessional = isAssignedPT || isAssignedNutri || isAssignedPsico;
         if (!isSelf && !isAssignedProfessional && !isPrivileged) {
             throw new AccessDeniedException("Non sei autorizzato a visualizzare questi documenti");
         }

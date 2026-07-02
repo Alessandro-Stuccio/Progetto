@@ -3,7 +3,7 @@ package com.project.kore.dto.response;
 /**
  * Un piano di abbonamento offerto, con prezzi (intero o rateizzato) e crediti mensili inclusi.
  */
-public class PlanResponseDTO {
+public class PlanResponse {
 
     private Long id;
     private String name;
@@ -12,10 +12,11 @@ public class PlanResponseDTO {
     private Double monthlyInstallmentPrice;
     private Integer monthlyCreditsPT;
     private Integer monthlyCreditsNutri;
+    private Integer monthlyCreditsPsico;
     private Boolean active;
 
 
-    private PlanResponseDTO(Builder b) {
+    private PlanResponse(Builder b) {
         this.id = b.id;
         this.name = b.name;
         this.duration = b.duration;
@@ -23,6 +24,7 @@ public class PlanResponseDTO {
         this.monthlyInstallmentPrice = b.monthlyInstallmentPrice;
         this.monthlyCreditsPT = b.monthlyCreditsPT;
         this.monthlyCreditsNutri = b.monthlyCreditsNutri;
+        this.monthlyCreditsPsico = b.monthlyCreditsPsico;
         this.active = b.active;
     }
 
@@ -35,6 +37,7 @@ public class PlanResponseDTO {
     public Double getMonthlyInstallmentPrice() { return monthlyInstallmentPrice; }
     public Integer getMonthlyCreditsPT() { return monthlyCreditsPT; }
     public Integer getMonthlyCreditsNutri() { return monthlyCreditsNutri; }
+    public Integer getMonthlyCreditsPsico() { return monthlyCreditsPsico; }
     public Boolean getActive() { return active; }
 
     public static class Builder {
@@ -45,6 +48,7 @@ public class PlanResponseDTO {
         private Double monthlyInstallmentPrice;
         private Integer monthlyCreditsPT;
         private Integer monthlyCreditsNutri;
+        private Integer monthlyCreditsPsico;
         private Boolean active;
 
         public Builder id(Long id) { this.id = id; return this; }
@@ -54,8 +58,9 @@ public class PlanResponseDTO {
         public Builder monthlyInstallmentPrice(Double v) { this.monthlyInstallmentPrice = v; return this; }
         public Builder monthlyCreditsPT(Integer v) { this.monthlyCreditsPT = v; return this; }
         public Builder monthlyCreditsNutri(Integer v) { this.monthlyCreditsNutri = v; return this; }
+        public Builder monthlyCreditsPsico(Integer v) { this.monthlyCreditsPsico = v; return this; }
         public Builder active(Boolean active) { this.active = active; return this; }
 
-        public PlanResponseDTO build() { return new PlanResponseDTO(this); }
+        public PlanResponse build() { return new PlanResponse(this); }
     }
 }

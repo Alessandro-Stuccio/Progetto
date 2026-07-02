@@ -16,6 +16,7 @@ public class UserResponse {
     private String profilePictureUrl;
     private String assignedPtName;
     private String assignedNutritionistName;
+    private String assignedPsychologistName;
     private Integer activeClientsCount;
     private Double averageRating;
 
@@ -29,6 +30,7 @@ public class UserResponse {
         this.profilePictureUrl = builder.profilePictureUrl;
         this.assignedPtName = builder.assignedPtName;
         this.assignedNutritionistName = builder.assignedNutritionistName;
+        this.assignedPsychologistName = builder.assignedPsychologistName;
         this.activeClientsCount = builder.activeClientsCount;
         this.averageRating = builder.averageRating;
     }
@@ -43,6 +45,7 @@ public class UserResponse {
     public String getProfilePictureUrl() { return profilePictureUrl; }
     public String getAssignedPtName() { return assignedPtName; }
     public String getAssignedNutritionistName() { return assignedNutritionistName; }
+    public String getAssignedPsychologistName() { return assignedPsychologistName; }
     public Integer getActiveClientsCount() { return activeClientsCount; }
     public Double getAverageRating() { return averageRating; }
 
@@ -55,6 +58,7 @@ public class UserResponse {
         private String profilePictureUrl;
         private String assignedPtName;
         private String assignedNutritionistName;
+        private String assignedPsychologistName;
         private Integer activeClientsCount;
         private Double averageRating;
 
@@ -66,6 +70,7 @@ public class UserResponse {
         public Builder profilePictureUrl(String url) { this.profilePictureUrl = url; return this; }
         public Builder assignedPtName(String name) { this.assignedPtName = name; return this; }
         public Builder assignedNutritionistName(String name) { this.assignedNutritionistName = name; return this; }
+        public Builder assignedPsychologistName(String name) { this.assignedPsychologistName = name; return this; }
         public Builder activeClientsCount(Integer count) { this.activeClientsCount = count; return this; }
         public Builder averageRating(Double rating) { this.averageRating = rating; return this; }
 

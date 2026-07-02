@@ -3,6 +3,7 @@ package com.project.kore.service;
 import com.project.kore.exception.common.CustomResourceNotFoundException;
 import com.project.kore.model.User;
 import com.project.kore.enums.Role;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.validation.annotation.Validated;
@@ -47,7 +48,7 @@ public interface UserService {
      * @param user l'utente da salvare
      * @return l'utente salvato
      */
-    User save(@NotNull User user);
+    User save(@NotNull @Valid User user);
 
     /**
      * Utenti attivi con il ruolo indicato.
@@ -81,6 +82,14 @@ public interface UserService {
     long countByAssignedNutritionist(@NotNull User nutritionist);
 
     /**
+     * Quanti client sono assegnati allo psicologo.
+     *
+     * @param psychologist lo psicologo
+     * @return il numero di client assegnati
+     */
+    long countByAssignedPsychologist(@NotNull User psychologist);
+
+    /**
      * Client assegnati al personal trainer.
      *
      * @param pt il personal trainer
@@ -95,6 +104,14 @@ public interface UserService {
      * @return i client assegnati
      */
     List<User> findByAssignedNutritionist(@NotNull User nutritionist);
+
+    /**
+     * Client assegnati allo psicologo.
+     *
+     * @param psychologist lo psicologo
+     * @return i client assegnati
+     */
+    List<User> findByAssignedPsychologist(@NotNull User psychologist);
 
     /**
      * Email già in uso da un altro utente, escludendo se stessi: serve in fase di update profilo.

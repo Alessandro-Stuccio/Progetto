@@ -52,7 +52,8 @@ public class ActivityFeedFacadeImpl implements ActivityFeedFacade {
         if (user.getRole() == Role.CLIENT) {
             slots = slotService.findRecentByUser(user, since);
             documents = documentService.findRecentByOwner(user, since);
-        } else if (user.getRole() == Role.PERSONAL_TRAINER || user.getRole() == Role.NUTRITIONIST) {
+        } else if (user.getRole() == Role.PERSONAL_TRAINER || user.getRole() == Role.NUTRITIONIST
+                || user.getRole() == Role.PSYCHOLOGIST) {
             slots = slotService.findRecentByProfessional(user, since);
             documents = documentService.findRecentByProfessional(user, since);
         }

@@ -38,6 +38,7 @@ public class SlotGenerationScheduler {
     public void generateWeeklySlotsForAllProfessionals() {
         List<User> professionals = new ArrayList<>(userService.findByRole(Role.PERSONAL_TRAINER));
         professionals.addAll(userService.findByRole(Role.NUTRITIONIST));
+        professionals.addAll(userService.findByRole(Role.PSYCHOLOGIST));
         LocalDate start = LocalDate.now().plusDays(7);
         LocalDate end = start.plusDays(6);
         for (User pro : professionals) {

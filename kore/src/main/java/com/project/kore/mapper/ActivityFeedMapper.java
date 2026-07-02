@@ -46,7 +46,11 @@ public class ActivityFeedMapper {
     private ActivityFeedItemResponse toActivityFeedItemResponseSlotUser(Slot slot) {
         User professional = slot.getProfessional();
         String proName = professional.getFirstName();
-        String proRole = professional.getRole() == Role.PERSONAL_TRAINER ? "PT" : "Nutrizionista";
+        String proRole = switch (professional.getRole()) {
+            case PERSONAL_TRAINER -> "PT";
+            case PSYCHOLOGIST -> "Psicologo";
+            default -> "Nutrizionista";
+        };
         return ActivityFeedItemResponse.builder().type("Booking").text("Appuntamento prenotato con " + proRole + " " + proName).timestamp(slot.getStartTime()).build();
     }
 

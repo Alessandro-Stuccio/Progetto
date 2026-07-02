@@ -7,7 +7,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -32,8 +31,7 @@ public class JwtUtil {
     private static final long PASSWORD_RESET_EXPIRATION_MS = 30 * 60 * 1000L;
 
     public JwtUtil(RandomGenerationService random) {
-        SECRET_KEY =random.getTokenKey();
-        LogManager.getLogger(this.getClass()).warn("SECRET_KEY => " + SECRET_KEY);
+        SECRET_KEY = random.getTokenKey();
     }
 
     private final String SECRET_KEY;

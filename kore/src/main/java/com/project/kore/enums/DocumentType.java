@@ -6,6 +6,7 @@ package com.project.kore.enums;
  */
 public enum DocumentType {
     INSURANCE_POLICE("polizza"),
+    PSYCHOLOGY_PLAN("percorso psicologico"),
     DIET_PLAN("dieta"),
     WORKOUT_PLAN("scheda di allenamento");
 

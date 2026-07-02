@@ -1,6 +1,7 @@
 package com.project.kore.dto.request;
 
 import com.project.kore.enums.PaymentFrequency;
+import com.project.kore.util.BusinessConstants;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,7 @@ import jakarta.validation.constraints.Size;
  * @param password                password in chiaro (6-100 caratteri)
  * @param selectedPtId            id del personal trainer scelto
  * @param selectedNutritionistId  id del nutrizionista scelto
+ * @param selectedPsychologistId  id dello psicologo scelto
  * @param profilePicture          URL dell'immagine di profilo (opzionale)
  * @param selectedPlanId          id del piano scelto (opzionale)
  * @param paymentFrequency        frequenza di pagamento scelta (opzionale)
@@ -34,7 +36,8 @@ public record RegisterRequest(
         String email,
 
         @NotBlank
-        @Size(min = 6, max = 100, message = "La password deve avere tra 6 e 100 caratteri")
+        @Size(min = BusinessConstants.MIN_PASSWORD_LENGTH, max = BusinessConstants.MAX_PASSWORD_LENGTH,
+                message = "La password deve avere tra {min} e {max} caratteri")
         String password,
 
         @NotNull(message = "È necessario selezionare un Personal Trainer")
@@ -42,6 +45,9 @@ public record RegisterRequest(
 
         @NotNull(message = "È necessario selezionare un Nutrizionista")
         Long selectedNutritionistId,
+
+        @NotNull(message = "È necessario selezionare uno Psicologo")
+        Long selectedPsychologistId,
 
         @Size(max = 500, message = "URL immagine troppo lungo")
         String profilePicture,

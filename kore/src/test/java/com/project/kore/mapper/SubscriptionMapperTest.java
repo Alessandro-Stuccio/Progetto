@@ -63,7 +63,7 @@ class SubscriptionMapperTest {
     void toSubscription_nullUser_returnsNull() {
         Plan plan = buildPlan(PlanDuration.SEMESTRALE, 1, 1, 55.0);
         RegisterRequest request = new RegisterRequest(
-                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, null, 1L, PaymentFrequency.UNICA_SOLUZIONE);
+                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, 3L, null, 1L, PaymentFrequency.UNICA_SOLUZIONE);
 
         assertThat(subscriptionMapper.toSubscription(request, null, plan)).isNull();
     }
@@ -73,7 +73,7 @@ class SubscriptionMapperTest {
     void toSubscription_nullPlan_returnsNull() {
         User user = buildUser(1L, "Luca", "Bianchi");
         RegisterRequest request = new RegisterRequest(
-                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, null, 1L, PaymentFrequency.UNICA_SOLUZIONE);
+                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, 3L, null, 1L, PaymentFrequency.UNICA_SOLUZIONE);
 
         assertThat(subscriptionMapper.toSubscription(request, user, null)).isNull();
     }
@@ -84,7 +84,7 @@ class SubscriptionMapperTest {
         User user = buildUser(1L, "Luca", "Bianchi");
         Plan plan = buildPlan(PlanDuration.SEMESTRALE, 1, 1, 55.0);
         RegisterRequest request = new RegisterRequest(
-                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, null, 1L, PaymentFrequency.UNICA_SOLUZIONE);
+                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, 3L, null, 1L, PaymentFrequency.UNICA_SOLUZIONE);
 
         Subscription sub = subscriptionMapper.toSubscription(request, user, plan);
 
@@ -105,7 +105,7 @@ class SubscriptionMapperTest {
         User user = buildUser(1L, "Luca", "Bianchi");
         Plan plan = buildPlan(PlanDuration.SEMESTRALE, 1, 1, 55.0);
         RegisterRequest request = new RegisterRequest(
-                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, null, 1L, PaymentFrequency.RATE_MENSILI);
+                "Luca", "Bianchi", "luca@test.com", "password", 1L, 2L, 3L, null, 1L, PaymentFrequency.RATE_MENSILI);
 
         Subscription sub = subscriptionMapper.toSubscription(request, user, plan);
 

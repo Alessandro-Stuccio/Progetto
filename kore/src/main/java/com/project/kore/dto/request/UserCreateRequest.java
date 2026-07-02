@@ -1,5 +1,6 @@
 package com.project.kore.dto.request;
 
+import com.project.kore.util.BusinessConstants;
 import jakarta.validation.constraints.*;
 
 /**
@@ -13,17 +14,20 @@ import jakarta.validation.constraints.*;
  * @param role                   ruolo da assegnare (nome dell'enum)
  * @param assignedPTId           id del personal trainer assegnato (solo clienti)
  * @param assignedNutritionistId id del nutrizionista assegnato (solo clienti)
+ * @param assignedPsychologistId id dello psicologo assegnato (solo clienti)
  * @param planId                 id del piano (solo clienti)
  * @param paymentFrequency       frequenza di pagamento (solo clienti)
  */
-public record UserCreateRequestDTO(
+public record UserCreateRequest(
         @NotBlank @Email String email,
         @NotBlank @Size(min = 2, max = 50) String firstName,
         @NotBlank @Size(min = 2, max = 50) String lastName,
-        @NotBlank @Size(min = 8, max = 100) String password,
+        @NotBlank @Size(min = BusinessConstants.MIN_PASSWORD_LENGTH, max = BusinessConstants.MAX_PASSWORD_LENGTH,
+                message = "La password deve avere tra {min} e {max} caratteri") String password,
         @NotBlank String role,
         @Min(1) Long assignedPTId,
         @Min(1) Long assignedNutritionistId,
+        @Min(1) Long assignedPsychologistId,
         @Min(1) Long planId,
         String paymentFrequency
 ) {}

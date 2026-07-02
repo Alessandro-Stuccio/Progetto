@@ -1,7 +1,7 @@
 package com.project.kore.facade.impl;
 
 import com.project.kore.dto.response.BookingResponse;
-import com.project.kore.dto.response.SlotDTO;
+import com.project.kore.dto.response.SlotResponse;
 import com.project.kore.dto.response.stats.ProfessionalStatsResponse;
 import com.project.kore.enums.BookingStatus;
 import com.project.kore.enums.DocumentType;
@@ -89,13 +89,13 @@ class ProfessionalFacadeImplTest {
     @DisplayName("getAvailableSlots: delegates to slotService and maps result")
     void getAvailableSlots_delegatesAndMaps() {
         List<Slot> slots = List.of(new Slot());
-        List<SlotDTO> dtos = List.of(new SlotDTO());
+        List<SlotResponse> dtos = List.of(new SlotResponse());
 
         when(userService.getUserById(1L)).thenReturn(ptUser);
         when(slotService.getAvailableSlots(ptUser)).thenReturn(slots);
         when(slotMapper.toDtoList(slots)).thenReturn(dtos);
 
-        List<SlotDTO> result = facade.getAvailableSlots(1L);
+        List<SlotResponse> result = facade.getAvailableSlots(1L);
 
         assertThat(result).isEqualTo(dtos);
     }
@@ -107,7 +107,7 @@ class ProfessionalFacadeImplTest {
         when(slotService.getAvailableSlots(ptUser)).thenReturn(List.of());
         when(slotMapper.toDtoList(List.of())).thenReturn(List.of());
 
-        List<SlotDTO> result = facade.getAvailableSlots(1L);
+        List<SlotResponse> result = facade.getAvailableSlots(1L);
 
         assertThat(result).isEmpty();
     }
@@ -117,17 +117,19 @@ class ProfessionalFacadeImplTest {
     @Test
     @DisplayName("createSlots PT: maps to entities, creates via service, and returns DTOs")
     void createSlots_personalTrainer_success() {
-        List<SlotDTO> inputDtos = List.of(new SlotDTO());
+        SlotResponse inputDto = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 0));
+        List<SlotResponse> inputDtos = List.of(inputDto);
         List<Slot> entities = List.of(new Slot());
         List<Slot> savedEntities = List.of(new Slot());
-        List<SlotDTO> expectedDtos = List.of(new SlotDTO());
+        List<SlotResponse> expectedDtos = List.of(new SlotResponse());
 
         when(userService.getUserById(1L)).thenReturn(ptUser);
-        when(slotMapper.toEntityList(inputDtos, ptUser)).thenReturn(entities);
+        when(slotService.slotExists(eq(ptUser), any(LocalDateTime.class))).thenReturn(false);
+        when(slotMapper.toEntityList(List.of(inputDto), ptUser)).thenReturn(entities);
         when(slotService.createSlots(entities)).thenReturn(savedEntities);
         when(slotMapper.toDtoList(savedEntities)).thenReturn(expectedDtos);
 
-        List<SlotDTO> result = facade.createSlots(1L, inputDtos);
+        List<SlotResponse> result = facade.createSlots(1L, inputDtos);
 
         assertThat(result).isEqualTo(expectedDtos);
     }
@@ -135,17 +137,19 @@ class ProfessionalFacadeImplTest {
     @Test
     @DisplayName("createSlots NUTRITIONIST: succeeds")
     void createSlots_nutritionist_success() {
-        List<SlotDTO> inputDtos = List.of(new SlotDTO());
+        SlotResponse inputDto = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 0));
+        List<SlotResponse> inputDtos = List.of(inputDto);
         List<Slot> entities = List.of(new Slot());
         List<Slot> savedEntities = List.of(new Slot());
-        List<SlotDTO> expectedDtos = List.of(new SlotDTO());
+        List<SlotResponse> expectedDtos = List.of(new SlotResponse());
 
         when(userService.getUserById(2L)).thenReturn(nutriUser);
-        when(slotMapper.toEntityList(inputDtos, nutriUser)).thenReturn(entities);
+        when(slotService.slotExists(eq(nutriUser), any(LocalDateTime.class))).thenReturn(false);
+        when(slotMapper.toEntityList(List.of(inputDto), nutriUser)).thenReturn(entities);
         when(slotService.createSlots(entities)).thenReturn(savedEntities);
         when(slotMapper.toDtoList(savedEntities)).thenReturn(expectedDtos);
 
-        List<SlotDTO> result = facade.createSlots(2L, inputDtos);
+        List<SlotResponse> result = facade.createSlots(2L, inputDtos);
 
         assertThat(result).isEqualTo(expectedDtos);
     }
@@ -158,6 +162,70 @@ class ProfessionalFacadeImplTest {
         assertThatThrownBy(() -> facade.createSlots(3L, List.of()))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("professionisti");
+    }
+
+    @Test
+    @DisplayName("createSlots: salta gli orari già esistenti a DB e crea solo i nuovi")
+    void createSlots_existingSlots_skipped() {
+        SlotResponse existing = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 0));
+        SlotResponse fresh = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 30));
+        List<Slot> entities = List.of(new Slot());
+        List<Slot> savedEntities = List.of(new Slot());
+        List<SlotResponse> expectedDtos = List.of(new SlotResponse());
+
+        when(userService.getUserById(1L)).thenReturn(ptUser);
+        when(slotService.slotExists(ptUser, existing.getStartTime())).thenReturn(true);
+        when(slotService.slotExists(ptUser, fresh.getStartTime())).thenReturn(false);
+        when(slotMapper.toEntityList(any(), eq(ptUser))).thenReturn(entities);
+        when(slotService.createSlots(entities)).thenReturn(savedEntities);
+        when(slotMapper.toDtoList(savedEntities)).thenReturn(expectedDtos);
+
+        List<SlotResponse> result = facade.createSlots(1L, List.of(existing, fresh));
+
+        assertThat(result).isEqualTo(expectedDtos);
+        ArgumentCaptor<List<SlotResponse>> captor = ArgumentCaptor.forClass(List.class);
+        verify(slotMapper).toEntityList(captor.capture(), eq(ptUser));
+        assertThat(captor.getValue()).extracting(SlotResponse::getStartTime)
+                .containsExactly(fresh.getStartTime());
+    }
+
+    @Test
+    @DisplayName("createSlots: deduplica i doppioni con lo stesso startTime nella richiesta")
+    void createSlots_duplicateInRequest_deduplicated() {
+        SlotResponse first = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 0));
+        SlotResponse duplicate = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 0));
+        List<Slot> entities = List.of(new Slot());
+        List<Slot> savedEntities = List.of(new Slot());
+        List<SlotResponse> expectedDtos = List.of(new SlotResponse());
+
+        when(userService.getUserById(1L)).thenReturn(ptUser);
+        when(slotService.slotExists(eq(ptUser), any(LocalDateTime.class))).thenReturn(false);
+        when(slotMapper.toEntityList(any(), eq(ptUser))).thenReturn(entities);
+        when(slotService.createSlots(entities)).thenReturn(savedEntities);
+        when(slotMapper.toDtoList(savedEntities)).thenReturn(expectedDtos);
+
+        List<SlotResponse> result = facade.createSlots(1L, List.of(first, duplicate));
+
+        assertThat(result).isEqualTo(expectedDtos);
+        ArgumentCaptor<List<SlotResponse>> captor = ArgumentCaptor.forClass(List.class);
+        verify(slotMapper).toEntityList(captor.capture(), eq(ptUser));
+        assertThat(captor.getValue()).extracting(SlotResponse::getStartTime)
+                .containsExactly(first.getStartTime());
+    }
+
+    @Test
+    @DisplayName("createSlots: se tutti gli orari esistono già ritorna lista vuota e non salva nulla")
+    void createSlots_allExisting_returnsEmptyAndDoesNotCreate() {
+        SlotResponse existing = slotResponseAt(LocalDateTime.of(2026, 6, 16, 9, 0));
+
+        when(userService.getUserById(1L)).thenReturn(ptUser);
+        when(slotService.slotExists(eq(ptUser), any(LocalDateTime.class))).thenReturn(true);
+
+        List<SlotResponse> result = facade.createSlots(1L, List.of(existing));
+
+        assertThat(result).isEmpty();
+        verify(slotService, never()).createSlots(any());
+        verify(slotMapper, never()).toEntityList(any(), any());
     }
 
     // ─── deleteSlot ──────────────────────────────────────────────────────────────
@@ -466,6 +534,13 @@ class ProfessionalFacadeImplTest {
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────────
+
+    private SlotResponse slotResponseAt(LocalDateTime start) {
+        return SlotResponse.builder()
+                .startTime(start)
+                .endTime(start.plusMinutes(30))
+                .build();
+    }
 
     private Slot buildBookedSlot(LocalDateTime start, LocalDateTime end, User bookedBy) {
         Slot slot = new Slot();

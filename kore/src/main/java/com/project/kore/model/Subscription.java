@@ -1,7 +1,5 @@
 package com.project.kore.model;
 
-import com.project.kore.builder.SubscriptionBuilder;
-import com.project.kore.builder.impl.SubscriptionBuilderImpl;
 import com.project.kore.enums.PaymentFrequency;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,6 +16,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.util.Objects;
@@ -41,15 +40,18 @@ public class Subscription {
     @Version
     private Integer version;
 
+    @NotNull(message = "user è obbligatorio")
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_subscription_user_id"))
     private User user;
 
     // EAGER perché ci serve subito per leggere i crediti del piano
+    @NotNull(message = "plan è obbligatorio")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plan_id", nullable = false, foreignKey = @ForeignKey(name = "fk_subscription_plan_id"))
     private Plan plan;
 
+    @NotNull(message = "paymentFrequency è obbligatorio")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentFrequency paymentFrequency;
@@ -69,6 +71,7 @@ public class Subscription {
     // Crediti rimasti nel mese corrente, distinti per tipo di professionista
     private int currentCreditsPT;
     private int currentCreditsNutri;
+    private int currentCreditsPsico;
 
     // Ultimo rinnovo mensile dei crediti fatto dallo scheduler
     private LocalDate lastRenewalDate;
@@ -114,12 +117,11 @@ public class Subscription {
     public int getCurrentCreditsNutri() { return currentCreditsNutri; }
     public void setCurrentCreditsNutri(int currentCreditsNutri) { this.currentCreditsNutri = currentCreditsNutri; }
 
+    public int getCurrentCreditsPsico() { return currentCreditsPsico; }
+    public void setCurrentCreditsPsico(int currentCreditsPsico) { this.currentCreditsPsico = currentCreditsPsico; }
+
     public LocalDate getLastRenewalDate() { return lastRenewalDate; }
     public void setLastRenewalDate(LocalDate lastRenewalDate) { this.lastRenewalDate = lastRenewalDate; }
-
-    public static SubscriptionBuilder builder() {
-        return new SubscriptionBuilderImpl();
-    }
 
     @Override
     public boolean equals(Object o) {

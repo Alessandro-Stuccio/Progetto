@@ -2,6 +2,7 @@ package com.project.kore.facade.impl;
 
 import com.project.kore.dto.request.LoginRequest;
 import com.project.kore.dto.request.RegisterRequest;
+import com.project.kore.dto.response.AuthResultResponse;
 import com.project.kore.dto.response.UserResponse;
 import com.project.kore.enums.Role;
 import com.project.kore.exception.booking.ProfessionalSoldOutException;
@@ -13,7 +14,6 @@ import com.project.kore.mapper.UserMapper;
 import com.project.kore.model.Plan;
 import com.project.kore.model.User;
 import com.project.kore.security.JwtUtil;
-import com.project.kore.dto.response.AuthResult;
 import com.project.kore.service.EmailService;
 import com.project.kore.service.PlanService;
 import com.project.kore.service.UserService;
@@ -70,6 +70,7 @@ public class AuthFacadeImpl implements AuthFacade {
 
         assignProfessional(newUser, request.selectedPtId(), Role.PERSONAL_TRAINER);
         assignProfessional(newUser, request.selectedNutritionistId(), Role.NUTRITIONIST);
+        assignProfessional(newUser, request.selectedPsychologistId(), Role.PSYCHOLOGIST);
 
         User savedUser = userService.save(newUser);
 
@@ -90,13 +91,13 @@ public class AuthFacadeImpl implements AuthFacade {
     // Verifica la password e, se combacia, genera il JWT e lo restituisce insieme all'utente.
     @Override
     @Transactional(readOnly = true)
-    public AuthResult login(LoginRequest request) {
+    public AuthResultResponse login(LoginRequest request) {
         User user = userService.getUserByEmail(request.email());
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BadCredentialsException("Credenziali non valide");
         }
         String jwtToken = jwtUtil.generateToken(user);
-        return AuthResult.builder().token(jwtToken).user(user).build();
+        return AuthResultResponse.builder().token(jwtToken).user(user).build();
     }
 
     // Genera il token di reset (vita breve, 30 min) e lo invia via email. Errori SMTP loggati ma non propagati.
@@ -137,16 +138,18 @@ public class AuthFacadeImpl implements AuthFacade {
         if (professional.getRole() != expectedRole) {
             throw new IllegalArgumentException("L'ID fornito non corrisponde a un " + expectedRole + ".");
         }
-        long activeClients = expectedRole == Role.PERSONAL_TRAINER
-                ? userService.countByAssignedPT(professional)
-                : userService.countByAssignedNutritionist(professional);
+        long activeClients = switch (expectedRole) {
+            case PERSONAL_TRAINER -> userService.countByAssignedPT(professional);
+            case NUTRITIONIST -> userService.countByAssignedNutritionist(professional);
+            default -> userService.countByAssignedPsychologist(professional);
+        };
         if (activeClients >= BusinessConstants.MAX_CLIENTS_PER_PROFESSIONAL) {
             throw new ProfessionalSoldOutException(professional.getFirstName());
         }
-        if (expectedRole == Role.PERSONAL_TRAINER) {
-            user.setAssignedPT(professional);
-        } else {
-            user.setAssignedNutritionist(professional);
+        switch (expectedRole) {
+            case PERSONAL_TRAINER -> user.setAssignedPT(professional);
+            case NUTRITIONIST -> user.setAssignedNutritionist(professional);
+            default -> user.setAssignedPsychologist(professional);
         }
     }
 }

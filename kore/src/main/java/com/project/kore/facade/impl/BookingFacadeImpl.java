@@ -103,7 +103,7 @@ public class BookingFacadeImpl implements BookingFacade {
             BookingStrategy strategy = strategies.stream()
                     .filter(s -> s.getSupportedRole() == professional.getRole())
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Il professionista non è né PT né Nutrizionista"));
+                    .orElseThrow(() -> new IllegalStateException("Il professionista non è prenotabile (ruolo non valido)."));
 
             strategy.verifyAssignment(user, professional);
 

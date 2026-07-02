@@ -40,7 +40,7 @@ public class SecurityConfig {
                     .cors(cors -> cors.configurationSource(request -> {
                         CorsConfiguration config = new CorsConfiguration();
                         config.setAllowedOrigins(allowedOrigins);
-                        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                         config.setAllowedHeaders(List.of("*"));
                         config.setAllowCredentials(true);
                         return config;
@@ -60,8 +60,10 @@ public class SecurityConfig {
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/ws/**").permitAll()
                             .requestMatchers("/api/plans/**").permitAll()
+                            // Health check usato da Render per verificare che il servizio sia vivo.
+                            .requestMatchers("/actuator/health").permitAll()
                             // Gli slot di un professionista li vede solo chi è loggato e può prenotare o gestirli.
-                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/professionals/*/slots").hasAnyRole(Role.CLIENT.name(), Role.PERSONAL_TRAINER.name(), Role.NUTRITIONIST.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/professionals/*/slots").hasAnyRole(Role.CLIENT.name(), Role.PERSONAL_TRAINER.name(), Role.NUTRITIONIST.name(), Role.PSYCHOLOGIST.name())
                             .requestMatchers("/api/professionals/**").permitAll()
                             .requestMatchers("/api/reviews/professional/**").permitAll()
                             .requestMatchers("/api/job-applications/**").permitAll()
