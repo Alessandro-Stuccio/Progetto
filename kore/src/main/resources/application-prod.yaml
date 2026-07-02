@@ -45,8 +45,8 @@ jwt:
   secret: ${JWT_SECRET:}
 
 cors:
-  # Uno o più origin separati da virgola, es. https://kore-frontend.vercel.app
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://kore-frontend.vercel.app}
+  # Uno o più origin separati da virgola, es. https://progetto-fe.vercel.app
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://progetto-fe.vercel.app}
 
 # L'health check di Render deve riflettere solo l'applicazione e il suo DB:
 # senza queste esclusioni Spring aggrega anche RabbitMQ e SMTP, e un problema
