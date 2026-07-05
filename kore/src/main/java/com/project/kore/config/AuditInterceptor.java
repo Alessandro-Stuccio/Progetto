@@ -1,12 +1,7 @@
 package com.project.kore.config;
 
-import com.project.kore.model.AuditLog;
-import com.project.kore.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -14,26 +9,25 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
  * Per ogni richiesta HTTP salva in modo asincrono un record nell'audit log:
  * utente, metodo, path, IP, status e, solo per POST/PUT/PATCH, il body troncato
  * a 2000 caratteri. Il body è leggibile perché {@link RequestBodyCachingFilter}
- * avvolge la request a monte.
+ * avvolge la request a monte. La scrittura vera e propria è delegata ad
+ * {@link AuditLogWriter} così l'@Async passa dal proxy Spring.
  */
 @Component
 public class AuditInterceptor implements HandlerInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(AuditInterceptor.class);
     private static final int MAX_BODY_LENGTH = 2000;
     private static final Set<String> BODY_METHODS = Set.of("POST", "PUT", "PATCH");
 
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogWriter auditLogWriter;
 
-    public AuditInterceptor(AuditLogRepository auditLogRepository) {
-        this.auditLogRepository = auditLogRepository;
+    public AuditInterceptor(AuditLogWriter auditLogWriter) {
+        this.auditLogWriter = auditLogWriter;
     }
 
     @Override
@@ -45,29 +39,17 @@ public class AuditInterceptor implements HandlerInterceptor {
         String ip           = request.getRemoteAddr();
         int    status       = response.getStatus();
         String body         = extractBody(request, method);
-        persistAsync(userIdentity, method, path, ip, status, body);
-    }
-
-    @Async("emailTaskExecutor")
-    protected void persistAsync(String userIdentity, String method, String path,
-                                String ip, int httpStatus, String requestBody) {
-        try {
-            AuditLog entry = new AuditLog();
-            entry.setLoggedAt(LocalDateTime.now());
-            entry.setUserIdentity(userIdentity);
-            entry.setHttpMethod(method);
-            entry.setHttpPath(path);
-            entry.setIpAddress(ip);
-            entry.setHttpStatus(httpStatus);
-            entry.setRequestBody(requestBody);
-            auditLogRepository.save(entry);
-        } catch (Exception e) {
-            log.warn("Audit log fallito per {} {}: {}", method, path, e.getMessage());
-        }
+        auditLogWriter.persist(userIdentity, method, path, ip, status, body);
     }
 
     private String extractBody(HttpServletRequest request, String method) {
         if (!BODY_METHODS.contains(method)) {
+            return null;
+        }
+        // Solo body testuali: i multipart (upload PDF) non vengono avvolti dal filtro
+        // e comunque non avrebbe senso salvare byte binari nell'audit log.
+        String contentType = request.getContentType();
+        if (contentType == null || !isTextual(contentType)) {
             return null;
         }
         if (request instanceof ContentCachingRequestWrapper wrapped) {
@@ -79,6 +61,12 @@ public class AuditInterceptor implements HandlerInterceptor {
             return raw.length() > MAX_BODY_LENGTH ? raw.substring(0, MAX_BODY_LENGTH) + "…" : raw;
         }
         return null;
+    }
+
+    private boolean isTextual(String contentType) {
+        String lower = contentType.toLowerCase();
+        return lower.contains("json") || lower.contains("xml")
+                || lower.startsWith("text/") || lower.contains("x-www-form-urlencoded");
     }
 
     private String extractUserIdentity() {

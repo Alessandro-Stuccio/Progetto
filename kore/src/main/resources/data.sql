@@ -127,6 +127,10 @@ VALUES (0, 'marina@test.com', '$2a$10$0VtW52huEimaZO64NAgNpO8NXKTrMutT24RHz..em0
         (SELECT id FROM users WHERE email = 'nutri2@test.com'))
 ON CONFLICT (email) DO NOTHING;
 
+-- Data di creazione per tutti gli utenti seed: gli INSERT SQL grezzi non passano
+-- da @CreationTimestamp, quindi senza questo UPDATE created_at resterebbe NULL.
+UPDATE users SET created_at = NOW() - INTERVAL '60 days' WHERE created_at IS NULL;
+
 -- Utente con account creato 40 giorni fa (abilita logica recensione)
 UPDATE users SET created_at = NOW() - INTERVAL '40 days' WHERE email = 'testreview@test.com';
 

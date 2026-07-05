@@ -48,6 +48,10 @@ cors:
   # Uno o più origin separati da virgola, es. https://tesi-two.vercel.app
   allowed-origins: ${CORS_ALLOWED_ORIGINS:https://tesi-two.vercel.app,https://progetto-fe.vercel.app}
 
+# I link nelle email (login, reset password) puntano al sito pubblico su Vercel.
+app:
+  frontend-url: ${FRONTEND_URL:https://tesi-two.vercel.app}
+
 # L'health check di Render deve riflettere solo l'applicazione e il suo DB:
 # senza queste esclusioni Spring aggrega anche RabbitMQ e SMTP, e un problema
 # temporaneo su un servizio esterno farebbe marcare "failed" l'intero deploy.

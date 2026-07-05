@@ -55,9 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User userDetails = (User) this.userDetailsService.loadUserByUsername(userEmail);
                 if (!userDetails.isEnabled()) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=utf-8");
-                    response.getWriter().write("Utente disabilitato");
+                    writeUnauthorized(response, "Utente disabilitato");
                     return;
                 }
                 if (jwtUtil.isTokenValid(jwt, userDetails)) {
@@ -70,24 +68,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (ExpiredJwtException e) {
             log.warn("Token JWT scaduto: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=utf-8");
-            response.getWriter().write(e.getMessage());
+            writeUnauthorized(response, "Token scaduto");
             return;
         } catch (SignatureException e) {
             log.warn("Firma JWT non valida: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=utf-8");
-            response.getWriter().write(e.getMessage());
+            writeUnauthorized(response, "Token non valido");
             return;
         } catch (Exception e) {
             log.error("Errore validazione JWT: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=utf-8");
-            response.getWriter().write(e.getMessage());
+            writeUnauthorized(response, "Autenticazione non valida");
             return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    // Risposta 401 con messaggio fisso: il dettaglio dell'eccezione resta solo nei log,
+    // mai nella response (e il body è JSON vero, coerente col Content-Type).
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=utf-8");
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 }

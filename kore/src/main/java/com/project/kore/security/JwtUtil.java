@@ -40,9 +40,10 @@ public class JwtUtil {
     private long jwtExpiration;
 
     /**
-     * All'avvio fallisce subito se la chiave di firma non è configurata.
+     * All'avvio fallisce subito se la chiave di firma non è configurata o non è
+     * utilizzabile: meglio un errore chiaro al boot che un 500 al primo login.
      *
-     * @throws IllegalStateException se la chiave segreta è nulla o vuota
+     * @throws IllegalStateException se la chiave è nulla, vuota, non Base64 o troppo corta
      */
     @PostConstruct
     public void validateSecret() {
@@ -50,6 +51,14 @@ public class JwtUtil {
             throw new IllegalStateException(
                 "JWT_SECRET non configurata. " +
                 "Imposta la variabile d'ambiente JWT_SECRET prima di avviare l'app."
+            );
+        }
+        try {
+            getSignInKey();
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                "JWT_SECRET non valida: deve essere una stringa Base64 decodificabile " +
+                "di almeno 256 bit (es. 128 caratteri esadecimali). Causa: " + e.getMessage(), e
             );
         }
     }

@@ -64,6 +64,10 @@ public class SecurityConfig {
                             .requestMatchers("/actuator/health").permitAll()
                             // Gli slot di un professionista li vede solo chi è loggato e può prenotare o gestirli.
                             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/professionals/*/slots").hasAnyRole(Role.CLIENT.name(), Role.PERSONAL_TRAINER.name(), Role.NUTRITIONIST.name(), Role.PSYCHOLOGIST.name())
+                            // Creare e cancellare slot è riservato ai professionisti: senza questa regola
+                            // il permitAll sottostante lascerebbe passare anche chiamate anonime.
+                            .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/professionals/slots").hasAnyRole(Role.PERSONAL_TRAINER.name(), Role.NUTRITIONIST.name(), Role.PSYCHOLOGIST.name())
+                            .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/professionals/slots/*").hasAnyRole(Role.PERSONAL_TRAINER.name(), Role.NUTRITIONIST.name(), Role.PSYCHOLOGIST.name())
                             .requestMatchers("/api/professionals/**").permitAll()
                             .requestMatchers("/api/reviews/professional/**").permitAll()
                             .requestMatchers("/api/job-applications/**").permitAll()

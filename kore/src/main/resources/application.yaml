@@ -37,8 +37,9 @@ spring:
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:koreadministration@gmail.com}
-    password: ${SMTP_PASSWORD:scgw qype mlnj xnuz}
+    # Credenziali solo da variabili d'ambiente: mai committare l'app password nel repo.
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -64,6 +65,10 @@ mail:
 
 admin:
   email: koreadministration@gmail.com
+
+# Base URL del frontend, usata per i link nelle email (login, reset password).
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
 
 jwt:
   length: 128

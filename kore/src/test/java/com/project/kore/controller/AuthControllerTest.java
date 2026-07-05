@@ -26,7 +26,7 @@ class AuthControllerTest {
     private AuthController authController;
 
     @Test
-    @DisplayName("register — chiama UserFacade e restituisce 200 con il profilo creato")
+    @DisplayName("register — chiama UserFacade e restituisce 201 con il profilo creato")
     void register() {
         RegisterRequest req = new RegisterRequest(null, null, "mario@test.com", null, null, null, null, null, null, null);
         UserResponse userResp = UserResponse.builder().id(1L).email("mario@test.com").role(Role.CLIENT).build();
@@ -34,7 +34,7 @@ class AuthControllerTest {
 
         ResponseEntity<UserResponse> response = authController.register(req);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
         assertThat(response.getBody().getEmail()).isEqualTo("mario@test.com");
     }
 

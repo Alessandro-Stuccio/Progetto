@@ -49,6 +49,14 @@ services:
       # Origin del frontend su Vercel; aggiornabile dalla dashboard senza toccare il codice.
       - key: CORS_ALLOWED_ORIGINS
         value: https://tesi-two.vercel.app,https://progetto-fe.vercel.app
+      # Base URL del frontend usata per i link nelle email (login, reset password).
+      - key: FRONTEND_URL
+        value: https://tesi-two.vercel.app
+      # Credenziali SMTP Gmail (app password) — mai nel repo, da incollare alla creazione.
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
 
 databases:
   - name: kore-db

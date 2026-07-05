@@ -11,6 +11,7 @@ import com.project.kore.facade.AuthFacade;
 import com.project.kore.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,14 +37,14 @@ public class AuthController {
      * Registra un nuovo utente; nasce sempre con ruolo CLIENT.
      *
      * @param request dati di registrazione validati
-     * @return 200 con i dati dell'utente registrato
+     * @return 201 con i dati dell'utente registrato
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
         log.info("Registrazione nuovo utente: {}", request.email());
         UserResponse response = authFacade.registerUser(request);
         log.info("Utente registrato con successo: id={}", response.getId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**

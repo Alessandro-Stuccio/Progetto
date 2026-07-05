@@ -37,7 +37,11 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${spring.mail.username}")
     private String mailFrom;
-    private final String adminEmail="admin@example.com";
+    @Value("${admin.email}")
+    private String adminEmail;
+    // Base URL del frontend: i link nelle email devono puntare al sito pubblico, non al localhost.
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
     private final EmailService self;
     private final JavaMailSender javaMailSender;
 
@@ -126,7 +130,7 @@ public class EmailServiceImpl implements EmailService {
         return "<div style=\"font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; border-radius: 12px; overflow: hidden;\">"
                 + "<div style=\"background: linear-gradient(135deg, #1a3462, #112240); padding: 30px; text-align: center;\">"
                 + "<h1 style=\"color: #c9a96e; margin: 0; font-size: 24px;\">&#127947; Nuova Candidatura</h1>"
-                + "<p style=\"color: #b1c0d4; margin: 8px 0 0;\">Richiesta di collaborazione su Naval Gold</p>"
+                + "<p style=\"color: #b1c0d4; margin: 8px 0 0;\">Richiesta di collaborazione su Kore</p>"
                 + "</div>"
                 + "<div style=\"padding: 30px;\">"
                 + "<table style=\"width: 100%; border-collapse: collapse;\">"
@@ -149,7 +153,7 @@ public class EmailServiceImpl implements EmailService {
                 + request.message() + "</p>"
                 + "</div></div>"
                 + "<div style=\"background: #e9ecef; padding: 16px; text-align: center; font-size: 13px; color: #6c757d;\">"
-                + "Email generata automaticamente da Naval Gold Platform"
+                + "Email generata automaticamente da Kore Platform"
                 + "</div></div>";
     }
 
@@ -178,7 +182,7 @@ public class EmailServiceImpl implements EmailService {
              + "<p style=\"color:#495057;font-size:15px;line-height:1.6;margin:0 0 20px\">Siamo felici di averti con noi! "
              + "Il tuo account è attivo e pronto all'uso. Ora puoi accedere alla piattaforma e iniziare a prenotare le tue consulenze.</p>"
              + "<div style=\"text-align:center;margin:30px 0\">"
-             + "<a href=\"http://localhost:4200/login\" style=\"background:linear-gradient(135deg,#e2b93b,#c49a20);color:#1a3462;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block\">Accedi alla Piattaforma</a>"
+             + "<a href=\"" + frontendUrl + "/login\" style=\"background:linear-gradient(135deg,#e2b93b,#c49a20);color:#1a3462;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block\">Accedi alla Piattaforma</a>"
              + "</div>"
              + "<p style=\"color:#6c757d;font-size:14px;line-height:1.5;margin:0\">Se hai bisogno di aiuto, rispondi a questa email o contattaci nella chat di supporto.</p>"
              + "</div>"
@@ -187,8 +191,10 @@ public class EmailServiceImpl implements EmailService {
              + "</div></div>";
     }
 
+    // Volutamente sincrono (niente @Async): lo chiama solo il BookingReminderScheduler,
+    // che gira già su un thread in background e deve vedere l'eventuale eccezione per
+    // NON marcare reminderSent quando l'invio fallisce.
     @Override
-    @Async("emailTaskExecutor")
     public void sendBookingReminderEmail(String toEmail, String recipientName, String otherPartyName,
                                           LocalDateTime startTime, String meetingLink, boolean isForClient) {
         validateRecipient(toEmail);
@@ -285,7 +291,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             validateRecipient(toEmail);
             String subject = "🔑 Recupero Password — Kore";
-            String resetLink = "http://localhost:4200/reset-password?token=" + resetToken;
+            String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
             String html = buildPasswordResetHtml(firstName, resetLink);
             sendSimpleEmail(toEmail, subject, html);
             log.info("Email di reset password inviata a {}", toEmail);

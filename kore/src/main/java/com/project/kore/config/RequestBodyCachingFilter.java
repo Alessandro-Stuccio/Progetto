@@ -26,6 +26,13 @@ public class RequestBodyCachingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // Gli upload multipart (PDF fino a 10MB) non vanno bufferizzati in memoria:
+        // l'audit non salva comunque body binari.
+        String contentType = request.getContentType();
+        if (contentType != null && contentType.toLowerCase().startsWith("multipart/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         ContentCachingRequestWrapper wrappedRequest   = new ContentCachingRequestWrapper(request, 65536);
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
         try {
